@@ -76,5 +76,13 @@ RUN composer install --no-dev --optimize-autoloader
 # Set permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+# Clear all Laravel caches at runtime
+RUN echo '#!/bin/sh\nphp artisan config:clear && php artisan route:clear && php artisan view:clear && apache2-foreground' > /start.sh \
+    && chmod +x /start.sh
+
+CMD ["/start.sh"]
+
 # Start Apache
 CMD ["apache2-foreground"]
