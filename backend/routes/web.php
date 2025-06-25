@@ -20,9 +20,9 @@ use App\Http\Controllers\MailController;
 
 // Test email the demo email
 // Route::get('/send-demo-email', [MailController::class, 'sendDemoEmail']);
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+Route::get('/', function () {
+    return view('welcome');
+});
 
 Route::get('/env-check', function () {
     return [
@@ -32,7 +32,4 @@ Route::get('/env-check', function () {
     ];
 });
 
-Route::get('/', function () {
-    return 'Welcome - Route is working!';
-});
 
