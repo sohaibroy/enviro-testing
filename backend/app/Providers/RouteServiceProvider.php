@@ -24,14 +24,11 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-file_put_contents(storage_path('logs/route_service_provider_booted.txt'), "RouteServiceProvider booted\n", FILE_APPEND);
-
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
         $this->routes(function () {
-             file_put_contents(storage_path('logs/routes_callback_called.txt'), "routes() callback hit\n", FILE_APPEND);
             Route::middleware('api')
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));

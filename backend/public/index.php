@@ -46,35 +46,30 @@ require __DIR__.'/../vendor/autoload.php';
 
  $app = require_once __DIR__.'/../bootstrap/app.php';
 
- file_put_contents(__DIR__ . '/../storage/logs/render_test.log', "Index reached\n", FILE_APPEND);
-
-
 $kernel = $app->make(Kernel::class);
 
-try {
-    $response = $kernel->handle(
-        $request = Request::capture()
-    );
+// try {
+//     $response = $kernel->handle(
+//         $request = Request::capture()
+//     );
 
-    file_put_contents(__DIR__ . '/../storage/logs/render_test.log', "Request handled\n", FILE_APPEND);
-    $response->send();
+//     file_put_contents(__DIR__ . '/../storage/logs/render_test.log', "Request handled\n", FILE_APPEND);
+//     $response->send();
 
-    $kernel->terminate($request, $response);
-} catch (\Throwable $e) {
-    echo "<pre>";
-    echo "ERROR: " . $e->getMessage() . "\n";
-    echo $e->getFile() . ':' . $e->getLine() . "\n";
-    echo $e->getTraceAsString();
-    echo "</pre>";
-    exit;
-}
+//     $kernel->terminate($request, $response);
+// } catch (\Throwable $e) {
+//     echo "<pre>";
+//     echo "ERROR: " . $e->getMessage() . "\n";
+//     echo $e->getFile() . ':' . $e->getLine() . "\n";
+//     echo $e->getTraceAsString();
+//     echo "</pre>";
+//     exit;
+// }
 
-// $kernel = $app->make(Kernel::class);
+  $response = $kernel->handle(
+      $request = Request::capture()
+  )->send();
 
-//  $response = $kernel->handle(
-//      $request = Request::capture()
-//  )->send();
-
-// $kernel->terminate($request, $response);
+ $kernel->terminate($request, $response);
 
 //echo 'FROM THE APP INDEX.PHP';
