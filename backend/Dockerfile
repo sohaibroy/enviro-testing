@@ -71,6 +71,7 @@ COPY config /var/www/html/config
 COPY resources /var/www/html/resources
 COPY storage /var/www/html/storage
 COPY composer.* /var/www/html/
+COPY .env.example /var/www/html/.env
 
 # Set working directory
 WORKDIR /var/www/html
