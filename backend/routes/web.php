@@ -22,24 +22,10 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
-file_put_contents(storage_path('logs/web_routes_loaded.txt'), now() . " web.php loaded\n", FILE_APPEND);
-
-Route::get('/debug-routes', function () {
-    return response()->json([
-        'base_path' => base_path(),
-        'routes_folder' => scandir(base_path('routes')),
-    ]);
-});
-
-file_put_contents(storage_path('logs/web_routes_loaded.txt'), "Routes file loaded at " . now() . "\n", FILE_APPEND);
-
-Route::get('/', function () {
-    return '✅ Route is working!';
-});
-
-Route::get('/debug-routes', function () {
-    return response()->json([
-        'base_path' => base_path(),
-        'routes_folder' => scandir(base_path('routes')),
-    ]);
+Route::get('/env-check', function () {
+    return [
+        'env' => env('APP_ENV'),
+        'debug' => config('app.debug'),
+        'key_set' => config('app.key') ? true : false,
+    ];
 });
