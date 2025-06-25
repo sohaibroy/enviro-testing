@@ -29,6 +29,15 @@ Route::get('/debug-routes', function () {
     ]);
 });
 
+file_put_contents(storage_path('logs/web_routes_loaded.txt'), "Routes file loaded at " . now() . "\n", FILE_APPEND);
+
 Route::get('/', function () {
-    return '✅ Laravel route / is working!';
+    return '✅ Route is working!';
+});
+
+Route::get('/debug-routes', function () {
+    return response()->json([
+        'base_path' => base_path(),
+        'routes_folder' => scandir(base_path('routes')),
+    ]);
 });
