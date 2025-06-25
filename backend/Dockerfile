@@ -63,7 +63,15 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 # Copy Laravel app
-COPY . /var/www/html
+COPY routes /var/www/html/routes
+COPY app /var/www/html/app
+COPY public /var/www/html/public
+COPY bootstrap /var/www/html/bootstrap
+COPY config /var/www/html/config
+COPY resources /var/www/html/resources
+COPY storage /var/www/html/storage
+COPY composer.* /var/www/html/
+COPY vendor /var/www/html/vendor
 
 # Set working directory
 WORKDIR /var/www/html
