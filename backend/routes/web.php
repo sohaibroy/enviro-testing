@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
+file_put_contents(storage_path('logs/web_routes_loaded.txt'), now() . " web.php loaded\n", FILE_APPEND);
+
 Route::get('/debug-routes', function () {
     return response()->json([
         'base_path' => base_path(),
