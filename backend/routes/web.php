@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Http\Request;
+//use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MailController;
-use App\Http\Controllers\EstimateController;
+//use App\Http\Controllers\MailController;
+//use App\Http\Controllers\EstimateController; -->
 
 /*
 |--------------------------------------------------------------------------
@@ -17,7 +17,11 @@ use App\Http\Controllers\EstimateController;
 */
 
 // Test email the demo email
-Route::get('/send-demo-email', [MailController::class, 'sendDemoEmail']);
+// Route::get('/send-demo-email', [MailController::class, 'sendDemoEmail']);
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+
 Route::get('/', function () {
-    return view('welcome');
+    return 'Render is working!';
 });
