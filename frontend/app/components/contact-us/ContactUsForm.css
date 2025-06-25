@@ -1,0 +1,235 @@
+.contact-form {
+    max-width: 60rem;
+    margin: 2rem auto;
+    background-color: white;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    border: 2px solid #d1d5db;
+    border-radius: 1rem;
+    overflow: hidden;
+
+}
+
+.form-header {
+    background-color: #003883;
+    color: white;
+    text-align: center;
+    align-items: center;
+    /* padding: 2rem; */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-header h2 {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid white;
+    width: 100%;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.form-header p {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid white;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.form-header h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    padding-bottom: 2rem;
+
+}
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 2rem;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+/* .form-field-group {
+    display: flex;
+    gap: 4rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    margin-right: 6rem;
+    max-width: 50rem;
+    font-size: 1.25rem;
+} */
+.form-field-group {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    gap: 4rem;
+}
+
+.form-field-group input {
+    flex: 1;
+    width: 100%;
+    /* Adjust as needed */
+    padding: .25rem;
+    font-size: 1.25rem;
+    border-radius: 0.5rem;
+    max-width: 22rem;
+}
+
+
+.message-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 2rem;
+    font-size: 1.25rem;
+    border-radius: .5rem;
+}
+
+.form-label {
+    font-weight: bold;
+    color: #003883;
+}
+
+.form-textarea {
+    width: 100%;
+    height: 10rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    border-radius: 1rem;
+    resize: none;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid white;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.submit-message {
+    font-size: 1rem;
+    padding-bottom: 2rem;
+}
+
+.submit-button,
+.reset-button {
+    font-size: 1.25rem;
+    font-weight: bold;
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: 1rem;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+.submit-button {
+    background-color: #003883;
+}
+
+.reset-button {
+    background-color: #ee7d11;
+    margin-left: 1rem;
+}
+
+.alert {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    border-radius: 5px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.alert-success {
+    background-color: #003883;
+    border: 1px solid #00388383;
+}
+
+.alert-error {
+    background-color: #ee7d11;
+    border: 1px solid #ee7d1183;
+}
+
+.submit-button,
+.reset-button {
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+.submit-button:hover {
+    background-color: #00388383;
+    transform: scale(1.05);
+}
+
+.reset-button:hover {
+    background-color: #ee7d1183;
+    transform: scale(1.05);
+}
+
+.submit-button:disabled {
+    background-color: #65787D;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    border: 1px solid #65787D83;
+    /* padding: 1rem; */
+    margin-bottom: 2rem;
+    max-width: 50rem;
+    border-radius: 1rem;
+}
+
+.data-privacy {
+    max-width: 50rem;
+    margin: 0 auto;
+    font-size: 1.25rem;
+    padding-left: 1rem;
+    color: #65787D;
+}
+
+.error-message {
+    color: red;
+    font-size: 1rem;
+    margin-top: 0.5rem;
+}
+
+.form-container p.text-red-400 {
+    font-size: 1.1rem !important;
+    color: #ef4444 !important;
+    margin-top: 0.5rem !important;
+}
+
+.form-container input .checkbox-container {
+    font-size: 1rem !important;
+
+}

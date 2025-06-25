@@ -1,0 +1,49 @@
+services:
+  laravel-app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/.env:/var/www/html/.env
+    ports:
+      - "80:80"
+    depends_on:
+      - mariadb
+
+  # MariaDB Service
+  mariadb:
+    image: mariadb:10.9
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: enviro_works
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    volumes:
+      - mysqldata:/var/lib/mysql
+
+  # phpMyAdmin Service
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - 8080:80
+    environment:
+      - PMA_HOST=mariadb
+    depends_on:
+      - mariadb
+
+  nextjs-app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - nextjs_cache:/app/.next
+    ports:
+      - "3000:3000"
+
+# Volumes
+volumes:
+  mysqldata:
+  nextjs_cache:

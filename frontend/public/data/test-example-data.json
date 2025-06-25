@@ -1,0 +1,144 @@
+{
+  "sanitationTestingTypes": [
+    {
+      "type": "Surface Swab Testing",
+      "description": "Testing of various surfaces for the presence of contaminants and pathogens.",
+      "price": 75.0,
+      "methodOfCollection": "Swabbing",
+      "medium": "Solid"
+    },
+    {
+      "type": "Air Quality Testing",
+      "description": "Analysis of indoor air quality to ensure a healthy working environment.",
+      "price": 120.0,
+      "methodOfCollection": "Air Sampling",
+      "medium": "Air"
+    },
+    {
+      "type": "Hand Hygiene Assessment",
+      "description": "Evaluation of hand hygiene practices to prevent the spread of infections.",
+      "price": 50.0,
+      "methodOfCollection": "Observation and Swabbing",
+      "medium": "Solid"
+    },
+    {
+      "type": "PPE Inspection",
+      "description": "Ensuring the proper usage and condition of personal protective equipment for workplace safety.",
+      "price": 80.0,
+      "methodOfCollection": "Visual Inspection",
+      "medium": "N/A"
+    },
+    {
+      "type": "Water Quality Testing",
+      "description": "Examination of water sources for potential contaminants.",
+      "price": 90.0,
+      "methodOfCollection": "Water Sampling",
+      "medium": "Liquid"
+    },
+    {
+      "type": "Food Surface Testing",
+      "description": "Testing surfaces in food preparation areas to ensure cleanliness and safety.",
+      "price": 65.0,
+      "methodOfCollection": "Swabbing",
+      "medium": "Solid"
+    },
+    {
+      "type": "Mold and Fungi Inspection",
+      "description": "Identification and analysis of mold and fungi in the workplace.",
+      "price": 110.0,
+      "methodOfCollection": "Air and Surface Sampling",
+      "medium": "Air, Solid"
+    },
+    {
+      "type": "Biohazard Material Testing",
+      "description": "Testing of materials for the presence of biohazardous substances.",
+      "price": 150.0,
+      "methodOfCollection": "Swabbing and Testing",
+      "medium": "Solid"
+    },
+    {
+      "type": "Chemical Spill Cleanup Verification",
+      "description": "Verification of the effectiveness of chemical spill cleanup procedures.",
+      "price": 100.0,
+      "methodOfCollection": "Surface Sampling",
+      "medium": "Solid"
+    },
+    {
+      "type": "Employee Health Check",
+      "description": "Monitoring and testing employee health to prevent the spread of illnesses.",
+      "price": 70.0,
+      "methodOfCollection": "Health Questionnaires and Testing",
+      "medium": "N/A"
+    },
+    {
+      "type": "HVAC System Inspection",
+      "description": "Inspection and testing of HVAC systems for air quality and cleanliness.",
+      "price": 130.0,
+      "methodOfCollection": "Air Sampling",
+      "medium": "Air"
+    },
+    {
+      "type": "Employee Training Assessment",
+      "description": "Assessment of employee training on sanitation and hygiene practices.",
+      "price": 55.0,
+      "methodOfCollection": "Observation and Interviews",
+      "medium": "N/A"
+    },
+    {
+      "type": "Waste Disposal Area Testing",
+      "description": "Testing of waste disposal areas to ensure proper sanitation practices.",
+      "price": 85.0,
+      "methodOfCollection": "Swabbing and Sampling",
+      "medium": "Solid"
+    },
+    {
+      "type": "Biological Contamination Testing",
+      "description": "Identification and analysis of biological contaminants in the workplace.",
+      "price": 95.0,
+      "methodOfCollection": "Swabbing and Testing",
+      "medium": "Solid"
+    },
+    {
+      "type": "Emergency Response Preparedness Evaluation",
+      "description": "Evaluation of the workplace's preparedness for emergency sanitation procedures.",
+      "price": 120.0,
+      "methodOfCollection": "Observation and Assessment",
+      "medium": "N/A"
+    },
+    {
+      "type": "Computer Equipment Sanitization",
+      "description": "Testing and verification of sanitization procedures for computer equipment.",
+      "price": 75.0,
+      "methodOfCollection": "Surface Sampling",
+      "medium": "Solid"
+    },
+    {
+      "type": "Vehicle Sanitization Check",
+      "description": "Checking and testing sanitation measures in company vehicles.",
+      "price": 110.0,
+      "methodOfCollection": "Swabbing and Inspection",
+      "medium": "Solid"
+    },
+    {
+      "type": "Occupational Health Program Audit",
+      "description": "Audit of the occupational health program to ensure compliance and effectiveness.",
+      "price": 140.0,
+      "methodOfCollection": "Documentation Review and Interviews",
+      "medium": "N/A"
+    },
+    {
+      "type": "Chemical Exposure Monitoring",
+      "description": "Monitoring and testing for chemical exposure levels in the workplace.",
+      "price": 95.0,
+      "methodOfCollection": "Air and Surface Sampling",
+      "medium": "Air, Solid"
+    },
+    {
+      "type": "Ventilation System Inspection",
+      "description": "Inspection and testing of ventilation systems for air quality.",
+      "price": 125.0,
+      "methodOfCollection": "Air Sampling",
+      "medium": "Air"
+    }
+  ]
+}
