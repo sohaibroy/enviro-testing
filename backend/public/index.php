@@ -53,10 +53,24 @@ use Illuminate\Http\Request;
 
 $kernel = $app->make(Kernel::class);
 
-file_put_contents(__DIR__ . '/../storage/logs/render_test.log', "Kernel created\n", FILE_APPEND);
+try {
+    $response = $kernel->handle(
+        $request = Request::capture()
+    );
 
-echo "Kernel created";
-exit;
+    file_put_contents(__DIR__ . '/../storage/logs/render_test.log', "Request handled\n", FILE_APPEND);
+
+    $response->send();
+
+    $kernel->terminate($request, $response);
+} catch (\Throwable $e) {
+    echo "<pre>";
+    echo "ERROR: " . $e->getMessage() . "\n";
+    echo $e->getFile() . ':' . $e->getLine() . "\n";
+    echo $e->getTraceAsString();
+    echo "</pre>";
+    exit;
+}
 
 // $kernel = $app->make(Kernel::class);
 
