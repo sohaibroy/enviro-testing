@@ -48,9 +48,25 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 
 $kernel = $app->make(Kernel::class);
 
- $response = $kernel->handle(
-     $request = Request::capture()
- )->send();
+//  $response = $kernel->handle(
+//      $request = Request::capture()
+//  )->send();
+
+try {
+    $response = $kernel->handle(
+        $request = Request::capture()
+    );
+    $response->send();
+
+    $kernel->terminate($request, $response);
+} catch (\Throwable $e) {
+    echo "<pre>";
+    echo "UNCAUGHT EXCEPTION: " . $e->getMessage() . "\n";
+    echo "File: " . $e->getFile() . ":" . $e->getLine() . "\n";
+    echo $e->getTraceAsString();
+    echo "</pre>";
+    exit;
+}
 
 // $kernel->terminate($request, $response);
 
