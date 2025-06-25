@@ -51,35 +51,26 @@ RUN apt-get update && \
 
 RUN echo "ServerName laravel-app.local" >> /etc/apache2/apache2.conf
 
-# Enable mod_rewrite
 RUN a2enmod rewrite
-
-# Install PHP extensions
 RUN docker-php-ext-install pdo_mysql zip
 
-# Set document root to /public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Copy Laravel app
-COPY routes /var/www/html/routes
-COPY app /var/www/html/app
-COPY public /var/www/html/public
-COPY bootstrap /var/www/html/bootstrap
-COPY config /var/www/html/config
-COPY resources /var/www/html/resources
-COPY storage /var/www/html/storage
-COPY composer.* /var/www/html/
-COPY .env.example /var/www/html/.env
+# ✅ Copy the full Laravel project (relative to backend/)
+COPY . /var/www/html
 
 # Set working directory
 WORKDIR /var/www/html
 
+# Add default .env if needed (optional but helpful)
+COPY .env.example .env
+
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install project dependencies
+# ✅ Install project dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Set permissions
