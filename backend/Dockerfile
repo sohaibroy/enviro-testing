@@ -1,69 +1,69 @@
-FROM php:8.2-apache
+# FROM php:8.2-apache
 
-# Install dependencies
-RUN apt-get update && \
-    apt-get install -y \
-    libzip-dev \
-    zip
+# # Install dependencies
+# RUN apt-get update && \
+#     apt-get install -y \
+#     libzip-dev \
+#     zip
 
-RUN echo "ServerName laravel-app.local" >> /etc/apache2/apache2.conf
+# RUN echo "ServerName laravel-app.local" >> /etc/apache2/apache2.conf
 
-# Enable mod_rewrite
-RUN a2enmod rewrite
+# # Enable mod_rewrite
+# RUN a2enmod rewrite
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql zip
+# # Install PHP extensions
+# RUN docker-php-ext-install pdo_mysql zip
 
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+# RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+# RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Copy the application code
-COPY backend/. /var/www/html
+# # Copy the application code
+# COPY backend/. /var/www/html
 
-# Set the working directory
-WORKDIR /var/www/html
+# # Set the working directory
+# WORKDIR /var/www/html
 
-# Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# # Install composer
+# RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install project dependencies
-RUN composer install --no-dev -vvv
-RUN composer dump-autoload
+# # Install project dependencies
+# RUN composer install
+# RUN composer dump-autoload
 
-#Cache Configuration
-RUN php artisan config:cache
+# #Cache Configuration
+# RUN php artisan config:cache
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# # Set permissions
+# RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Dockerfile (in root of repo, assumes Laravel in backend/)
 
-# FROM php:8.2-apache
+FROM php:8.2-apache
 
-# RUN apt-get update && apt-get install -y \
-#     git zip unzip curl libzip-dev && \
-#     docker-php-ext-install pdo_mysql zip && \
-#     a2enmod rewrite
+RUN apt-get update && apt-get install -y \
+    git zip unzip curl libzip-dev && \
+    docker-php-ext-install pdo_mysql zip && \
+    a2enmod rewrite
 
-# ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-# RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
-#     sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
+    sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# # ✅ Laravel is in backend/
-# COPY backend/. /var/www/html
+# ✅ Laravel is in backend/
+COPY backend/. /var/www/html
 
-# WORKDIR /var/www/html
+WORKDIR /var/www/html
 
-# RUN curl -sS https://getcomposer.org/installer | php && \
-#     mv composer.phar /usr/local/bin/composer && \
-#     composer install --no-dev --optimize-autoloader
+RUN curl -sS https://getcomposer.org/installer | php && \
+    mv composer.phar /usr/local/bin/composer && \
+    composer install --no-dev --optimize-autoloader
 
-# # Remove old cached bootstrap files
-# RUN rm -rf bootstrap/cache/*.php
+# Remove old cached bootstrap files
+RUN rm -rf bootstrap/cache/*.php
 
-# # Set correct permissions
-# RUN chown -R www-data:www-data storage bootstrap/cache
+# Set correct permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-# # ✅ Always reset config & routes cache at runtime
-# CMD php artisan config:clear && php artisan route:clear && php artisan view:clear && apache2-foreground
+# ✅ Always reset config & routes cache at runtime
+CMD php artisan config:clear && php artisan route:clear && php artisan view:clear && apache2-foreground
