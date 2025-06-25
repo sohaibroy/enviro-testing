@@ -5,8 +5,6 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-echo 'LINES 3-6 GOOD';
-
 /*
 |--------------------------------------------------------------------------
 | Check If The Application Is Under Maintenance
@@ -18,9 +16,9 @@ echo 'LINES 3-6 GOOD';
 |
 */
 
-// if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
-//     require $maintenance;
-// }
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
 
 // /*
 // |--------------------------------------------------------------------------
