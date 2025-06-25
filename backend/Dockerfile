@@ -56,6 +56,8 @@ WORKDIR /var/www/html
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+RUN ls -la /var/www/html/routes && cat /var/www/html/routes/web.php || echo "routes/web.php not found"
+
 RUN composer install || true
 RUN cat storage/logs/laravel.log || echo "No laravel.log found"
 RUN cat /var/www/html/artisan || echo "No artisan found"

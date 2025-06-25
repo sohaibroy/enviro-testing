@@ -1,5 +1,7 @@
 <?php
 
+file_put_contents(storage_path('logs/web_routes_loaded.txt'), "Web routes loaded\n", FILE_APPEND);
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MailController;
@@ -29,3 +31,8 @@ Route::get('/env-check', function () {
         'key_set' => config('app.key') ? true : false,
     ];
 });
+
+Route::get('/', function () {
+    return 'Welcome - Route is working!';
+});
+

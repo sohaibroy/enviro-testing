@@ -57,7 +57,6 @@ try {
     );
 
     file_put_contents(__DIR__ . '/../storage/logs/render_test.log', "Request handled\n", FILE_APPEND);
-
     $response->send();
 
     $kernel->terminate($request, $response);
