@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Contracts\Http\Kernel;
-use Illuminate\Http\Request;
+// use Illuminate\Contracts\Http\Kernel;
+// use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
@@ -47,7 +47,15 @@ require __DIR__.'/../vendor/autoload.php';
  $app = require_once __DIR__.'/../bootstrap/app.php';
 
  file_put_contents(__DIR__ . '/../storage/logs/render_test.log', "Index reached\n", FILE_APPEND);
-echo "Index executing.";
+
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
+
+$kernel = $app->make(Kernel::class);
+
+file_put_contents(__DIR__ . '/../storage/logs/render_test.log', "Kernel created\n", FILE_APPEND);
+
+echo "Kernel created";
 exit;
 
 // $kernel = $app->make(Kernel::class);
