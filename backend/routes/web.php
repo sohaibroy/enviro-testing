@@ -23,5 +23,6 @@ use Illuminate\Support\Facades\Route;
 // });
 
 Route::get('/', function () {
-    return 'Render is working!';
+    error_log('✅ Route for / is loaded');
+    return '✅ Laravel route / is working!';
 });
