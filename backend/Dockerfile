@@ -75,10 +75,6 @@ RUN composer install --no-dev --optimize-autoloader
 # Set proper permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# ✅ Entry script to clear caches then start apache
-COPY ./start.sh /start.sh
-RUN chmod +x /start.sh
-
 RUN php artisan config:clear && \
     php artisan route:clear && \
     php artisan view:clear && \
