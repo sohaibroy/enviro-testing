@@ -71,7 +71,6 @@ COPY config /var/www/html/config
 COPY resources /var/www/html/resources
 COPY storage /var/www/html/storage
 COPY composer.* /var/www/html/
-COPY vendor /var/www/html/vendor
 
 # Set working directory
 WORKDIR /var/www/html
