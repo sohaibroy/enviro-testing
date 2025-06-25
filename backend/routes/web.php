@@ -22,7 +22,13 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
+Route::get('/debug-routes', function () {
+    return response()->json([
+        'base_path' => base_path(),
+        'routes_folder' => scandir(base_path('routes')),
+    ]);
+});
+
 Route::get('/', function () {
-    error_log('✅ Route for / is loaded');
     return '✅ Laravel route / is working!';
 });
