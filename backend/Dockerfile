@@ -58,7 +58,7 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
     sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 # Copy Laravel app
-COPY . /var/www/html
+COPY ./ /var/www/html
 
 # Delete stale route cache
 RUN rm -f bootstrap/cache/routes-*.php
@@ -79,5 +79,9 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 COPY ./start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Use entry script as CMD
-CMD ["/start.sh"]
+RUN php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan view:clear && \
+    php artisan config:cache
+
+CMD ["apache2-foreground"]
