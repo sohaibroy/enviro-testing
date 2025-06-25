@@ -37,36 +37,32 @@
 # # Set permissions
 # RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
+# Dockerfile (in root of repo, assumes Laravel in backend/)
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip git curl && \
-    docker-php-ext-install pdo_mysql zip
+    git zip unzip curl libzip-dev && \
+    docker-php-ext-install pdo_mysql zip && \
+    a2enmod rewrite
 
-RUN a2enmod rewrite
-
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
     sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# ✅ Copy from backend folder
-COPY ./backend /var/www/html
+# ✅ Laravel is in backend/
+COPY backend/. /var/www/html
 
 WORKDIR /var/www/html
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php && \
+    mv composer.phar /usr/local/bin/composer && \
+    composer install --no-dev --optimize-autoloader
 
-RUN ls -la /var/www/html/routes && cat /var/www/html/routes/web.php || echo "routes/web.php not found"
+# Remove old cached bootstrap files
+RUN rm -rf bootstrap/cache/*.php
 
-RUN composer install || true
-RUN cat storage/logs/laravel.log || echo "No laravel.log found"
-RUN cat /var/www/html/artisan || echo "No artisan found"
-
+# Set correct permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-RUN php artisan config:clear && \
-    php artisan route:clear && \
-    php artisan view:clear && \
-    php artisan config:cache
-
-CMD ["apache2-foreground"]
+# ✅ Always reset config & routes cache at runtime
+CMD php artisan config:clear && php artisan route:clear && php artisan view:clear && apache2-foreground
