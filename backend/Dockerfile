@@ -60,6 +60,9 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 # Copy Laravel app
 COPY . /var/www/html
 
+# Delete stale route cache
+RUN rm -f bootstrap/cache/routes-*.php
+
 # Set working directory
 WORKDIR /var/www/html
 
