@@ -13,6 +13,8 @@
     "dependencies": {
         "@stripe/react-stripe-js": "^3.7.0",
         "@stripe/stripe-js": "^7.4.0",
-        "framer-motion": "^12.19.1"
+        "framer-motion": "^12.19.1",
+        "autoprefixer": "^10.0.1",
+        "postcss": "^8"
     }
 }
