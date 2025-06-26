@@ -79,7 +79,8 @@ RUN composer install --no-dev --optimize-autoloader || true
 
 # Fix permissions
 RUN mkdir -p storage bootstrap/cache && \
-    chown -R www-data:www-data storage bootstrap/cache public
+    if [ -d "public" ]; then chown -R www-data:www-data public; fi && \
+    chown -R www-data:www-data storage bootstrap/cache
 
 # Clear stale caches
 RUN php artisan config:clear || true && php artisan route:clear || true && php artisan view:clear || true
