@@ -57,29 +57,24 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy Laravel source *after* setting working directory
+# Copy Laravel source code (only for Render build)
 COPY . /var/www/html
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php && \
     mv composer.phar /usr/local/bin/composer
 
-# Build argument for environment (use with docker-compose `args`)
-ARG APP_ENV=local
+# Set ENV for Composer
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Install dependencies based on environment
-RUN if [ "$APP_ENV" = "production" ]; then \
-      composer install --no-dev --optimize-autoloader; \
-    else \
-      composer install; \
-    fi
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader || true
 
-# Ensure folders exist before chown
+# Create required dirs and fix permissions
 RUN mkdir -p storage bootstrap/cache && \
     chown -R www-data:www-data storage bootstrap/cache
 
-# Clear config caches to avoid stale state
-RUN php artisan config:clear && php artisan route:clear && php artisan view:clear
+# Clear stale caches
+RUN php artisan config:clear || true && php artisan route:clear || true && php artisan view:clear || true
 
-# Default command
 CMD ["apache2-foreground"]
