@@ -58,7 +58,7 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
 WORKDIR /var/www/html
 
 # Copy Laravel source *after* setting working directory
-COPY . .
+COPY . /var/www/html
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php && \
