@@ -17,10 +17,14 @@ use App\Http\Controllers\EstimateController;
 */
 
 // Test email the demo email
- Route::get('/send-demo-email', [MailController::class, 'sendDemoEmail']);
+//Route::get('/send-demo-email', [MailController::class, 'sendDemoEmail']);
 // Route::get('/', function () {
 //     return view('welcome');
 // });
+
+Route::get('/', function () {
+    return response()->json(['status' => 'API root reachable']);
+});
 
 
 
