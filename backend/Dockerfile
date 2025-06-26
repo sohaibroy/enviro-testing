@@ -58,7 +58,7 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
 WORKDIR /var/www/html
 
 # Copy Laravel source code (only for Render build)
-COPY . /var/www/html
+COPY ./ /var/www/html
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php && \
