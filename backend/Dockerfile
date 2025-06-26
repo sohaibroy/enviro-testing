@@ -58,7 +58,7 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
 WORKDIR /var/www/html
 
 # Only COPY if building on Render (not needed for local bind mount)
-COPY . /var/www/html
+COPY backend/. /var/www/html
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php && \
