@@ -43,37 +43,40 @@ FROM php:8.2-apache
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    git zip unzip curl libzip-dev libpng-dev libonig-dev libxml2-dev && \
+    git zip unzip curl libzip-dev && \
     docker-php-ext-install pdo_mysql zip && \
     a2enmod rewrite
 
-# Set Laravel public folder as Apache root
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
-    sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# Set Apache document root to Laravel public directory
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+    /etc/apache2/sites-available/*.conf && \
+    sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' \
+    /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Copy app source into image (for Render)
+# Copy Laravel source
 COPY . /var/www/html
 
+# Set working directory
 WORKDIR /var/www/html
 
-# Install Composer globally
+# Install Composer
 RUN curl -sS https://getcomposer.org/installer | php && \
     mv composer.phar /usr/local/bin/composer
 
-# Conditionally install dependencies
-ARG APP_ENV=production
+# Install PHP dependencies based on environment
+ARG APP_ENV=local
 RUN if [ "$APP_ENV" = "production" ]; then \
       composer install --no-dev --optimize-autoloader; \
     else \
       composer install; \
     fi
 
-# Clean stale bootstrap cache
-RUN rm -rf bootstrap/cache/*.php
-
-# Fix file permissions
+# Fix permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Start Apache after clearing Laravel caches
-CMD php artisan config:clear && php artisan route:clear && php artisan view:clear && apache2-foreground
+# Clear caches
+RUN php artisan config:clear && php artisan route:clear && php artisan view:clear
+
+# Start Apache
+CMD ["apache2-foreground"]
