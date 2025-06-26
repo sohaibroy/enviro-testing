@@ -41,29 +41,39 @@
 
 FROM php:8.2-apache
 
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    git zip unzip curl libzip-dev && \
+    git zip unzip curl libzip-dev libpng-dev libonig-dev libxml2-dev && \
     docker-php-ext-install pdo_mysql zip && \
     a2enmod rewrite
 
+# Set Laravel public folder as Apache root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
     sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# ✅ Laravel is in backend/
-COPY backend/. /var/www/html
+# Copy app source into image (for Render)
+COPY . /var/www/html
 
 WORKDIR /var/www/html
 
+# Install Composer globally
 RUN curl -sS https://getcomposer.org/installer | php && \
-    mv composer.phar /usr/local/bin/composer && \
-    composer install --no-dev --optimize-autoloader
+    mv composer.phar /usr/local/bin/composer
 
-# Remove old cached bootstrap files
+# Conditionally install dependencies
+ARG APP_ENV=production
+RUN if [ "$APP_ENV" = "production" ]; then \
+      composer install --no-dev --optimize-autoloader; \
+    else \
+      composer install; \
+    fi
+
+# Clean stale bootstrap cache
 RUN rm -rf bootstrap/cache/*.php
 
-# Set correct permissions
+# Fix file permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# ✅ Always reset config & routes cache at runtime
+# Start Apache after clearing Laravel caches
 CMD php artisan config:clear && php artisan route:clear && php artisan view:clear && apache2-foreground
