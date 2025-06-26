@@ -1,9 +1,17 @@
-# Use an official Node.js runtime as a base image
+# Dockerfile (for Render)
 FROM node:18-alpine
 
 WORKDIR /app
+
 COPY package*.json ./
-RUN npm i
+RUN npm ci --omit=dev
+
 COPY . .
+
+ENV NODE_ENV=production
+
+RUN npm run build
+
 EXPOSE 3000
-CMD npm run dev
+
+CMD ["npm", "start"]
