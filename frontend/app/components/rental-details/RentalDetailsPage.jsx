@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { RentalDetailsListItem } from "@/components/rental/RentalDetailsListItem";
-import { RentalUpdatePopup } from "@/components/rental/RentalUpdatePopup";
-import BasePopup from "@/components/basic/BasePopup";
+import { RentalDetailsListItem } from "../rentals/RentalDetailsListItem";
+import { RentalUpdatePopup } from "../rentals/RentalUpdatePopup";
+import BasePopup from "../basic/BasePopup";
 import { isTokenExpired } from "@/utils/session";
 
 export default function RentalDetailsPage() {
