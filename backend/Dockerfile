@@ -54,10 +54,17 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
     sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' \
     /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
+# Allow Apache to serve public directory
+RUN echo '<Directory /var/www/html/public>\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' > /etc/apache2/conf-available/allow-public.conf && \
+    a2enconf allow-public
+
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy Laravel source code (only for Render build)
+# Copy Laravel source code
 COPY ./ /var/www/html
 
 # Install Composer
@@ -70,11 +77,15 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader || true
 
-# Create required dirs and fix permissions
+# Fix permissions
 RUN mkdir -p storage bootstrap/cache && \
-    chown -R www-data:www-data storage bootstrap/cache
+    chown -R www-data:www-data storage bootstrap/cache public
 
 # Clear stale caches
 RUN php artisan config:clear || true && php artisan route:clear || true && php artisan view:clear || true
 
+# Optional: Debug listing
+RUN ls -la /var/www/html/public
+
+# Start Apache
 CMD ["apache2-foreground"]
