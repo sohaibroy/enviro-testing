@@ -197,6 +197,9 @@ class EquipmentController extends Controller
             }
         }
 
+        \Log::info('Token:', ['token' => $accessToken]);
+        \Log::info('User:', ['user' => optional($user)->id]);
+
         \Log::info('User loading equipment:', ['user' => optional($user)->account_id]);
 
         $companyId = $user ? $user->company_id : null;
