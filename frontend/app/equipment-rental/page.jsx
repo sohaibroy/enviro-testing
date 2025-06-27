@@ -25,9 +25,15 @@ export default function EquipmentRentalPage() {
     const fetchTypes = async () => {
       const accessToken = sessionStorage.getItem("accessToken");
 
-      const headers = accessToken
-        ? { Authorization: `Bearer ${accessToken}` }
-        : {};
+      // const headers = accessToken
+      //   ? { Authorization: `Bearer ${accessToken}` }
+      //   : {};
+
+       const headers = {};
+
+    if (accessToken && accessToken !== "undefined" && accessToken !== "null") {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
 
       try {
         //const response = await fetch("http://localhost/api/equipment-types", {
