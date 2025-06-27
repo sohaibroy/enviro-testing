@@ -46,8 +46,8 @@ export default function RentalCartPage() {
         if (accessToken) {
             //fetch("http://localhost/api/account/me", {
             fetch(`${baseUrl}/api/account/me`, {
-                // headers: { Authorization: `Bearer ${accessToken}` },
-                headers,
+                headers: { Authorization: `Bearer ${accessToken}` },
+                //headers,
                 credentials: "include",
             })
                 .then((res) => {
