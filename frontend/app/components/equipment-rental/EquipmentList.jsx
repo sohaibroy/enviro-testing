@@ -57,6 +57,7 @@ function EquipmentRentalList({ searchTerm, searchType, selectedCategory }) {
                 //const res = await fetch("http://localhost/api/equipment-data", {
                 const res = await fetch(`${baseUrl}/api/equipment-data`, {
                     headers,
+                    credentials: "include",   //ADDED
                 });
 
                 if (!res.ok) throw new Error("Failed to load equipment.");

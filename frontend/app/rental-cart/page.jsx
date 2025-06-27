@@ -47,6 +47,7 @@ export default function RentalCartPage() {
             //fetch("http://localhost/api/account/me", {
             fetch(`${baseUrl}/api/account/me`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
+                credentials: "include",
             })
                 .then((res) => {
                     if (!res.ok) throw new Error("Failed to fetch user info");
