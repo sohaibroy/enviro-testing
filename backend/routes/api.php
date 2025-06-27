@@ -171,7 +171,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/equipment-data', [EquipmentController::class, 'getAllEquipment']);
 
     // Auth
-    Route::middleware('auth:sanctum')->get('/account/me', [AccountsController::class, 'me']);
+    //Route::middleware('auth:sanctum')->get('/account/me', [AccountsController::class, 'me']);
+    Route::get('/account/me', [AccountsController::class, 'me']);
 });
 
 // Search for a company by name --works
