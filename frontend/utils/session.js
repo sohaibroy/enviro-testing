@@ -1,5 +1,6 @@
 export function isTokenExpired() {
   const tokenExpirationTime = sessionStorage.getItem("tokenExpiration");
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
   if (!tokenExpirationTime) {
     // If token is not provided, consider it expired
@@ -48,7 +49,8 @@ export async function destroySession() {
     const accessToken = sessionStorage.getItem("accessToken");
 
     if (accessToken) {
-      const response = await fetch("http://localhost:80/api/logout", {
+      //const response = await fetch("http://localhost:80/api/logout", {
+      const response = await fetch(`${baseUrl}/api/logout`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,

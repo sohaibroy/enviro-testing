@@ -1,6 +1,6 @@
 // RentalCartPage.jsx
 "use client";
-
+//This is where the me call is
 import React, { useEffect, useState } from "react";
 import RentalCart from "../components/equipment-rental/RentalCart";
 import NotificationPopup from "../components/popup/NotificationPopup";

@@ -167,6 +167,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/turnaroundtimes/set/{method_id}', [TurnAroundTimeController::class, 'setAllTurnAroundTimes']);// phpunit works
     Route::get('/turnaroundtimes/{method_id}', [TurnAroundTimeController::class, 'getTurnAroundTimesByMethodId']);// phpunit works
 
+    //added equipment data route as it was not protected
+    Route::get('/equipment-data', [EquipmentController::class, 'getAllEquipment']);
+
     // Auth
     Route::middleware('auth:sanctum')->get('/account/me', [AccountsController::class, 'me']);
 });
