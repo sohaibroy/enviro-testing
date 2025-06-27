@@ -21,10 +21,10 @@ return [
 
     // 'allowed_origins' => ['*'],
 
-       'allowed_origins' => [
-        'http://localhost:3000',
-        'https://enviro-testing.onrender.com',
-    ],
+   'allowed_origins' => [
+    'https://enviro-frontend.onrender.com',
+    'http://localhost:3000'
+],
     
 
     'allowed_origins_patterns' => [],
