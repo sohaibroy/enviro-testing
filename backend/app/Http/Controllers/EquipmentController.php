@@ -230,7 +230,7 @@ class EquipmentController extends Controller
                             if ($override) {
                                 $fieldName = 'company_' . $companyId . '_price';
                                 $item->$fieldName = $override->override_price;
-                                \Log::info("✅ Override applied: {$override->override_price} on equipment {$item->equipment_id}");
+                                \Log::info(" Override applied: {$override->override_price} on equipment {$item->equipment_id}");
                             }
                         }
                     } catch (\Throwable $e) {

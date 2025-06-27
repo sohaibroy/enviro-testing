@@ -48,6 +48,8 @@ return [
 
     'expiration' => 60,
 
+     'prefix' => 'api', //  ADDED THIS  line added
+
     /*
     |--------------------------------------------------------------------------
     | Token Prefix
