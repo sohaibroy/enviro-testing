@@ -22,8 +22,8 @@ use App\Http\Controllers\EstimateController;
 //     return view('welcome');
 // });
 
-Route::get('/', function () {
-    return response()->json(['status' => 'API root reachable']);
+Route::get('/test-db', function () {
+    return DB::table('accounts')->get();
 });
 
 
