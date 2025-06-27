@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 //Admin section: analyte creation *popup* 
 
@@ -43,7 +44,8 @@ const AnalyteCreatePopup = ({ isOpen, onClose, title }) => {
         return;
       }
 
-      fetch("http://localhost:80/api/analyte/create", {
+      //fetch("http://localhost:80/api/analyte/create", {
+      fetch(`${baseUrl}/api/analyte/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

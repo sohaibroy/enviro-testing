@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const AccountCreatePopup = ({ isOpen, onClose, title, company }) => {
   if (!isOpen) return null;
@@ -63,7 +64,8 @@ const AccountCreatePopup = ({ isOpen, onClose, title, company }) => {
         return;
       }
 
-      fetch(`http://localhost:80/api/account/create`, {
+      //fetch(`http://localhost:80/api/account/create`, {
+      fetch(`${baseUrl}/api/account/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

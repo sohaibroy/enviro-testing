@@ -9,6 +9,7 @@ import { LoadingIcon } from "../components/loading/LoadingIcon";
 import { ErrorMessage } from "../components/basic/ErrorMessage";
 import { GeneralMessage } from "../components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 
 function ManageEquipment() {
@@ -26,7 +27,8 @@ function ManageEquipment() {
                 return;
             }
 
-            const response = await fetch("http://localhost:80/api/equipment-data", {
+            //const response = await fetch("http://localhost:80/api/equipment-data", {
+            const response = await fetch(`${baseUrl}/api/equipment-data`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
                 },
@@ -75,7 +77,8 @@ function ManageEquipment() {
             }
 
             const response = await fetch(
-                `http://localhost/api/equipment/search?search=${encodeURIComponent(searchTerm)}`,
+                //`http://localhost/api/equipment/search?search=${encodeURIComponent(searchTerm)}`,
+                `${baseUrl}/api/equipment/search?search=${encodeURIComponent(searchTerm)}`,
                 {
                     method: 'GET',
                     headers: {

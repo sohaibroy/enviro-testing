@@ -6,6 +6,7 @@ import { RentalDetailsListItem } from "../../components/rentals/RentalDetailsLis
 import { RentalUpdatePopup } from "../../components/rentals/RentalUpdatePopup";
 import BasePopup from "../../components/basic/BasePopup";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ManageRentalDetailsPage() {
     const { rentalId } = useParams();
@@ -20,7 +21,8 @@ export default function ManageRentalDetailsPage() {
 
     const fetchRental = async () => {
         try {
-            const res = await fetch(`http://localhost:80/api/rental/${rentalId}`, {
+            //const res = await fetch(`http://localhost:80/api/rental/${rentalId}`, {
+            const res = await fetch(`${baseUrl}/api/rental/${rentalId}`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
                 },

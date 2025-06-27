@@ -9,6 +9,7 @@ import { LoadingIcon } from "../components/loading/LoadingIcon";
 import { ErrorMessage } from "../components/basic/ErrorMessage";
 import { GeneralMessage } from "../components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function ManageAnalytes() {
   const [analytes, setAnalytes] = useState([]);
@@ -27,7 +28,8 @@ function ManageAnalytes() {
       if (searchTerm.trim() !== "") {
         await fetchSearchResults();
       } else {
-        const response = await fetch("http://localhost:80/api/analytes", {
+        //const response = await fetch("http://localhost:80/api/analytes", {
+        const response = await fetch(`${baseUrl}/api/analytes`, {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
@@ -52,7 +54,8 @@ function ManageAnalytes() {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/analyte/search/${encodeURIComponent(
+        //`http://localhost:80/api/analyte/search/${encodeURIComponent(
+        `${baseUrl}/api/analyte/search/${encodeURIComponent(
           searchTerm
         )}`,
         {

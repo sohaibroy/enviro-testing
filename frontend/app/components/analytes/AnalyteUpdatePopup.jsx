@@ -3,6 +3,7 @@ import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { RadioBoolInput } from "../basic/RadioBoolInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 //ADMIN BOARD: Edit: Update Analyte pop up
 
@@ -46,7 +47,8 @@ const AnalyteUpdatePopup = ({ analyte, isOpen, onClose, title }) => {
         return;
       }
 
-      fetch(`http://localhost:80/api/analyte/update/${analyte.analyte_id}`, {
+      //fetch(`http://localhost:80/api/analyte/update/${analyte.analyte_id}`, {
+      fetch(`${baseUrl}/api/analyte/update/${analyte.analyte_id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -8,6 +8,8 @@ import { LoadingIcon } from "../components/loading/LoadingIcon";
 import { ErrorMessage } from "../components/basic/ErrorMessage";
 import { GeneralMessage } from "../components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 function ManageRentals() {
     const [rentals, setRentals] = useState([]);
@@ -22,7 +24,8 @@ function ManageRentals() {
                 return;
             }
 
-            const response = await fetch("http://localhost/api/rentals", {
+            //const response = await fetch("http://localhost/api/rentals", {
+            const response = await fetch(`${baseUrl}/api/rentals`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
                 },

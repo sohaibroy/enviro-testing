@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
   const [turnAroundTimes, setTurnAroundTimes] = useState([]);
@@ -31,7 +33,7 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
 
         try {
           const response = await fetch(
-            `http://localhost:80/api/turnaroundtimes/${method.method_id}`,
+            `${baseUrl}/api/turnaroundtimes/${method.method_id}`,
             {
               headers: {
                 Authorization: `Bearer ${sessionStorage.getItem(
@@ -170,7 +172,8 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/turnaroundtimes/set/${method.method_id}`,
+        //`http://localhost:80/api/turnaroundtimes/set/${method.method_id}`,
+        `${baseUrl}/api/turnaroundtimes/set/${method.method_id}`,
         {
           method: "POST",
           headers: {

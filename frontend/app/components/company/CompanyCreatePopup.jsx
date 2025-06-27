@@ -3,6 +3,7 @@ import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { RadioBoolInput } from "../basic/RadioBoolInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const CompanyCreatePopup = ({ isOpen, onClose, title }) => {
   if (!isOpen) return null;
@@ -46,7 +47,8 @@ const CompanyCreatePopup = ({ isOpen, onClose, title }) => {
         return;
       }
 
-      fetch("http://localhost:80/api/company/create", {
+      //fetch("http://localhost:80/api/company/create", {
+      fetch(`${baseUrl}/api/company/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

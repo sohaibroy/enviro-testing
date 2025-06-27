@@ -3,6 +3,7 @@ import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { RadioBoolInput } from "../basic/RadioBoolInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const CompanyUpdatePopup = ({ company, isOpen, onClose, title }) => {
   if (!isOpen) return null;
@@ -46,7 +47,8 @@ const CompanyUpdatePopup = ({ company, isOpen, onClose, title }) => {
         return;
       }
 
-      fetch(`http://localhost:80/api/company/update/${company.company_id}`, {
+      //fetch(`http://localhost:80/api/company/update/${company.company_id}`, {
+      fetch(`${baseUrl}/api/company/update/${company.company_id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

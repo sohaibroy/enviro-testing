@@ -5,6 +5,8 @@ import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { RadioBoolInput } from "../basic/RadioBoolInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 const EquipmentUpdatePopup = ({ equipment, isOpen, onClose, title, fetchEquipment }) => {
     const [form, setForm] = useState({
@@ -48,7 +50,8 @@ const EquipmentUpdatePopup = ({ equipment, isOpen, onClose, title, fetchEquipmen
             return;
         }
 
-        fetch(`http://localhost:80/api/equipment/update/${equipment.equipment_id}`, {
+        //fetch(`http://localhost:80/api/equipment/update/${equipment.equipment_id}`, {
+        fetch(`${baseUrl}/api/equipment/update/${equipment.equipment_id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",

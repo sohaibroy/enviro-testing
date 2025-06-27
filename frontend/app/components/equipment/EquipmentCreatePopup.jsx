@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 const EquipmentCreatePopup = ({ isOpen, onClose, title, fetchEquipment }) => {
     const [form, setForm] = useState({
@@ -24,7 +26,8 @@ const EquipmentCreatePopup = ({ isOpen, onClose, title, fetchEquipment }) => {
     useEffect(() => {
         if (!isOpen) return;
 
-        fetch("http://localhost:80/api/equipment-types", {
+        //fetch("http://localhost:80/api/equipment-types", {
+        fetch(`${baseUrl}/api/equipment-types`, {
             headers: {
                 Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
             },
@@ -54,7 +57,8 @@ const EquipmentCreatePopup = ({ isOpen, onClose, title, fetchEquipment }) => {
         }
 
         // Create the equipment
-        fetch("http://localhost:80/api/equipment/create", {
+        //fetch("http://localhost:80/api/equipment/create", {
+        fetch(`${baseUrl}/api/equipment/create`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

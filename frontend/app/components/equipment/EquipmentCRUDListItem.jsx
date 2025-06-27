@@ -6,6 +6,8 @@ import { EquipmentUpdatePopup } from "./EquipmentUpdatePopup";
 import { EquipmentSerialStatusPopup } from "./EquipmentSerialList";
 import BasePopup from "../basic/BasePopup";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 function EquipmentCRUDListItem({ equipment, fetchEquipment }) {
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
@@ -30,7 +32,8 @@ function EquipmentCRUDListItem({ equipment, fetchEquipment }) {
         const fetchRelatedSerials = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch(`http://localhost:80/api/public/equipment/${equipment.equipment_id}/serials`);
+                //const res = await fetch(`http://localhost:80/api/public/equipment/${equipment.equipment_id}/serials`);
+                const res = await fetch(`${baseUrl}/api/public/equipment/${equipment.equipment_id}/serials`);
 
                 if (!res.ok) throw new Error("Failed to fetch related serials");
 
@@ -70,7 +73,8 @@ function EquipmentCRUDListItem({ equipment, fetchEquipment }) {
             return;
         }
 
-        fetch(`http://localhost:80/api/equipment/${equipment.equipment_id}`, {
+        //fetch(`http://localhost:80/api/equipment/${equipment.equipment_id}`, {
+        fetch(`${baseUrl}/api/equipment/${equipment.equipment_id}`, {
             method: "DELETE",
             headers: {
                 Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,

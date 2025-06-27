@@ -3,6 +3,7 @@ import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { RadioBoolInput } from "../basic/RadioBoolInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const AccountUpdatePopup = ({ account, company, isOpen, onClose, title }) => {
   if (!isOpen) return null;
@@ -84,7 +85,8 @@ const AccountUpdatePopup = ({ account, company, isOpen, onClose, title }) => {
 
       console.log(content);
 
-      fetch(`http://localhost:80/api/account/update/${account.account_id}`, {
+      //fetch(`http://localhost:80/api/account/update/${account.account_id}`, {
+      fetch(`${baseUrl}/api/account/update/${account.account_id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

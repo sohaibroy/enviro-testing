@@ -8,6 +8,7 @@ import { GeneralMessage } from "@/app/components/basic/GeneralMessage";
 import { PricingMethodSelection } from "@/app/components/pricing/PricingMethodSelection";
 import { FaArrowRight } from "react-icons/fa";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function ManagePricingPage({ params }) {
   const [company, setCompany] = useState([]);
@@ -27,7 +28,8 @@ function ManagePricingPage({ params }) {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/company/${params.company_id}`,
+        //`http://localhost:80/api/company/${params.company_id}`,
+        `${baseUrl}/api/company/${params.company_id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
@@ -48,7 +50,8 @@ function ManagePricingPage({ params }) {
         return;
       }
 
-      const response = await fetch("http://localhost:80/api/analytes", {
+      //const response = await fetch("http://localhost:80/api/analytes", {
+      const response = await fetch(`${baseUrl}/api/analytes`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
         },
@@ -71,7 +74,8 @@ function ManagePricingPage({ params }) {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/methods/analyte/${analyteId}`,
+        //`http://localhost:80/api/methods/analyte/${analyteId}`,
+        `${baseUrl}/api/methods/analyte/${analyteId}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,

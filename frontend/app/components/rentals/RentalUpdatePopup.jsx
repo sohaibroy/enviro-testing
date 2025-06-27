@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import BasePopup from "../basic/BasePopup";
 import { RadioBoolInput } from "../basic/RadioBoolInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 const RentalUpdatePopup = ({ rental, isOpen, onClose, title }) => {
     if (!isOpen) return null;
@@ -18,7 +20,8 @@ const RentalUpdatePopup = ({ rental, isOpen, onClose, title }) => {
             return;
         }
 
-        fetch(`http://localhost:80/api/rental/update/${rental.rental_id}`, {
+        //fetch(`http://localhost:80/api/rental/update/${rental.rental_id}`, {
+        fetch(`${baseUrl}/api/rental/update/${rental.rental_id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",

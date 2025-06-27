@@ -8,6 +8,7 @@ import { LoadingIcon } from "@/app/components/loading/LoadingIcon";
 import { ErrorMessage } from "@/app/components/basic/ErrorMessage";
 import { GeneralMessage } from "@/app/components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function ManageAccountsPage({ params }) {
   const [company, setCompany] = useState([]);
@@ -24,7 +25,8 @@ function ManageAccountsPage({ params }) {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/company/${params.company_id}`,
+        //`http://localhost:80/api/company/${params.company_id}`,
+        `${baseUrl}/api/company/${params.company_id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
@@ -46,7 +48,8 @@ function ManageAccountsPage({ params }) {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/accounts/${company.company_id}`,
+        //`http://localhost:80/api/accounts/${company.company_id}`,
+        `${baseUrl}/api/accounts/${company.company_id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,

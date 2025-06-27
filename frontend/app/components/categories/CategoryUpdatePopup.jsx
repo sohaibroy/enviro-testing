@@ -3,6 +3,7 @@ import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { RadioBoolInput } from "../basic/RadioBoolInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const CategoryUpdatePopup = ({ category, isOpen, onClose, title }) => {
   if (!isOpen) return null;
@@ -40,7 +41,8 @@ const CategoryUpdatePopup = ({ category, isOpen, onClose, title }) => {
         return;
       }
 
-      fetch(`http://localhost:80/api/category/update/${category.category_id}`, {
+      //fetch(`http://localhost:80/api/category/update/${category.category_id}`, {
+      fetch(`${baseUrl}/api/category/update/${category.category_id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

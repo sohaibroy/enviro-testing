@@ -14,6 +14,8 @@ function EquipmentRentalCard({ equipment }) {
     const [serials, setSerials] = useState([]);
     const [availableQuantity, setAvailableQuantity] = useState(0);
     const [isSerialsLoading, setIsSerialsLoading] = useState(true);
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
     if (!equipment) return null;
 
@@ -44,7 +46,8 @@ function EquipmentRentalCard({ equipment }) {
     useEffect(() => {
         const fetchRelatedSerials = async () => {
             try {
-                const res = await fetch(`http://localhost:80/api/public/equipment/${equipment.equipment_id}/serials`);
+                //const res = await fetch(`http://localhost:80/api/public/equipment/${equipment.equipment_id}/serials`);
+                const res = await fetch(`${baseUrl}/api/public/equipment/${equipment.equipment_id}/serials`);
                 if (!res.ok) throw new Error("Failed to fetch related serials");
 
                 const data = await res.json();

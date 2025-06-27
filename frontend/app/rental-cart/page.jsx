@@ -7,6 +7,8 @@ import NotificationPopup from "../components/popup/NotificationPopup";
 import { isTokenExpired } from "@/utils/session";
 import GuestRentalForm from "../components/rental-forms/GuestForm";
 import AuthenticatedRentalForm from "../components/rental-forms/UserForm";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 export default function RentalCartPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -42,7 +44,8 @@ export default function RentalCartPage() {
         setIsAuthenticated(!!accessToken);
 
         if (accessToken) {
-            fetch("http://localhost/api/account/me", {
+            //fetch("http://localhost/api/account/me", {
+            fetch(`${baseUrl}/api/account/me`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
             })
                 .then((res) => {
@@ -178,7 +181,8 @@ export default function RentalCartPage() {
                 ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
             };
 
-            const endpoint = accessToken ? "http://localhost:80/api/transactions/create" : "http://localhost:80/api/transactions/guest";
+            //const endpoint = accessToken ? "http://localhost:80/api/transactions/create" : "http://localhost:80/api/transactions/guest";
+            const endpoint = accessToken   ? `${baseUrl}/api/transactions/create`          : `${baseUrl}/api/transactions/guest`;
 
             const response = await fetch(endpoint, {
                 method: "POST",

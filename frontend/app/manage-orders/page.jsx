@@ -8,6 +8,7 @@ import { LoadingIcon } from "../components/loading/LoadingIcon";
 import { ErrorMessage } from "../components/basic/ErrorMessage";
 import { GeneralMessage } from "../components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function ManageOrders() {
   const [orders, setOrders] = useState([]);
@@ -25,7 +26,8 @@ function ManageOrders() {
       if (searchTerm.trim() !== "") {
         await fetchSearchResults();
       } else {
-        const response = await fetch("http://localhost:80/api/orders", {
+        //const response = await fetch("http://localhost:80/api/orders", {
+        const response = await fetch(`${baseUrl}/api/orders`, {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
@@ -54,7 +56,8 @@ function ManageOrders() {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/orders/searchtool/${encodeURIComponent(
+        //`http://localhost:80/api/orders/searchtool/${encodeURIComponent(
+        `${baseUrl}/api/orders/searchtool/${encodeURIComponent(
           searchTerm
         )}`
       );

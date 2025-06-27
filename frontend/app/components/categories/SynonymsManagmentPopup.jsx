@@ -8,6 +8,7 @@ import { LoadingIcon } from "../loading/LoadingIcon";
 import { ErrorMessage } from "../basic/ErrorMessage";
 import { GeneralMessage } from "../basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const SynonymsManagementPopup = ({ isOpen, onClose, title, category }) => {
   const [inputValue, setInputValue] = useState("");
@@ -24,7 +25,8 @@ const SynonymsManagementPopup = ({ isOpen, onClose, title, category }) => {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/synonyms/${category.category_id}`,
+        //`http://localhost:80/api/synonyms/${category.category_id}`,
+         `${baseUrl}/api/synonyms/${category.category_id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
@@ -51,7 +53,8 @@ const SynonymsManagementPopup = ({ isOpen, onClose, title, category }) => {
       return;
     }
 
-    fetch(`http://localhost:80/api/synonym/create/${category.category_id}`, {
+    //fetch(`http://localhost:80/api/synonym/create/${category.category_id}`, {
+    fetch(`${baseUrl}/api/synonym/create/${category.category_id}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

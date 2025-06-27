@@ -3,6 +3,8 @@
 import * as React from "react";
 import Rating from "@mui/material/Rating";
 import { styled } from "@mui/material/styles";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 // Transition for hover 
 const StyledRating = styled(Rating)(({ theme }) => ({
@@ -60,7 +62,8 @@ export default function NPSSurvey({ open }) {
     setLoading(true);
   
     try {
-      const response = await fetch("http://localhost/api/feedback", {
+      //const response = await fetch("http://localhost/api/feedback", {
+      const response = await fetch(`${baseUrl}/api/feedback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

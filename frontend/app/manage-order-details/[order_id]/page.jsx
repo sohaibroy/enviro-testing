@@ -7,6 +7,7 @@ import { LoadingIcon } from "@/app/components/loading/LoadingIcon";
 import { ErrorMessage } from "@/app/components/basic/ErrorMessage";
 import { GeneralMessage } from "@/app/components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function OrderDetailsPage({ params }) {
   const [order_details, setOrderDetails] = useState([]);
@@ -21,7 +22,8 @@ function OrderDetailsPage({ params }) {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/orderdetails/${params.order_id}`,
+        //`http://localhost:80/api/orderdetails/${params.order_id}`,
+        `${baseUrl}/api/orderdetails/${params.order_id}`,
         {
           method: "POST",
           headers: {

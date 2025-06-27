@@ -6,6 +6,8 @@ import { MethodCard } from "@/app/components/methods/MethodCard";
 import { GeneralMessage } from "@/app/components/basic/GeneralMessage";
 import FadeIn from "@/app/components/basic/FadeIn";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 export default function FetchMethod({ analyteId }) {
   const [methods, setMethods] = useState([]);
@@ -36,8 +38,10 @@ useEffect(() => {
       }
 
       const url = accessToken
-        ? `http://localhost:80/api/methods/company/${analyteId}`
-        : `http://localhost:80/api/methods/${analyteId}`;
+        // ? `http://localhost:80/api/methods/company/${analyteId}`
+        // : `http://localhost:80/api/methods/${analyteId}`;
+          ? `${baseUrl}/api/methods/company/${analyteId}`
+          : `${baseUrl}/api/methods/${analyteId}`;
 
       const response = await fetch(url, { headers });
 

@@ -9,6 +9,7 @@ import { LoadingIcon } from "@/app/components/loading/LoadingIcon";
 import { GeneralMessage } from "@/app/components/basic/GeneralMessage";
 import { ErrorMessage } from "@/app/components/basic/ErrorMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function ManageMethodsPage({ params }) {
 
@@ -26,7 +27,8 @@ function ManageMethodsPage({ params }) {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/analyte/${params.analyte_id}`,
+        //`http://localhost:80/api/analyte/${params.analyte_id}`,
+        `${baseUrl}/api/analyte/${params.analyte_id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
@@ -48,7 +50,8 @@ function ManageMethodsPage({ params }) {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/methods/analyte/${analyte.analyte_id}`,
+        //`http://localhost:80/api/methods/analyte/${analyte.analyte_id}`,
+        `${baseUrl}/api/methods/analyte/${analyte.analyte_id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,

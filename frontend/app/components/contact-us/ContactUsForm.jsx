@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ValidationInput } from "../basic/ValidationInput";
 import "./ContactUsForm.css";
 import BasePopup from "../popup/BasePopup";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 // Contact Us form component
 function ContactUsForm() {
@@ -92,7 +93,8 @@ function ContactUsForm() {
     console.log("Sending request...");
 
     try {
-      const response = await fetch("http://localhost/api/send-contact-email", {
+      //const response = await fetch("http://localhost/api/send-contact-email", {
+      const response = await fetch(`${baseUrl}/api/send-contact-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

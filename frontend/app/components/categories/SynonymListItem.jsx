@@ -2,6 +2,7 @@
 
 import { isTokenExpired } from "@/utils/session";
 import FadeIn from "../basic/FadeIn";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function SynonymListItem({ synonym, fetchSynonyms }) {
   const deleteSynonym = () => {
@@ -10,7 +11,8 @@ function SynonymListItem({ synonym, fetchSynonyms }) {
       return;
     }
 
-    fetch(`http://localhost:80/api/synonym/delete/${synonym.synonym_id}`, {
+    //fetch(`http://localhost:80/api/synonym/delete/${synonym.synonym_id}`, {
+    fetch(`${baseUrl}/api/synonym/delete/${synonym.synonym_id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,

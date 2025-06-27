@@ -9,6 +9,7 @@ import { LoadingIcon } from "../components/loading/LoadingIcon";
 import { GeneralMessage } from "../components/basic/GeneralMessage";
 import { ErrorMessage } from "../components/basic/ErrorMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function ManageCompanies() {
   const [companies, setCompanies] = useState([]);
@@ -26,7 +27,8 @@ function ManageCompanies() {
       if (searchTerm.trim() !== "") {
         await fetchSearchResults();
       } else {
-        const response = await fetch("http://localhost:80/api/companies", {
+        //const response = await fetch("http://localhost:80/api/companies", {
+        const response = await fetch(`${baseUrl}/api/companies`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
@@ -56,7 +58,8 @@ function ManageCompanies() {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/company/search/${encodeURIComponent(
+        //`http://localhost:80/api/company/search/${encodeURIComponent(
+        `${baseUrl}/api/company/search/${encodeURIComponent(
           searchTerm
         )}`
       );

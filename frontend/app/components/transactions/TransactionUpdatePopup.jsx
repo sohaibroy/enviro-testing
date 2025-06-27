@@ -3,6 +3,8 @@ import BasePopup from "../basic/BasePopup";
 import { RadioBoolInput } from "../basic/RadioBoolInput";
 import { isTokenExpired } from "@/utils/session";
 import { SP } from "next/dist/shared/lib/utils";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 const TransactionUpdatePopup = ({ transaction, isOpen, onClose, title }) => {
   if (!isOpen) return null;
@@ -17,7 +19,8 @@ const TransactionUpdatePopup = ({ transaction, isOpen, onClose, title }) => {
       return;
     }
 
-    fetch(`http://localhost:80/api/transactions/update/${transaction.transaction_id}`, {
+    //fetch(`http://localhost:80/api/transactions/update/${transaction.transaction_id}`, {
+    fetch(`${baseUrl}/api/transactions/update/${transaction.transaction_id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

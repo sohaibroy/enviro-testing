@@ -6,6 +6,7 @@ import { AnalytesTable } from "./components/analytes/AnalytesTable";
 import { LoadingIcon } from "./components/loading/LoadingIcon";
 import { ErrorMessage } from "./components/basic/ErrorMessage";
 import FadeIn from "./components/basic/FadeIn";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 
 export default function Home({ children }) {
@@ -45,9 +46,13 @@ export default function Home({ children }) {
 
     const flag = !searchTerm;
 
+    //const endpoint = flag
+      //? "http://localhost:80/api/analytes/active"
+      //: "http://localhost:80/api/analyte/searchtool";
+
     const endpoint = flag
-      ? "http://localhost:80/api/analytes/active"
-      : "http://localhost:80/api/analyte/searchtool";
+        ? `${baseUrl}/api/analytes/active`
+        : `${baseUrl}/api/analyte/searchtool`;
 
     if (!flag) {
       setSearchObj({ searchTerm, searchType });

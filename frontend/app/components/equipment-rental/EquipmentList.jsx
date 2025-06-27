@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { GeneralMessage } from "../basic/GeneralMessage";
 import EquipmentRentalCard from "./EquipmentCard";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 function EquipmentRentalList({ searchTerm, searchType, selectedCategory }) {
     const [equipmentList, setEquipmentList] = useState([]);
@@ -20,7 +22,8 @@ function EquipmentRentalList({ searchTerm, searchType, selectedCategory }) {
 
         const fetchUser = async () => {
             try {
-                const res = await fetch("http://localhost/api/account/me", {
+                //const res = await fetch("http://localhost/api/account/me", {
+                const res = await fetch(`${baseUrl}/api/account/me`, {
                     headers: { Authorization: `Bearer ${accessToken}` },
                 });
 
@@ -51,7 +54,8 @@ function EquipmentRentalList({ searchTerm, searchType, selectedCategory }) {
                 : {};
 
             try {
-                const res = await fetch("http://localhost/api/equipment-data", {
+                //const res = await fetch("http://localhost/api/equipment-data", {
+                const res = await fetch(`${baseUrl}/api/equipment-data`, {
                     headers,
                 });
 

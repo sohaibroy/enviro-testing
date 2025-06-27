@@ -1,6 +1,7 @@
 "use client";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 import { useState } from "react";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export default function CheckoutForm() {
   const stripe = useStripe();
@@ -13,7 +14,7 @@ export default function CheckoutForm() {
     setStatus("Processing...");
 
     try {
-      const res = await fetch("http://localhost/api/create-payment-intent", {
+      const res = await fetch(`${baseUrl}/api/create-payment-intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: 2000 }), // $20 dollars

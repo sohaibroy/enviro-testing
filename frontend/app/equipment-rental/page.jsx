@@ -7,6 +7,7 @@ import { ErrorMessage } from "../components/basic/ErrorMessage";
 import Search from "../components/search/Search";
 import EquipmentCategories from "../components/equipment-rental/EquipmentCategories";
 import FloatingCart from "../components/equipment-rental/FloatingCart";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 //Equipment rental page
 // This will eventually be part of the chain of custody page
@@ -29,7 +30,8 @@ export default function EquipmentRentalPage() {
         : {};
 
       try {
-        const response = await fetch("http://localhost/api/equipment-types", {
+        //const response = await fetch("http://localhost/api/equipment-types", {
+        const response = await fetch(`${baseUrl}/api/equipment-types`, {
           headers,
         });
         if (!response.ok) throw new Error("Failed to fetch equipment types");

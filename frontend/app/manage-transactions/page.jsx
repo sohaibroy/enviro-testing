@@ -7,6 +7,8 @@ import { ErrorMessage } from "../components/basic/ErrorMessage";
 import { GeneralMessage } from "../components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
 import { AdminSearch } from "../components/adminsearch/AdminSearch";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 function ManageTransactions() {
   const [transactions, setTransactions] = useState([]);
@@ -24,7 +26,8 @@ function ManageTransactions() {
       if (searchTerm.trim() !== "") {
         await fetchSearchResults();
       } else {
-        const response = await fetch("http://localhost:80/api/transactions", {
+        //const response = await fetch("http://localhost:80/api/transactions", {
+        const response = await fetch(`${baseUrl}/api/transactions`, {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
@@ -47,7 +50,8 @@ function ManageTransactions() {
         return;
       }
 
-      const response = await fetch(`http://localhost:80/api/transactions/search/${encodeURIComponent(searchTerm)}`, {
+      //const response = await fetch(`http://localhost:80/api/transactions/search/${encodeURIComponent(searchTerm)}`, {
+      const response = await fetch(`${baseUrl}/api/transactions/search/${encodeURIComponent(searchTerm)}`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
         },

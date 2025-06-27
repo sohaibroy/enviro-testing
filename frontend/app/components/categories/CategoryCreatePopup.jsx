@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const CategoryCreatePopup = ({ isOpen, onClose, title, analyte }) => {
   if (!isOpen) return null;
@@ -38,7 +39,8 @@ const CategoryCreatePopup = ({ isOpen, onClose, title, analyte }) => {
         return;
       }
 
-      fetch(`http://localhost:80/api/category/create/${analyte.analyte_id}`, {
+      //fetch(`http://localhost:80/api/category/create/${analyte.analyte_id}`, {
+      fetch(`${baseUrl}/api/category/create/${analyte.analyte_id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

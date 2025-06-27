@@ -50,7 +50,7 @@ const executeLogin = async (apiPath, email, password) => {
 
       setTimeout(() => {
         router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
-      }, 200); // ✅ short delay to ensure all state/cookies are set
+      }, 200); //  short delay to ensure all state/cookies are set
     } else {
       setError("Invalid Login Credentials...");
       setLoading(false);

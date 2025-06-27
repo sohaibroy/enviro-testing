@@ -12,6 +12,8 @@ import { isTokenExpired } from "@/utils/session";
 import NPSSurvey from "../components/nps-survey/NPSSurvey";
 import { useRouter } from "next/navigation";
 import NotificationPopup from "../components/popup/NotificationPopup";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 const EstimatePage = () => {
   const [loading, setLoading] = useState(true);
@@ -280,7 +282,8 @@ const EstimatePage = () => {
         ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
       };
 
-      const url = `http://localhost/api/send-estimate-email`;
+      //const url = `http://localhost/api/send-estimate-email`;
+      const url = `${baseUrl}/api/send-estimate-email`;
 
       const response = await fetch(url, {
         method: "POST",
@@ -324,9 +327,13 @@ const EstimatePage = () => {
         }
         : { "Content-Type": "application/json" };
 
+      //const url = accessToken
+        //? `http://localhost:80/api/transactions/create`
+        //: `http://localhost:80/api/orders/walk-in`;
+
       const url = accessToken
-        ? `http://localhost:80/api/transactions/create`
-        : `http://localhost:80/api/orders/walk-in`;
+          ? `${baseUrl}/api/transactions/create`
+          : `${baseUrl}/api/orders/walk-in`;
 
       const response = await fetch(url, {
         method: "POST",

@@ -5,6 +5,7 @@ import { useForm, Controller, useFieldArray, FormProvider } from "react-hook-for
 import { useState } from "react";
 import Link from "next/link";
 import NotificationPopup from "../components/popup/NotificationPopup";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 //MAIN FOCUS
 //Chain of custody page
@@ -107,7 +108,8 @@ const CocForm = () => {
     }
 
     try {
-      const url = `http://localhost/api/submit-coc`;
+      //const url = `http://localhost/api/submit-coc`;
+      const url = `${baseUrl}/api/submit-coc`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {

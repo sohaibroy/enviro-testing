@@ -5,6 +5,8 @@ import React, { useState, useEffect } from "react";
 import FadeIn from "@/app/components/basic/FadeIn";
 import QuantityDetails from "@/app/components/quantity-details/QuantityDetails";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 export default function Quantity({ params }) {
   console.log("Received methodId param:", params.methodId);
@@ -34,11 +36,17 @@ export default function Quantity({ params }) {
       }
 
       let url;
+      // if (accessToken) {
+      //   url = `http://localhost:80/api/method-details/company/${params.methodId}`;
+      // } else {
+      //   url = `http://localhost:80/api/method-details/${params.methodId}`;
+      // }
+
       if (accessToken) {
-        url = `http://localhost:80/api/method-details/company/${params.methodId}`;
+        url = `${baseUrl}/api/method-details/company/${params.methodId}`;
       } else {
-        url = `http://localhost:80/api/method-details/${params.methodId}`;
-      }
+        url = `${baseUrl}/api/method-details/${params.methodId}`;
+          }
 
       const response = await fetch(url, { headers });
 

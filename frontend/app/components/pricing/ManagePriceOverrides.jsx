@@ -5,6 +5,8 @@ import BasePopup from "../basic/BasePopup";
 import { ValidationInput } from "../basic/ValidationInput";
 import { GeneralMessage } from "../basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 const ManagePriceOverrides = ({ company, method, isOpen, onClose, title }) => {
   const [turnAroundTimes, setTurnAroundTimes] = useState([]);
@@ -17,7 +19,8 @@ const ManagePriceOverrides = ({ company, method, isOpen, onClose, title }) => {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/priceoverride/${company.company_id}/${method.method_id}`,
+        //`http://localhost:80/api/priceoverride/${company.company_id}/${method.method_id}`,
+        `http://${baseUrl}/api/priceoverride/${company.company_id}/${method.method_id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
@@ -49,7 +52,8 @@ const ManagePriceOverrides = ({ company, method, isOpen, onClose, title }) => {
       );
 
       fetch(
-        `http://localhost:80/api/priceoverride/reset/${company.company_id}`,
+        //`http://localhost:80/api/priceoverride/reset/${company.company_id}`,
+        `http://${baseUrl}/api/priceoverride/reset/${company.company_id}`,
         {
           method: "POST",
           headers: {

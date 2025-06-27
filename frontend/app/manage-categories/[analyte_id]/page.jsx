@@ -8,6 +8,7 @@ import { LoadingIcon } from "../../components/loading/LoadingIcon";
 import { ErrorMessage } from "../../components/basic/ErrorMessage";
 import { GeneralMessage } from "../../components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function ManageCategoriesPage({ params }) {
   const [analyte, setAnalyte] = useState([]);
@@ -24,7 +25,8 @@ function ManageCategoriesPage({ params }) {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/analyte/${params.analyte_id}`,
+        //`http://localhost:80/api/analyte/${params.analyte_id}`,
+        `${baseUrl}/api/analyte/${params.analyte_id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
@@ -46,7 +48,8 @@ function ManageCategoriesPage({ params }) {
       }
 
       const response = await fetch(
-        `http://localhost:80/api/categories/${params.analyte_id}`,
+        //`http://localhost:80/api/categories/${params.analyte_id}`,
+        `${baseUrl}/api/categories/${params.analyte_id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
