@@ -21,23 +21,47 @@ class AccountsController extends Controller
     }
 
     // Use the correct singular relationship
-    $user->load('company');
+    // $user->load('company');
+
+     // If user is not Admin, load company relationship 
+    if ($user instanceof \App\Models\Accounts) {   //ADDED THIS LINE FOR TESTING ON RENDER
+        $user->load('company');
+    }
+
+    // return response()->json([
+    //     'account_id'     => $user->account_id,
+    //     'first_name'     => $user->first_name,
+    //     'last_name'      => $user->last_name,
+    //     'email'          => $user->email,
+    //     'phone_number'   => $user->phone_number,
+    //     'street_address' => $user->street_address,
+    //     'city'           => $user->city,
+    //     'province'       => $user->province,
+    //     'postal_code'    => $user->postal_code,
+    //     'country'        => $user->country,
+    //     'company_id'     => $user->company_id,
+    //     'company_name'   => optional($user->company)->company_name,
+    //     'is_active'      => $user->is_active,
+    // ]);
 
     return response()->json([
-        'account_id'     => $user->account_id,
-        'first_name'     => $user->first_name,
-        'last_name'      => $user->last_name,
-        'email'          => $user->email,
-        'phone_number'   => $user->phone_number,
-        'street_address' => $user->street_address,
-        'city'           => $user->city,
-        'province'       => $user->province,
-        'postal_code'    => $user->postal_code,
-        'country'        => $user->country,
-        'company_id'     => $user->company_id,
-        'company_name'   => optional($user->company)->company_name,
-        'is_active'      => $user->is_active,
-    ]);
+    'id'             => $user->account_id ?? $user->admin_id,
+    'first_name'     => $user->first_name,
+    'last_name'      => $user->last_name,
+    'email'          => $user->email,
+    'phone_number'   => $user->phone_number ?? null,
+    'street_address' => $user->street_address ?? null,
+    'city'           => $user->city ?? null,
+    'province'       => $user->province ?? null,
+    'postal_code'    => $user->postal_code ?? null,
+    'country'        => $user->country ?? null,
+    'company_id'     => $user->company_id ?? null,
+    'company_name'   => $user instanceof \App\Models\Accounts
+        ? optional($user->company)->company_name
+        : null,
+    'is_active'      => $user->is_active ?? true,
+    'role'           => $user instanceof \App\Models\Admin ? 'admin' : 'account',
+]);
 }
 
     public function login(Request $request)
