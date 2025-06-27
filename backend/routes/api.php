@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;  //ADDED for testing
 use App\Http\Controllers\AccountsController;
 use App\Http\Controllers\AnalytesController;
 use App\Http\Controllers\OrdersController;
@@ -216,3 +217,12 @@ Route::post('/transactions/create', [TransactionsController::class, 'createTrans
 Route::post('/transactions/guest', [TransactionsController::class, 'createTransaction']);
 // Turnaroundtime Routes
 Route::get('/turn-around-times/{methodId}', [TurnAroundTimeController::class, 'getTurnAroundTimes']);//phpunit works
+
+Route::get('/test-db', function () {
+    try {
+        $result = DB::table('equipment')->limit(5)->get();
+        return response()->json($result);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});

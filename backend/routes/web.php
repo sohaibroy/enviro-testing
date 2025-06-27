@@ -23,7 +23,7 @@ use App\Http\Controllers\EstimateController;
 // });
 
 Route::get('/test-db', function () {
-    return \DB::table('equipment_types')->get(); // or another small table
+    return DB::table('accounts')->get();
 });
 
 
