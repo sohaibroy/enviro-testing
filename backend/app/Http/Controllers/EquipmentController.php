@@ -188,7 +188,7 @@ class EquipmentController extends Controller
 
     public function getAllEquipment(Request $request)
     {
-        \Log::info('🚀 EquipmentController@getAllEquipment reached');
+        \Log::info('EquipmentController@getAllEquipment reached');
         $accessToken = $request->bearerToken();
         $user = null;
 
@@ -244,11 +244,16 @@ class EquipmentController extends Controller
                     }
 
                      // ADDED This line to make the equipment images appear 
-    if ($item->image_path) {
-        $item->image_url = url('storage/' . $item->image_path);
-    } else {
-        $item->image_url = null;
-    }
+    // if ($item->image_path) {
+    //     $item->image_url = url('storage/' . $item->image_path);
+    // } else {
+    //     $item->image_url = null;
+    // }
+    
+    // Safely add image_url even if image_path doesn't exist
+$item->image_url = property_exists($item, 'image_path') && $item->image_path
+    ? url('storage/' . $item->image_path)
+    : null;
 
                     return $item;
                 });
