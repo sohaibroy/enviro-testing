@@ -221,52 +221,56 @@ class EquipmentController extends Controller
             //         'equipment_attributes.attribute_name',
             //         'equipment_values.attribute_value'
             //     )   //COMMENTED THIS FOR TESTING
-        select(
-        'equipment.equipment_id',
-        'equipment.equipment_name',
-        'equipment.description',
-        'equipment.specsheet',
-        'equipment.daily_cost',
-        'equipment.available_quantity',
-        'equipment.is_active',
-        'equipment.image_path',  
-        'equipment_types.equipment_type_id as type_id',
-        'equipment_types.equipment_type_name',
-        'equipment_attributes.attribute_id',
-        'equipment_attributes.attribute_name',
-        'equipment_values.attribute_value'
-    )
+       $equipment = DB::table('equipment')
+        ->join('equipment_attributes', 'equipment.equipment_id', '=', 'equipment_attributes.equipment_id')
+        ->join('equipment_types', 'equipment.type_id', '=', 'equipment_types.type_id')
+        ->select(
+            'equipment.equipment_id',
+            'equipment.equipment_name',
+            'equipment.description',
+            'equipment.image_path',
+            'equipment.specsheet',
+            'equipment.daily_cost',
+            'equipment.available_quantity',
+            'equipment.is_active',
+            'equipment.type_id',
+            'equipment_types.equipment_type_name',
+            'equipment_attributes.attribute_id',
+            'equipment_attributes.attribute_name',
+            'equipment_attributes.attribute_value'
+        )
+        ->get()
+        ->map(function ($item) use ($companyId) {
+            try {
+                if ($companyId) {
+                    $override = DB::table('equipment_price_overrides')
+                        ->where('company_id', $companyId)
+                        ->where('equipment_id', $item->equipment_id)
+                        ->first();
 
-                ->get()
-                ->map(function ($item) use ($companyId) {
-                    try {
-                        if ($companyId) {
-                            $override = DB::table('equipment_price_overrides')
-                                ->where('company_id', $companyId)
-                                ->where('equipment_id', $item->equipment_id)
-                                ->first();
-
-                            if ($override) {
-                                $fieldName = 'company_' . $companyId . '_price';
-                                $item->$fieldName = $override->override_price;
-                                \Log::info(" Override applied: {$override->override_price} on equipment {$item->equipment_id}");
-                            }
-                        }
-                    } catch (\Throwable $e) {
-                        \Log::error('Error applying override in equipment map', [
-                            'equipment_id' => $item->equipment_id ?? 'n/a',
-                            'error' => $e->getMessage(),
-                        ]);
+                    if ($override) {
+                        $fieldName = 'company_' . $companyId . '_price';
+                        $item->$fieldName = $override->override_price;
+                        \Log::info(" Override applied: {$override->override_price} on equipment {$item->equipment_id}");
                     }
+                }
 
-                     // ADDED This line to make the equipment images appear 
-    if ($item->image_path) {
-        $item->image_url = url('storage/' . $item->image_path);
-    } else {
-        $item->image_url = null;
-    }
-                    return $item;
-                });
+                // Added image URL
+                if ($item->image_path) {
+                    $item->image_url = url('storage/' . $item->image_path);
+                } else {
+                    $item->image_url = null;
+                }
+
+            } catch (\Throwable $e) {
+                \Log::error('Error applying override in equipment map', [
+                    'equipment_id' => $item->equipment_id ?? 'n/a',
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return $item;
+        });
 
             if ($equipment->isEmpty()) {
                 return response()->json(['message' => 'No active equipment found'], 404);
