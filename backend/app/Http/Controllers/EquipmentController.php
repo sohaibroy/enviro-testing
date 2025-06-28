@@ -202,7 +202,8 @@ class EquipmentController extends Controller
 
         \Log::info('User loading equipment:', ['user' => optional($user)->account_id]);
 
-        $companyId = $user ? $user->company_id : null;
+        //$companyId = $user ? $user->company_id : null;
+        $companyId = $user && property_exists($user, 'company_id') ? $user->company_id : null; //ADDED THIS FOR DEBUG
 
         try {
             $equipment = DB::table('equipment')
