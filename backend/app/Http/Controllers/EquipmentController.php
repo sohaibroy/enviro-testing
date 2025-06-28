@@ -244,17 +244,11 @@ class EquipmentController extends Controller
                     }
 
                      // ADDED This line to make the equipment images appear 
-    // if ($item->image_path) {
-    //     $item->image_url = url('storage/' . $item->image_path);
-    // } else {
-    //     $item->image_url = null;
-    // }
-    
-    // Safely add image_url even if image_path doesn't exist
-$item->image_url = property_exists($item, 'image_path') && $item->image_path
-    ? url('storage/' . $item->image_path)
-    : null;
-
+    if ($item->image_path) {
+        $item->image_url = url('storage/' . $item->image_path);
+    } else {
+        $item->image_url = null;
+    }
                     return $item;
                 });
 
