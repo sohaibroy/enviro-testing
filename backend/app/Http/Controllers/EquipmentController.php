@@ -208,19 +208,35 @@ class EquipmentController extends Controller
         $companyId = $user && property_exists($user, 'company_id') ? $user->company_id : null; //ADDED THIS FOR DEBUG
 
         try {
-            $equipment = DB::table('equipment')
-                ->leftjoin('equipment_values', 'equipment.equipment_id', '=', 'equipment_values.equipment_id')
-                ->leftjoin('equipment_attributes', 'equipment_values.attribute_id', '=', 'equipment_attributes.attribute_id')
-                ->leftjoin('equipment_types', 'equipment_attributes.equipment_type_id', '=', 'equipment_types.equipment_type_id')
-                ->where('equipment.is_active', 1)
-                ->select(
-                    'equipment.*',
-                    'equipment_types.equipment_type_id as type_id',
-                    'equipment_types.equipment_type_name',
-                    'equipment_attributes.attribute_id',
-                    'equipment_attributes.attribute_name',
-                    'equipment_values.attribute_value'
-                )
+            // $equipment = DB::table('equipment')
+            //     ->leftjoin('equipment_values', 'equipment.equipment_id', '=', 'equipment_values.equipment_id')
+            //     ->leftjoin('equipment_attributes', 'equipment_values.attribute_id', '=', 'equipment_attributes.attribute_id')
+            //     ->leftjoin('equipment_types', 'equipment_attributes.equipment_type_id', '=', 'equipment_types.equipment_type_id')
+            //     ->where('equipment.is_active', 1)
+            //     ->select(
+            //         'equipment.*',
+            //         'equipment_types.equipment_type_id as type_id',
+            //         'equipment_types.equipment_type_name',
+            //         'equipment_attributes.attribute_id',
+            //         'equipment_attributes.attribute_name',
+            //         'equipment_values.attribute_value'
+            //     )   //COMMENTED THIS FOR TESTING
+        select(
+        'equipment.equipment_id',
+        'equipment.equipment_name',
+        'equipment.description',
+        'equipment.specsheet',
+        'equipment.daily_cost',
+        'equipment.available_quantity',
+        'equipment.is_active',
+        'equipment.image_path',  
+        'equipment_types.equipment_type_id as type_id',
+        'equipment_types.equipment_type_name',
+        'equipment_attributes.attribute_id',
+        'equipment_attributes.attribute_name',
+        'equipment_values.attribute_value'
+    )
+
                 ->get()
                 ->map(function ($item) use ($companyId) {
                     try {
