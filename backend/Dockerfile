@@ -58,7 +58,16 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
 WORKDIR /var/www/html
 
 # Only COPY if building on Render (not needed for local bind mount)
+#COPY backend/. /var/www/html
+
+ARG BUILD_ENV=local
+
+# Only copy files in production (like on Render)
 COPY backend/. /var/www/html
+RUN if [ "$BUILD_ENV" = "production" ]; then \
+      echo "Installing dependencies for production build..." && \
+      composer install --no-dev --optimize-autoloader || true; \
+    fi
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php && \

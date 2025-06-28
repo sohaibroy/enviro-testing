@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MailController;
 use App\Http\Controllers\EstimateController;
+use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +27,8 @@ Route::get('/test-db', function () {
     return DB::table('accounts')->get();
 });
 
-
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->json(['csrf_cookie' => true]);
+});
 
 

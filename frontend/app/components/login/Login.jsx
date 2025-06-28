@@ -8,6 +8,7 @@ import { AiFillAlert } from "react-icons/ai";
 import { LoadingIcon } from "../loading/LoadingIcon";
 import FadeIn from "../basic/FadeIn";
 import Cookies from "js-cookie";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function Login({ title, link, apiPath }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -15,14 +16,70 @@ function Login({ title, link, apiPath }) {
   const [error, setError] = useState(null);
   const router = useRouter();
 
+// const executeLogin = async (apiPath, email, password) => {
+//   setLoading(true);
+//   try {
+//     const response = await fetch(apiPath, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify({ email, password }),
+//     });
+
+//     if (response.ok) {
+//       const data = await response.json();
+
+//       if (data.user) {
+//         console.log("User Data to Store:", data.user);
+//         sessionStorage.setItem("user", JSON.stringify(data.user));
+//         sessionStorage.setItem("accountType", "true");
+//       }
+
+//       Cookies.set("token", data.token, { path: '/' });
+
+//       const isAdmin = apiPath.includes("/admin");
+//       Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
+
+//       createSession(
+//         data.token,
+//         isAdmin,
+//         data.expires_at,
+//         data.user,
+//         data.company_name
+//       );
+
+//       setTimeout(() => {
+//         router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
+//       }, 200); //  short delay to ensure all state/cookies are set
+//     } else {
+//       setError("Invalid Login Credentials...");
+//       setLoading(false);
+//     }
+//   } catch (error) {
+//     setError(error.message || "Something went wrong...");
+//     setLoading(false);
+//   }
+// };
+
 const executeLogin = async (apiPath, email, password) => {
   setLoading(true);
   try {
+    // Always request CSRF cookie
+    await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
+      credentials: "include",
+    });
+
+    // Get the XSRF token from cookies (Laravel sets this after the call above)
+    const xsrfToken = Cookies.get("XSRF-TOKEN");
+
     const response = await fetch(apiPath, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-XSRF-TOKEN": decodeURIComponent(xsrfToken), // Laravel requires this
       },
+      credentials: "include",
       body: JSON.stringify({ email, password }),
     });
 
@@ -30,13 +87,11 @@ const executeLogin = async (apiPath, email, password) => {
       const data = await response.json();
 
       if (data.user) {
-        console.log("User Data to Store:", data.user);
         sessionStorage.setItem("user", JSON.stringify(data.user));
         sessionStorage.setItem("accountType", "true");
       }
 
       Cookies.set("token", data.token, { path: '/' });
-
       const isAdmin = apiPath.includes("/admin");
       Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
 
@@ -50,7 +105,7 @@ const executeLogin = async (apiPath, email, password) => {
 
       setTimeout(() => {
         router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
-      }, 200); //  short delay to ensure all state/cookies are set
+      }, 200);
     } else {
       setError("Invalid Login Credentials...");
       setLoading(false);
