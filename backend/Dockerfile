@@ -79,11 +79,12 @@ RUN mkdir -p storage bootstrap/cache public && \
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Clear Laravel caches if Artisan exists
+# Clear Laravel caches and create storage symlink if Artisan exists
 RUN if [ -f artisan ]; then \
       php artisan config:clear || true && \
       php artisan route:clear || true && \
-      php artisan view:clear || true; \
+      php artisan view:clear || true && \
+      php artisan storage:link || true; \
     fi
 
 CMD ["apache2-foreground"]
