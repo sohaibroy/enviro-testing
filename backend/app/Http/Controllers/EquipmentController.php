@@ -225,9 +225,8 @@ class EquipmentController extends Controller
     ->join('equipment_types', 'equipment.type_id', '=', 'equipment_types.equipment_type_id')
     ->leftJoin('equipment_values', 'equipment.equipment_id', '=', 'equipment_values.equipment_id')
     ->leftJoin('equipment_attributes', 'equipment_values.attribute_id', '=', 'equipment_attributes.attribute_id')
-    ->leftJoin('equipment_types', 'equipment.type_id', '=', 'equipment_types.equipment_type_id')
     ->select(
-         'equipment.*',
+        'equipment.*',
         'equipment_types.equipment_type_id as type_id',
         'equipment_types.equipment_type_name',
         'equipment_attributes.attribute_id',
