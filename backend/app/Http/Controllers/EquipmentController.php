@@ -222,19 +222,13 @@ class EquipmentController extends Controller
             //         'equipment_values.attribute_value'
             //     )   //COMMENTED THIS FOR TESTING
        $equipment = DB::table('equipment')
-    ->join('equipment_types', 'equipment.type_id', '=', 'equipment_types.type_id')
+    ->join('equipment_types', 'equipment.type_id', '=', 'equipment_types.equipment_type_id')
     ->leftJoin('equipment_values', 'equipment.equipment_id', '=', 'equipment_values.equipment_id')
     ->leftJoin('equipment_attributes', 'equipment_values.attribute_id', '=', 'equipment_attributes.attribute_id')
+    ->leftJoin('equipment_types', 'equipment.type_id', '=', 'equipment_types.equipment_type_id')
     ->select(
-        'equipment.equipment_id',
-        'equipment.equipment_name',
-        'equipment.description',
-        'equipment.image_path',
-        'equipment.specsheet',
-        'equipment.daily_cost',
-        'equipment.available_quantity',
-        'equipment.is_active',
-        'equipment.type_id',
+         'equipment.*',
+        'equipment_types.equipment_type_id as type_id',
         'equipment_types.equipment_type_name',
         'equipment_attributes.attribute_id',
         'equipment_attributes.attribute_name',
