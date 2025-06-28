@@ -185,8 +185,10 @@ class EquipmentController extends Controller
         }
     }
 
+
     public function getAllEquipment(Request $request)
     {
+        \Log::info('GET /equipment-data called');
         $accessToken = $request->bearerToken();
         $user = null;
 

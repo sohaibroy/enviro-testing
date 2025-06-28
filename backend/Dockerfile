@@ -75,6 +75,10 @@ RUN if [ -f "composer.json" ]; then \
 RUN mkdir -p storage bootstrap/cache public && \
     chown -R www-data:www-data storage bootstrap/cache public || true
 
+    # Ensure proper permissions
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
 # Clear Laravel caches if Artisan exists
 RUN if [ -f artisan ]; then \
       php artisan config:clear || true && \
