@@ -71,9 +71,10 @@ sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
         data.company_name
       );
 
-      setTimeout(() => {
-        router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
-      }, 200);
+     setTimeout(() => {
+  console.log("🎯 Redirecting to:", isAdmin ? "/admin-selection" : "/multi-step-form");
+  router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
+}, 1000); // 👈 bump delay to 1000ms just to test
     } else {
       setError("Invalid Login Credentials...");
       setLoading(false);

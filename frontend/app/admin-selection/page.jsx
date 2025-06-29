@@ -76,9 +76,12 @@ function AdminSelection() {
     const sessionRole = sessionStorage.getItem("role");
 
     const role = cookieRole || sessionRole;
-    console.log("AdminSelection detected role:", role);
+      console.log("🔍 COOKIE role:", cookieRole);
+    console.log("📦 SESSION role:", sessionRole);
+    console.log("🎯 FINAL role decision:", role);
 
     if (role !== "admin") {
+         console.warn("❌ Not admin, redirecting to /customer-login");
       router.push("/customer-login");
     }
   }, []);
