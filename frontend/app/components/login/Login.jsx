@@ -10,7 +10,7 @@ import FadeIn from "../basic/FadeIn";
 import Cookies from "js-cookie";
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-function Login({ title, link, apiPath }) {
+function Login({ title, link, apiPath, isAdmin = false }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -63,59 +63,56 @@ function Login({ title, link, apiPath }) {
 // };
 
 const executeLogin = async (apiPath, email, password) => {
-  setLoading(true);
-  try {
-    // Always request CSRF cookie
-    await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
-      credentials: "include",
-    });
+    setLoading(true);
+    try {
+      // Always request CSRF cookie
+      await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
+        credentials: "include",
+      });
 
-    // Get the XSRF token from cookies (Laravel sets this after the call above)
-    const xsrfToken = Cookies.get("XSRF-TOKEN");
+      const xsrfToken = Cookies.get("XSRF-TOKEN");
 
-    const response = await fetch(apiPath, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-XSRF-TOKEN": decodeURIComponent(xsrfToken), // Laravel requires this
-      },
-      credentials: "include",
-      body: JSON.stringify({ email, password }),
-    });
+      const response = await fetch(apiPath, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
+        },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (response.ok) {
-      const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
 
-      if (data.user) {
-        sessionStorage.setItem("user", JSON.stringify(data.user));
-        sessionStorage.setItem("accountType", "true");
+        if (data.user) {
+          sessionStorage.setItem("user", JSON.stringify(data.user));
+          sessionStorage.setItem("accountType", "true");
+        }
+
+        Cookies.set("token", data.token, { path: "/" });
+        Cookies.set("role", isAdmin ? "admin" : "customer", { path: "/" });
+
+        createSession(
+          data.token,
+          isAdmin,
+          data.expires_at,
+          data.user,
+          data.company_name
+        );
+
+        setTimeout(() => {
+          router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
+        }, 200);
+      } else {
+        setError("Invalid Login Credentials...");
+        setLoading(false);
       }
-
-      Cookies.set("token", data.token, { path: '/' });
-      const isAdmin = apiPath.includes("/admin");
-      Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
-
-      createSession(
-        data.token,
-        isAdmin,
-        data.expires_at,
-        data.user,
-        data.company_name
-      );
-
-      setTimeout(() => {
-        router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
-      }, 200);
-    } else {
-      setError("Invalid Login Credentials...");
+    } catch (error) {
+      setError(error.message || "Something went wrong...");
       setLoading(false);
     }
-  } catch (error) {
-    setError(error.message || "Something went wrong...");
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleInputChange = (e) => {
     setError(null);
@@ -145,13 +142,11 @@ const executeLogin = async (apiPath, email, password) => {
               Enviro-Works
             </h2>
           </div>
-          {error ? (
+          {error && (
             <div className="flex gap-[.5rem] items-end justify-center drop-shadow-xl text-sm font-semibold">
               <AiFillAlert size={22} />
               <p>{error}</p>
             </div>
-          ) : (
-            <></>
           )}
         </section>
 
