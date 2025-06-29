@@ -54,7 +54,7 @@ class AdminController extends Controller
     {
         Log::info('Login request received', [
             'email' => $request->email,
-            'password' => '[HIDDEN]', // never log raw passwords
+            'password' => '[HIDDEN]', // dont log raw passwords
         ]);
 
         try {
@@ -81,10 +81,15 @@ class AdminController extends Controller
 
             $expiresAt = $admin->tokens->last()->expires_at;
 
-            return response()->json([
-                'token' => $token,
-                'expires_at' => $expiresAt->format('Y-m-d H:i:s')
-            ]);
+           return response()->json([
+    'user' => [
+        'admin_id' => $admin->admin_id,
+        'email' => $admin->email,
+        'role' => 'admin', 
+    ],
+    'token' => $token,
+    'expires_at' => $expiresAt->format('Y-m-d H:i:s')
+]);
 
         } catch (Exception $e) {
             Log::error('Exception during login', [
