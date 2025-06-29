@@ -9,33 +9,30 @@ import { LoadingIcon } from "../loading/LoadingIcon";
 import FadeIn from "../basic/FadeIn";
 import Cookies from "js-cookie";
 
-function Login({ title, link, apiPath }) {
+function Login({ title, link, apiPath, isAdmin = false }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const router = useRouter();
 
-const executeLogin = async (apiPath, email, password) => {
+const executeLogin = async (email, password, isAdmin) => {
   setLoading(true);
   try {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-    // ✅ Step 1: Get CSRF cookie
     await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
       credentials: "include",
     });
 
-    // ✅ Step 2: Get the XSRF token from cookie
     const xsrfToken = Cookies.get("XSRF-TOKEN");
 
-    // ✅ Step 3: Now send the login request
     const response = await fetch(apiPath, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
       },
-      credentials: "include", // include session cookies
+      credentials: "include",
       body: JSON.stringify({ email, password }),
     });
 
@@ -48,20 +45,11 @@ const executeLogin = async (apiPath, email, password) => {
         sessionStorage.setItem("accountType", "true");
       }
 
-      Cookies.set("token", data.token, {
-  path: '/',
-  secure: true,
-  sameSite: 'lax',
-});
+      Cookies.set("token", data.token, { path: '/' });
 
-      const isAdmin = apiPath.includes("/admin");
-Cookies.set("role", isAdmin ? "admin" : "customer", {
-  path: '/',
-  secure: true,          // Required for HTTPS
-  sameSite: 'lax',       // Safe for cross-subdomain session use
-});
-
-sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
+      // ✅ Use passed prop instead of guessing from URL
+      Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
+      sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
 
       createSession(
         data.token,
@@ -71,10 +59,10 @@ sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
         data.company_name
       );
 
-     setTimeout(() => {
-  console.log("🎯 Redirecting to:", isAdmin ? "/admin-selection" : "/multi-step-form");
-  router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
-}, 1000); // 👈 bump delay to 1000ms just to test
+      setTimeout(() => {
+        console.log("🎯 Redirecting to:", isAdmin ? "/admin-selection" : "/multi-step-form");
+        router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
+      }, 500);
     } else {
       setError("Invalid Login Credentials...");
       setLoading(false);
@@ -91,15 +79,11 @@ sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.email || !formData.password) {
-      return;
-    }
-
-    await executeLogin(apiPath, formData.email, formData.password);
-  };
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!formData.email || !formData.password) return;
+  await executeLogin(formData.email, formData.password, isAdmin);
+};
 
   return (
     <FadeIn>
