@@ -1,19 +1,19 @@
 // Comment this code block if you want the analytes landing page
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
-    return [{
-      source: '/',
-      destination: '/customer-login',
-      permanent: false,
-    }];
+    return [
+      {
+        source: '/',
+        destination: '/customer-login',
+        permanent: false,
+      },
+    ];
   },
-  experimental: {
-    clientRouterFilter: true,
-    clientRouterFilterRedirects: true,
-  }
 };
 
+export default nextConfig; // ✅ use 'export default' in .mjs
 
 
 // /** @type {import('next').NextConfig} */

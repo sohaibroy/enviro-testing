@@ -18,11 +18,24 @@ function Login({ title, link, apiPath }) {
 const executeLogin = async (apiPath, email, password) => {
   setLoading(true);
   try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    // ✅ Step 1: Get CSRF cookie
+    await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
+      credentials: "include",
+    });
+
+    // ✅ Step 2: Get the XSRF token from cookie
+    const xsrfToken = Cookies.get("XSRF-TOKEN");
+
+    // ✅ Step 3: Now send the login request
     const response = await fetch(apiPath, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
       },
+      credentials: "include", // include session cookies
       body: JSON.stringify({ email, password }),
     });
 
@@ -50,7 +63,7 @@ const executeLogin = async (apiPath, email, password) => {
 
       setTimeout(() => {
         router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
-      }, 200); // ✅ short delay to ensure all state/cookies are set
+      }, 200);
     } else {
       setError("Invalid Login Credentials...");
       setLoading(false);
