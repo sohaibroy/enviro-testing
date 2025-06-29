@@ -61,6 +61,8 @@ Cookies.set("role", isAdmin ? "admin" : "customer", {
   sameSite: 'lax',       // Safe for cross-subdomain session use
 });
 
+sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
+
       createSession(
         data.token,
         isAdmin,

@@ -56,24 +56,33 @@
 
 
 "use client";
-
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { AdminSelectionCard } from "../components/admin/AdminSelectionCard";
-import { FaBuildingUser, FaAddressBook, FaRegPenToSquare, FaVial, FaToolbox } from "react-icons/fa6";
+import { FaBuildingUser } from "react-icons/fa6";
+import { FaAddressBook } from "react-icons/fa6";
+import { FaRegPenToSquare } from "react-icons/fa6";
+import { FaVial } from "react-icons/fa6";
 import FadeIn from "../components/basic/FadeIn";
+import { FaToolbox } from "react-icons/fa";
+
 
 function AdminSelection() {
   const router = useRouter();
 
   useEffect(() => {
-    const role = Cookies.get("role") || sessionStorage.getItem("role");
-    console.log("AdminSelection Role:", role);
+    const cookieRole = Cookies.get("role");
+    const sessionRole = sessionStorage.getItem("role");
+
+    const role = cookieRole || sessionRole;
+    console.log("AdminSelection detected role:", role);
+
     if (role !== "admin") {
       router.push("/customer-login");
     }
   }, []);
+
 
   return (
     <FadeIn>
