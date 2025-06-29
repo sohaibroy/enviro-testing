@@ -8,70 +8,59 @@ import { AiFillAlert } from "react-icons/ai";
 import { LoadingIcon } from "../loading/LoadingIcon";
 import FadeIn from "../basic/FadeIn";
 import Cookies from "js-cookie";
-const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-function Login({ title, link, apiPath, isAdmin = false }) {
+function Login({ title, link, apiPath }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const router = useRouter();
 
 const executeLogin = async (apiPath, email, password) => {
-    setLoading(true);
-    try {
-      // Always request CSRF cookie
-      await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
-        credentials: "include",
-      });
+  setLoading(true);
+  try {
+    const response = await fetch(apiPath, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
+    if (response.ok) {
+      const data = await response.json();
 
-      const response = await fetch(apiPath, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
-        },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.user) {
-          sessionStorage.setItem("user", JSON.stringify(data.user));
-          sessionStorage.setItem("accountType", "true");
-        }
-
-        Cookies.set("token", data.token, { path: "/" });
-        Cookies.set("role", isAdmin ? "admin" : "customer", { path: "/" });
-
-        createSession(
-          data.token,
-          isAdmin,
-          data.expires_at,
-          data.user,
-          data.company_name
-        );
-
-        setTimeout(() => {
-          //router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
-          if (data.user?.role === "admin") {
-  router.push("/admin-selection");
-} else {
-  router.push("/multi-step-form");
-}
-        }, 200);
-      } else {
-        setError("Invalid Login Credentials...");
-        setLoading(false);
+      if (data.user) {
+        console.log("User Data to Store:", data.user);
+        sessionStorage.setItem("user", JSON.stringify(data.user));
+        sessionStorage.setItem("accountType", "true");
       }
-    } catch (error) {
-      setError(error.message || "Something went wrong...");
+
+      Cookies.set("token", data.token, { path: '/' });
+
+      const isAdmin = apiPath.includes("/admin");
+      Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
+
+      createSession(
+        data.token,
+        isAdmin,
+        data.expires_at,
+        data.user,
+        data.company_name
+      );
+
+      setTimeout(() => {
+        router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
+      }, 200); // ✅ short delay to ensure all state/cookies are set
+    } else {
+      setError("Invalid Login Credentials...");
       setLoading(false);
     }
-  };
+  } catch (error) {
+    setError(error.message || "Something went wrong...");
+    setLoading(false);
+  }
+};
+
 
   const handleInputChange = (e) => {
     setError(null);
@@ -101,11 +90,13 @@ const executeLogin = async (apiPath, email, password) => {
               Enviro-Works
             </h2>
           </div>
-          {error && (
+          {error ? (
             <div className="flex gap-[.5rem] items-end justify-center drop-shadow-xl text-sm font-semibold">
               <AiFillAlert size={22} />
               <p>{error}</p>
             </div>
+          ) : (
+            <></>
           )}
         </section>
 
