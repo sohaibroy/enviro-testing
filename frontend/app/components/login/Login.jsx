@@ -9,7 +9,7 @@ import { LoadingIcon } from "../loading/LoadingIcon";
 import FadeIn from "../basic/FadeIn";
 import Cookies from "js-cookie";
 
-function Login({ title, link, apiPath, isAdmin = false }) {
+function Login({ title, link, apiPath, isAdmin }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -60,9 +60,8 @@ const executeLogin = async (email, password, isAdmin) => {
       );
 
       setTimeout(() => {
-        console.log("🎯 Redirecting to:", isAdmin ? "/admin-selection" : "/multi-step-form");
-        router.push(isAdmin ? "/admin-selection" : "/multi-step-form");
-      }, 500);
+  window.location.href = isAdmin ? "/admin-selection" : "/multi-step-form";
+}, 200);
     } else {
       setError("Invalid Login Credentials...");
       setLoading(false);
