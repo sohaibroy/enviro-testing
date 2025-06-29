@@ -48,10 +48,18 @@ const executeLogin = async (apiPath, email, password) => {
         sessionStorage.setItem("accountType", "true");
       }
 
-      Cookies.set("token", data.token, { path: '/' });
+      Cookies.set("token", data.token, {
+  path: '/',
+  secure: true,
+  sameSite: 'lax',
+});
 
       const isAdmin = apiPath.includes("/admin");
-      Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
+Cookies.set("role", isAdmin ? "admin" : "customer", {
+  path: '/',
+  secure: true,          // Required for HTTPS
+  sameSite: 'lax',       // Safe for cross-subdomain session use
+});
 
       createSession(
         data.token,
