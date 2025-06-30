@@ -130,11 +130,12 @@ function EquipmentRentalCard({ equipment }) {
     return (
         <div className="bg-white shadow-lg rounded-xl p-10 transition-transform hover:scale-105 border border-gray-200 max-w-[45rem]">
             <div className="flex flex-col items-center text-center">
-                <img
+                 <img
                     src={image_url || "https://via.placeholder.com/150"}
                     alt={equipment_name}
                     className="w-full h-44 object-cover rounded-lg mb-3"
-                />
+                /> 
+
                 <h2 className="text-lg font-bold text-gray-900 leading-tight">{equipment_name}</h2>
 
                 <p className="text-sm text-e mt-1">
