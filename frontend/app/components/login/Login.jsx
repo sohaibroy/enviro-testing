@@ -47,7 +47,6 @@ const executeLogin = async (email, password, isAdmin) => {
 
       Cookies.set("token", data.token, { path: '/' });
 
-      // ✅ Use passed prop instead of guessing from URL
       Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
       sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
 

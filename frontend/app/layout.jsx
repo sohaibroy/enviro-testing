@@ -6,7 +6,7 @@ import { Footer } from "./components/footer/Footer";
 import ProgressNav from "./components/progress-nav/ProgressNav";
 import { usePathname } from "next/navigation";
 import Head from "next/head";
-import SideNav from "./components/basic/SideNav"; // <-- Import your SideNav
+import SideNav from "./components/basic/SideNav";
 import "./globals.css";
 import Link from "next/link";
 import ProtectedLayout from "./components/auth/ProtectedLayout";

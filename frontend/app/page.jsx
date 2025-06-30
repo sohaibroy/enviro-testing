@@ -17,7 +17,6 @@ export default function Home({ children }) {
   const [error, setError] = useState(null);
   const [searchObj, setSearchObj] = useState("");
 
-  // these are for the search bar placeholder
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [placeholderVisible, setPlaceholderVisible] = useState(true);
 
@@ -45,10 +44,6 @@ export default function Home({ children }) {
     setLoading(true);
 
     const flag = !searchTerm;
-
-    //const endpoint = flag
-      //? "http://localhost:80/api/analytes/active"
-      //: "http://localhost:80/api/analyte/searchtool";
 
     const endpoint = flag
         ? `${baseUrl}/api/analytes/active`
