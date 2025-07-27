@@ -4,10 +4,11 @@ import React from 'react';
 import { Stepper, Step, StepLabel } from '@mui/material';
 
 const steps = [
-  'Contact Info',
-  'Project Info',
-  'Pickup Info',
+  'Client Info',
+  'Project & Location Info',
   'Analytes',
+  'Methods',
+  'Quantity',
   'Equipment Rental',
   'Order Summary',
 ];

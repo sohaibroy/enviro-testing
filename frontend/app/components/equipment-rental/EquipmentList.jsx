@@ -4,7 +4,7 @@ import EquipmentRentalCard from "./EquipmentCard";
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 
-function EquipmentRentalList({ searchTerm, searchType, selectedCategory }) {
+function EquipmentRentalList({ searchTerm, searchType, selectedCategory, onSelectedEquipment }) {
     const [equipmentList, setEquipmentList] = useState([]);
     const [filteredList, setFilteredList] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -116,17 +116,30 @@ function EquipmentRentalList({ searchTerm, searchType, selectedCategory }) {
         setFilteredList(filtered);
     }, [equipmentList, searchTerm, searchType, selectedCategory]);
 
+    const handleSelect =(item) => {
+        const alreadySelected =selectedItems.find(
+            (e) = e.equipment_id === item.equipment_id
+        );
+        if (alreadySelected) return;
+        
+        const updated = [...selectedItems, item];
+        setSelectedItems(updated);
+        if (onSelectEquipment) {
+            onSelectEquipment(updated);
+        }
+    }
 
     if (loading) return <p className="text-gray-500">Loading equipment list...</p>;
     if (error) return <p className="text-red-500">{error}</p>;
     if (!filteredList.length) return <GeneralMessage message="No rental equipment available" />;
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4 w-full">
             {filteredList.map((equipment) => (
                 <EquipmentRentalCard
                     key={equipment.equipment_id}
                     equipment={equipment}
+                    onSelect={() => handleSelect(equipment)}
                 />
             ))}
         </div>

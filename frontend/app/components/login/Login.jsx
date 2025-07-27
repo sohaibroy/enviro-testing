@@ -15,143 +15,141 @@ function Login({ title, link, apiPath, isAdmin }) {
   const [error, setError] = useState(null);
   const router = useRouter();
 
-const executeLogin = async (email, password, isAdmin) => {
-  setLoading(true);
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const executeLogin = async (email, password, isAdmin) => {
+    setLoading(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-    await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
-      credentials: "include",
-    });
+      await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
+        credentials: "include",
+      });
 
-    const xsrfToken = Cookies.get("XSRF-TOKEN");
+      const xsrfToken = Cookies.get("XSRF-TOKEN");
 
-    const response = await fetch(apiPath, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
-      },
-      credentials: "include",
-      body: JSON.stringify({ email, password }),
-    });
+      const response = await fetch(apiPath, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
+        },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (response.ok) {
-      const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
 
-      if (data.user) {
-        console.log("User Data to Store:", data.user);
-        sessionStorage.setItem("user", JSON.stringify(data.user));
-        sessionStorage.setItem("accountType", "true");
+        if (data.user) {
+          sessionStorage.setItem("user", JSON.stringify(data.user));
+          sessionStorage.setItem("accountType", "true");
+        }
+
+        Cookies.set("token", data.token, { path: '/' });
+        Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
+        sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
+
+        createSession(
+          data.token,
+          isAdmin,
+          data.expires_at,
+          data.user,
+          data.company_name
+        );
+
+        setTimeout(() => {
+          // window.location.href = isAdmin ? "/admin-selection" : "/multi-step-form";
+          window.location.href = isAdmin ? "/admin-selection" : "/chain-of-custody";
+        }, 200);
+      } else {
+        setError("Incorrect email or password");
+        setLoading(false);
       }
-
-      Cookies.set("token", data.token, { path: '/' });
-
-      Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
-      sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
-
-      createSession(
-        data.token,
-        isAdmin,
-        data.expires_at,
-        data.user,
-        data.company_name
-      );
-
-      setTimeout(() => {
-  window.location.href = isAdmin ? "/admin-selection" : "/multi-step-form";
-}, 200);
-    } else {
-      setError("Invalid Login Credentials...");
+    } catch (error) {
+      setError(error.message || "Something went wrong...");
       setLoading(false);
     }
-  } catch (error) {
-    setError(error.message || "Something went wrong...");
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleInputChange = (e) => {
     setError(null);
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!formData.email || !formData.password) return;
-  await executeLogin(formData.email, formData.password, isAdmin);
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.email || !formData.password) return;
+    await executeLogin(formData.email, formData.password, isAdmin);
+  };
 
   return (
     <FadeIn>
-      <form
-        className="bg-enviro_blue m-auto w-2/3 p-[2rem] max-w-[40rem] h-[26rem] flex flex-col justify-between drop-shadow-lg text-white rounded-2xl transition-all hover:drop-shadow-2xl hover:scale-[101%] duration-300"
-        onSubmit={handleSubmit}
-      >
-        <section className="flex flex-col h-[4rem] justify-between">
-          <div className="flex justify-between">
-            <h1 className="text-white font-bold">{title || "Login"}</h1>
-            <h2 className="text-enviro_blue_xlight font-bold drop-shadow-2xl">
-              Enviro-Works
-            </h2>
-          </div>
-          {error ? (
-            <div className="flex gap-[.5rem] items-end justify-center drop-shadow-xl text-sm font-semibold">
-              <AiFillAlert size={22} />
-              <p>{error}</p>
-            </div>
-          ) : (
-            <></>
-          )}
-        </section>
+      <div className="w-full flex justify-center py-24">
+        <div className="w-full max-w-screen-md px-4">
+          <form
+            className="bg-white w-full px-10 py-16 rounded-2xl shadow-xl flex flex-col gap-10 transition-all hover:shadow-2xl"
+            onSubmit={handleSubmit}
+          >
+            <section className="flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{title || "Login"}</h1>
+                {/* <h2 className="text-enviro_blue text-lg font-bold">Enviro-Works</h2> */}
+              </div>
+              {error && (
+                <div className="flex items-center gap-2 text-sm text-red-600 font-semibold">
+                  <AiFillAlert size={20} />
+                  <p>{error}</p>
+                </div>
+              )}
+            </section>
 
-        <section className="flex flex-col gap-[1rem] mb-[2rem]">
-          <div className="w-full">
-            <p>Email</p>
-            <input
-              autoComplete="off"
-              className="h-[2.5rem] w-full p-2 text-black rounded-md"
-              placeholder="Enter your email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div className="w-full">
-            <p>Password</p>
-            <input
-              autoComplete="on"
-              type="password"
-              className="h-[2.5rem] w-full p-2 text-black rounded-md"
-              value={formData.password}
-              onChange={handleInputChange}
-              name="password"
-              placeholder="Enter your password"
-            />
-          </div>
-        </section>
+            <section className="flex flex-col gap-4">
+              <div className="w-full">
+                <label className="block mb-1 text-sm font-bold text-gray-700">Email</label>
+                <input
+                  autoComplete="off"
+                  className="h-[2.5rem] w-full p-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-enviro_blue"
+                  placeholder="Enter your email"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="w-full">
+                <label className="block mb-1 text-sm font-bold text-gray-700">Password</label>
+                <input
+                  autoComplete="on"
+                  type="password"
+                  className="h-[2.5rem] w-full p-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-enviro_blue"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  name="password"
+                  placeholder="Enter your password"
+                />
+              </div>
+            </section>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`rounded-md ${
-            loading
-              ? "bg-enviro_blue_xlight"
-              : "bg-enviro_orange transition-all hover:scale-[101%] duration-300"
-          } flex justify-center p-2 text-white w-full border-2 shadow-2xl border-white font-bold`}
-        >
-          {loading ? (
-            <LoadingIcon
-              className="h-full"
-              loadingRingStyles="border-enviro_blue h-[1.5rem] w-[1.5rem]"
-            />
-          ) : (
-            <>Submit</>
-          )}
-        </button>
-      </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`rounded-lg px-4 py-2 font-bold w-full transition-all ${
+                loading
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-enviro_orange hover:scale-[1.02] text-white"
+              }`}
+            >
+              {loading ? (
+                <LoadingIcon
+                  className="h-full"
+                  loadingRingStyles="border-enviro_blue h-[1.5rem] w-[1.5rem]"
+                />
+              ) : (
+                <>Log In</>
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
     </FadeIn>
   );
 }

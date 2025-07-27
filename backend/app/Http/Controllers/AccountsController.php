@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AccountsController extends Controller
 {
@@ -98,18 +99,19 @@ class AccountsController extends Controller
         $response = [
             'token' => $token,
             'user' => [
-                'first_name' => $account->first_name,
-                'last_name' => $account->last_name,
-                'email' => $account->email,
-                'phone_number' => $account->phone_number,
-                'street_address' => $account->street_address,
-                'city' => $account->city,
-                'province' => $account->province,
-                'postal_code' => $account->postal_code,
-                'country' => $account->country,
-                'credit_card' => $account->credit_card,
-                'job_title' => $account->job_title
-            ],
+    'account_id' => $account->account_id,
+    'first_name' => $account->first_name,
+    'last_name' => $account->last_name,
+    'email' => $account->email,
+    'phone_number' => $account->phone_number,
+    'street_address' => $account->street_address,
+    'city' => $account->city,
+    'province' => $account->province,
+    'postal_code' => $account->postal_code,
+    'country' => $account->country,
+    'credit_card' => $account->credit_card,
+    'job_title' => $account->job_title
+],
             'company_name' => $companyName,
             'expires_at' => $expiresAt->format('Y-m-d H:i:s') 
         ];
@@ -239,16 +241,36 @@ class AccountsController extends Controller
     
     public function updateAccount(Request $request, $id)
     {
-        $user = Auth::user();
-        if (strpos($user, 'admin') === false) {
-            return response()->json(['message' => 'You are not authorized to view this page'], 401);
-        }
-    
-        if (!$user || ($user->role !== 'admin' && $user->account_id != $id)) {
-            return response()->json(['message' => 'You are not authorized to update this account'], 401);
-        }
+        //$user = Auth::user();
 
-        // Validate incoming data
+        $authHeader = $request->header('Authorization');
+
+if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
+    return response()->json(['error' => 'Authorization header missing'], 401);
+}
+
+$token = str_replace('Bearer ', '', $authHeader);
+$accessToken = PersonalAccessToken::findToken($token);
+
+if (!$accessToken) {
+    return response()->json(['error' => 'Invalid token'], 401);
+}
+
+$user = $accessToken->tokenable; //  Account model
+
+        // if (strpos($user, 'admin') === false) {
+        //     return response()->json(['message' => 'You are not authorized to view this page'], 401);
+        // }
+    
+        // if (!$user || ($user->role !== 'admin' && $user->account_id != $id)) {
+        //     return response()->json(['message' => 'You are not authorized to update this account'], 401);
+        // }
+
+        if (!$user || (!($user instanceof \App\Models\Admin) && $user->account_id != $id)) {
+    return response()->json(['message' => 'You are not authorized to update this account'], 401);
+}
+
+        //Validate incoming data
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',

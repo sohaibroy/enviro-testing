@@ -92,8 +92,14 @@ export default function RentalCartPage() {
                 .catch((err) => console.error("Error fetching account info:", err));
         }
 
-        const storedCart = JSON.parse(sessionStorage.getItem("rentalCart")) || [];
-        setCartItems(storedCart);
+            // useEffect(() => {
+            // const storedCart = JSON.parse(sessionStorage.getItem('rentalCart')) || [];
+            // setCartItems(storedCart);
+            // }, [onCartUpdate]);
+
+            useEffect(() => {
+  refreshCartItems();
+}, []);
 
         const subTotalCalc = storedCart.reduce((acc, item) => {
             const startDate = new Date(item.StartDate);
@@ -236,12 +242,30 @@ export default function RentalCartPage() {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+    }; 
+
+    const refreshCartItems = () => {
+    const storedCart = JSON.parse(sessionStorage.getItem("rentalCart")) || [];
+    setCartItems(storedCart);
+    
+
+    const subTotalCalc = storedCart.reduce((acc, item) => {
+        const startDate = new Date(item.StartDate);
+        const endDate = new Date(item.ReturnDate);
+        let rentalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+        rentalDays = rentalDays > 0 ? rentalDays : 1;
+        return acc + rentalDays * item.DailyCost * item.Quantity;
+    }, 0);
+
+    setSubtotal(subTotalCalc);
+    setGst(subTotalCalc * 0.05);
+    setTotalAmount(subTotalCalc * 1.05);
+};
 
     return (
         <div className="max-w-7xl mx-auto p-6">
             <h1 className="text-3xl font-bold text-gray-900 text-center mb-6">Rental Cart</h1>
-            <RentalCart />
+            <RentalCart onCartUpdate={refreshCartItems} />
 
             {cartItems.length > 0 && (
                 <div className="mt-5 border border-gray-200 shadow-lg rounded-xl p-[2rem] max-w-[70rem] mx-auto flex flex-col gap-[.5rem]">
@@ -326,3 +350,23 @@ export default function RentalCartPage() {
         </div>
     );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

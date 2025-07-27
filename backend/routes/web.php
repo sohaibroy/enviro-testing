@@ -31,4 +31,26 @@ Route::get('/sanctum/csrf-cookie', function () {
     return response()->json(['csrf_cookie' => true]);
 });
 
+Route::get('/api/get-order', function (Request $request) {
+    $orderId = $request->query('order_id');
+
+    $order = \DB::table('orders')
+        ->where('order_id', $orderId)
+        ->first();
+
+    if (!$order) return response()->json(['error' => 'Order not found'], 404);
+
+    $details = \DB::table('order_details')
+        ->where('order_id', $orderId)
+        ->get();
+
+    return response()->json([
+        'id' => $order->order_id,
+        'order_date' => $order->order_date,
+        'subtotal' => $order->subtotal,
+        'payment_status' => $order->payment_status ?? 'pending',
+        'details' => $details,
+    ]);
+});
+
 

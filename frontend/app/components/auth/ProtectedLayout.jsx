@@ -19,7 +19,7 @@ export default function ProtectedLayout({ children }) {
       path?.startsWith(publicPath)
     );
 
-    // ✅ Don't redirect if on a public path
+    // Don't redirect if on a public path
     if (!token && !isPublic) {
       router.replace("/customer-login");
     }

@@ -27,6 +27,8 @@ use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\ChainOfCustodyController;
 use App\Http\Controllers\MailController;
 use App\Http\Controllers\StripeController;
+use App\Http\Controllers\MonerisController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -37,6 +39,11 @@ use App\Http\Controllers\StripeController;
 | be assigned to the "api" middleware group.
 |
 */
+
+//Moneris Route
+Route::post('/api/moneris/checkout', [MonerisController::class, 'startCheckout']);
+Route::post('/api/moneris/callback', [MonerisController::class, 'handleCallback'])->name('moneris.callback');
+Route::get('/orders/full/{order_id}', [OrdersController::class, 'getOrderWithDetails']);
 
 //Stripe Route
 Route::post('/create-payment-intent', [StripeController::class, 'create']);
@@ -53,7 +60,7 @@ Route::post('/feedback', [FeedbackController::class, 'store']);
  Route::post('signup/account', [AccountsController::class, 'signup']);
 
  // Update an existing account
-//  Route::put('/account/update/{account_id}', [AccountsController::class, 'updateAccount']); // Works
+//Route::put('/account/update/{account_id}', [AccountsController::class, 'updateAccount']); // Works
 
 // Send Chain of Custody Email
 Route::post('/submit-coc', [ChainOfCustodyController::class, 'submit']);
@@ -173,6 +180,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     //Route::middleware('auth:sanctum')->get('/account/me', [AccountsController::class, 'me']);
     Route::get('/account/me', [AccountsController::class, 'me']);
+
 });
 
 // Search for a company by name --works
@@ -208,6 +216,8 @@ Route::get('/method/{method_id}', [MethodsController::class, 'showMethodByMethod
 Route::get('/methods/{analyte_id}', [MethodsController::class, 'getMethodsByAnalyteId']); //phpunit work
 Route::get('/method-details/{method_id}', [MethodsController::class, 'getMethodByMethodId']);//phpunit works
 
+Route::get('/quantity-details/{method_id}', [MethodsController::class, 'getMethodByMethodId']);
+
 // Orders Routes
 Route::get('/orders/searchorderdetails/{order_id}', [OrdersController::class, 'show']);// phpunit walk
 Route::get('/orders/searchtool/{searchTerm}', [OrdersController::class, 'searchOrderTool']);// phpunit works
@@ -221,6 +231,9 @@ Route::post('/transactions/create', [TransactionsController::class, 'createTrans
 Route::post('/transactions/guest', [TransactionsController::class, 'createTransaction']);
 // Turnaroundtime Routes
 Route::get('/turn-around-times/{methodId}', [TurnAroundTimeController::class, 'getTurnAroundTimes']);//phpunit works
+
+//Create Order Route
+Route::post('/orders/create', [OrdersController::class, 'createOrder']);//ADDED THISSSSSS  
 
 Route::get('/test-db', function () {
     try {

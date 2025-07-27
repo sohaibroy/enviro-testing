@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ValidationInput } from "../basic/ValidationInput";
 import "./ContactUsForm.css";
 import BasePopup from "../popup/BasePopup";
@@ -30,6 +30,22 @@ function ContactUsForm() {
       [e.target.name]: e.target.value
     }));
   };
+
+  useEffect(() => {
+  const storedUser = sessionStorage.getItem("user");
+  if (storedUser) {
+    const user = JSON.parse(storedUser);
+    setFormData((prevData) => ({
+      ...prevData,
+      first_name: user.first_name || "",
+      last_name: user.last_name || "",
+      email: user.email || "",
+      phone_number: user.phone_number || "",
+      city: user.city || "",
+      province_state: user.province || "", //PROVICE in laravel this is diffrent 
+    }));
+  }
+}, []);
 
 
   // Function to validate input fields
@@ -270,11 +286,24 @@ function ContactUsForm() {
             </label>
           </div>
 
-          <button type="submit" className="submit-button" disabled={isSubmitting}>
-            {isSubmitting ? <span className="loading-spinner"></span> : "Submit"}
-          </button>
+          <div className="flex justify-left gap-4 mt-6">
+            <button
+              type="submit"
+              className="submit-button px-6 py-3 text-white bg-[#003883] rounded-xl font-bold hover:bg-[#003883cc] transition-all duration-200"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <span className="loading-spinner"></span> : "Submit"}
+            </button>
 
-          <button type="button" className="reset-button" onClick={handleReset}>Reset</button>
+            <button
+              type="button"
+              className="reset-button px-6 py-3 text-white bg-[#f47c00] rounded-xl font-bold hover:bg-[#f47c00cc] transition-all duration-200"
+              onClick={handleReset}
+            >
+              Reset
+            </button>
+          </div>
+
         </form>
 
       </div >

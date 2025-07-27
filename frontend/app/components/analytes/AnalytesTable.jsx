@@ -4,18 +4,22 @@ import { useRouter } from "next/navigation";
 
 // Analyte/Compound selection table(one part of the whole component)
 
-function AnalytesTable({ queryCriteria, analytes }) {
+function AnalytesTable({ queryCriteria, analytes, onSelectAnalyte }) { 
+
   const router = useRouter();
 
   if (!analytes) return null;
 
-  const handleSelectAnalyte = (analyte) => {
-    //print actual object
+  //updated to get to step 5 of multi stepper form
+const handleSelectAnalyte = (analyte) => {
   console.log("Selected analyte:", analyte); 
-  // save the analyte ID
   sessionStorage.setItem("selectedAnalyteId", analyte.analyte_id); 
-  router.push(`/method-selection/${analyte.analyte_id}`);
+
+  if (onSelectAnalyte) {
+    onSelectAnalyte(analyte.analyte_id);
+  } 
 };
+
 
   let arr = [];
 

@@ -30,64 +30,122 @@ class OrdersController extends Controller
         return response()->json($orders);
     }
 
-    public function createOrder($order)
-    {
-        // Validate the incoming JSON data
-        $validator = Validator::make($order, [
-            'order.transaction_id' => 'required|integer|min:1|max:11',
-            'order.subtotal' => 'required|numeric',
-            'order_details.*.turn_around_id' => 'required|integer',
-            'order_details.*.price' => 'required|numeric',
-            'order_details.*.required_quantity' => 'required|integer|min:1',
-            'order_details.*.required_pumps' => 'nullable|integer|max:11',
-            'order_details.*.required_media' => 'nullable|integer|max:11',
-            'order_details.*.customer_comment' => 'nullable|string|max:255',
-        ]);
+    // public function createOrder($order)
+    // {
+    //     // Validate the incoming JSON data
+    //     $validator = Validator::make($order, [
+    //         'order.transaction_id' => 'required|integer|min:1|max:11',
+    //         'order.subtotal' => 'required|numeric',
+    //         'order_details.*.turn_around_id' => 'required|integer',
+    //         'order_details.*.price' => 'required|numeric',
+    //         'order_details.*.required_quantity' => 'required|integer|min:1',
+    //         'order_details.*.required_pumps' => 'nullable|integer|max:11',
+    //         'order_details.*.required_media' => 'nullable|integer|max:11',
+    //         'order_details.*.customer_comment' => 'nullable|string|max:255',
+    //     ]);
 
-        // Check if validation fails
-        if ($validator->fails()) {
-            throw new Exception(json_encode($validator->errors()), 422);
-        }
+    //     // Check if validation fails
+    //     if ($validator->fails()) {
+    //         throw new Exception(json_encode($validator->errors()), 422);
+    //     }
 
-        try {
-            // Begin a database transaction
-            \DB::beginTransaction();
+    //     try {
+    //         // Begin a database transaction
+    //         \DB::beginTransaction();
 
-            // Create and save the order header
-            $orderRecord = new Orders();
-            $orderRecord->transaction_id = $order['transaction_id'];
-            $orderRecord->total_amount = $order['total_amount'];
-            $orderRecord->subtotal = $order['subtotal'];
-            $orderRecord->save();
+    //         // Create and save the order header
+    //         $orderRecord = new Orders();
+    //         $orderRecord->transaction_id = $order['transaction_id'];
+    //         $orderRecord->total_amount = $order['total_amount'];
+    //         $orderRecord->subtotal = $order['subtotal'];
+    //         $orderRecord->save();
 
-            // Retrieve the order_id after saving the order header
-            $order_id = $orderRecord->order_id;
+    //         // Retrieve the order_id after saving the order header
+    //         $order_id = $orderRecord->order_id;
 
-            // Create and save the order details
-            foreach ($request->input('order_details') as $detail) {
-                $orderDetail = new OrderDetails();
-                $orderDetail->order_id = $order_id; // Assign the order ID
-                $orderDetail->turn_around_id = $detail['turn_around_id'];
-                $orderDetail->price = $detail['price'];
-                $orderDetail->quantity = $detail['required_quantity'];
-                $orderDetail->quantity_pumps = $detail['required_pumps'];
-                $orderDetail->quantity_media = $detail['required_media'];
-                $orderDetail->comments = $detail['customer_comment'];
-                $orderDetail->save();
-            }
+    //         // Create and save the order details
+    //         foreach ($request->input('order_details') as $detail) {
+    //             $orderDetail = new OrderDetails();
+    //             $orderDetail->order_id = $order_id; // Assign the order ID
+    //             $orderDetail->turn_around_id = $detail['turn_around_id'];
+    //             $orderDetail->price = $detail['price'];
+    //             $orderDetail->quantity = $detail['required_quantity'];
+    //             $orderDetail->quantity_pumps = $detail['required_pumps'];
+    //             $orderDetail->quantity_media = $detail['required_media'];
+    //             $orderDetail->comments = $detail['customer_comment'];
+    //             $orderDetail->save();
+    //         }
 
-            // Commit the transaction
-            \DB::commit();
+    //         // Commit the transaction
+    //         \DB::commit();
 
-            // Return a success response
-            return $orderRecord;
-        } catch (\Exception $e) {
-            // Rollback the transaction if an exception occurs
-            \DB::rollback();
-            // Rethrow to be caught by createTransaction
-            throw $e;
-        }
+    //         // Return a success response
+    //         return $orderRecord;
+    //     } catch (\Exception $e) {
+    //         // Rollback the transaction if an exception occurs
+    //         \DB::rollback();
+    //         // Rethrow to be caught by createTransaction
+    //         throw $e;
+    //     }
+    // }
+
+    public function createOrder(Request $request)
+{
+    $order = $request->all();
+
+    // Validate the incoming JSON data
+    $validator = Validator::make($order, [
+        'order.transaction_id' => 'required|integer|exists:transactions,transaction_id',
+        'order.subtotal' => 'required|numeric',
+        'order.total_amount' => 'required|numeric',
+        'order_details.*.turn_around_id' => 'required|integer',
+        'order_details.*.price' => 'required|numeric',
+        'order_details.*.required_quantity' => 'required|integer|min:1',
+        'order_details.*.required_pumps' => 'nullable|integer|max:11',
+        'order_details.*.required_media' => 'nullable|integer|max:11',
+        'order_details.*.customer_comment' => 'nullable|string|max:255',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
     }
+
+    try {
+        \DB::beginTransaction();
+
+        // Create order
+        $orderRecord = new Orders();
+        $orderRecord->transaction_id = $order['order']['transaction_id'];
+        $orderRecord->total_amount = $order['order']['total_amount'];
+        $orderRecord->subtotal = $order['order']['subtotal'];
+        $orderRecord->save();
+
+        $order_id = $orderRecord->order_id;
+
+        // Save order details
+        foreach ($order['order_details'] as $detail) {
+            $orderDetail = new OrderDetails();
+            $orderDetail->order_id = $order_id;
+            $orderDetail->turn_around_id = $detail['turn_around_id'];
+            $orderDetail->price = $detail['price'];
+            $orderDetail->quantity = $detail['required_quantity'];
+            $orderDetail->quantity_pumps = $detail['required_pumps'] ?? 0;
+            $orderDetail->quantity_media = $detail['required_media'] ?? 0;
+            $orderDetail->comments = $detail['customer_comment'];
+            $orderDetail->save();
+        }
+
+        \DB::commit();
+
+        return response()->json([
+            'message' => 'Order created successfully',
+            'order_id' => $order_id,
+        ], 201);
+    } catch (\Exception $e) {
+        \DB::rollback();
+        return response()->json(['message' => 'Failed to create order', 'error' => $e->getMessage()], 500);
+    }
+}
 
     // Search for a specific order by order_id
     // search by company name and date
@@ -215,6 +273,48 @@ class OrdersController extends Controller
         // Return the order details along with the related company and account info
         return response()->json($orders);
     }
+
+    //Get the order with its details passing order id
+    public function getOrderWithDetails($order_id)
+{
+    if (!is_numeric($order_id) || $order_id < 1) {
+        return response()->json(['message' => 'Invalid order ID'], 400);
+    }
+
+    $order = DB::table('orders')
+        ->where('order_id', $order_id)
+        ->first();
+
+    if (!$order) {
+        return response()->json(['message' => 'Order not found'], 404);
+    }
+
+    $details = DB::table('order_details as o')
+        ->select(
+            'o.price',
+            'o.quantity',
+            'o.quantity_pumps',
+            'o.quantity_media',
+            'o.comments',
+            't.turnaround_time',
+            'm.method_name',
+            'm.media',
+            'a.analyte_name'
+        )
+        ->leftJoin('turn_around_times as t', 'o.turn_around_id', '=', 't.turn_around_id')
+        ->leftJoin('methods as m', 't.method_id', '=', 'm.method_id')
+        ->leftJoin('analytes as a', 'm.analyte_id', '=', 'a.analyte_id')
+        ->where('o.order_id', $order_id)
+        ->get();
+
+    return response()->json([
+        'order_id' => $order->order_id,
+        'order_date' => $order->order_date,
+        'subtotal' => $order->subtotal,
+        'payment_status' => $order->payment_status ?? 'pending',
+        'details' => $details
+    ]);
+}
 
     // NOTE: Commenting out since new Transactions rework should take care of this.
     // public function storeWalkinOrders(Request $request)

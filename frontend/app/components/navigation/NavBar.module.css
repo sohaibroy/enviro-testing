@@ -24,3 +24,20 @@
 .phoneLink:hover .phoneIcon {
   animation: ring 1s ease-in-out;
 }
+
+.hamburgerMenu {
+  width: 42px;
+  height: 42px;
+  background-color: #003366;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hamburgerMenu::before {
+  content: '≡';
+  font-size: 1.5rem;
+  color: white;
+  line-height: 1;
+}

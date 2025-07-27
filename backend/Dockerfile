@@ -59,11 +59,12 @@ WORKDIR /var/www/html
 
 # Only COPY if building on Render (not needed for local bind mount)
 #COPY backend/. /var/www/html
-
+COPY . /var/www/html
 ARG BUILD_ENV=local
 
 # Only copy files in production (like on Render)
-COPY backend/. /var/www/html
+#COPY backend/. /var/www/html
+
 RUN if [ "$BUILD_ENV" = "production" ]; then \
       echo "Installing dependencies for production build..." && \
       composer install --no-dev --optimize-autoloader || true; \

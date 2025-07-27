@@ -144,26 +144,26 @@ class TransactionsController extends Controller
             }
 
             // --- ORDER LOGIC ---
-            if (isset($data['order'])) {
-                $order = $data['order'];
-                $orderId = DB::table('orders')->insertGetId([
-                    'transaction_id' => $transactionId,
-                    'order_date'     => $order['order_date'] ?? now(),
-                    'subtotal'       => $order['subtotal'] ?? 0,
-                    'is_active'      => 1,
-                ]);
-                Log::info("Order created with ID: $orderId");
+            // if (isset($data['order'])) {
+            //     $order = $data['order'];
+            //     $orderId = DB::table('orders')->insertGetId([
+            //         'transaction_id' => $transactionId,
+            //         'order_date'     => $order['order_date'] ?? now(),
+            //         'subtotal'       => $order['subtotal'] ?? 0,
+            //         'is_active'      => 1,
+            //     ]);
+            //     Log::info("Order created with ID: $orderId");
 
-                foreach ($data['order_details'] ?? [] as $item) {
-                    DB::table('order_details')->insert([
-                        'order_id'   => $orderId,
-                        'item_name'  => $item['item_name'] ?? '',
-                        'quantity'   => $item['quantity'] ?? 1,
-                        'price'      => $item['price'] ?? 0,
-                    ]);
-                }
-                Log::info("Order details saved.");
-            }
+            //     foreach ($data['order_details'] ?? [] as $item) {
+            //         DB::table('order_details')->insert([
+            //             'order_id'   => $orderId,
+            //             'item_name'  => $item['item_name'] ?? '',
+            //             'quantity'   => $item['quantity'] ?? 1,
+            //             'price'      => $item['price'] ?? 0,
+            //         ]);
+            //     }
+            //     Log::info("Order details saved.");
+            // }
 
             // --- PAYMENT LOGIC ---
             DB::table('payments')->insert([
@@ -180,7 +180,11 @@ class TransactionsController extends Controller
 
             DB::commit();
 
-            return response()->json(['message' => 'Transaction successful'], 201);
+            // return response()->json(['message' => 'Transaction successful'], 201);
+            return response()->json([
+    'message' => 'Transaction successful',
+    'transaction_id' => $transactionId
+], 201);
 
         } catch (\Throwable $e) {
             DB::rollBack();

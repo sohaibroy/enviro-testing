@@ -7,7 +7,7 @@ import { FaTrashCan } from "react-icons/fa6";
 import FadeIn from "../basic/FadeIn";
 import BasePopup from "../basic/BasePopup";
 
-const RentalCart = () => {
+const RentalCart = (props) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [cartItems, setCartItems] = useState([]);
@@ -32,11 +32,11 @@ const RentalCart = () => {
     };
 
     useEffect(() => {
-        setLoading(true);
-        const storedCart = JSON.parse(sessionStorage.getItem("rentalCart")) || [];
-        setCartItems(storedCart);
-        setLoading(false);
-    }, []);
+    setLoading(true);
+    const storedCart = JSON.parse(sessionStorage.getItem("rentalCart")) || [];
+    setCartItems(storedCart);
+    setLoading(false);
+}, [props.onCartUpdate]);
 
     useEffect(() => {
         setIsAuthenticated(
@@ -60,17 +60,20 @@ const RentalCart = () => {
         );
         setCartItems(updatedCart);
         sessionStorage.setItem("rentalCart", JSON.stringify(updatedCart));
+        props.onCartUpdate && props.onCartUpdate();
     };
 
     const handleDeleteItem = (index) => {
         const updatedCart = cartItems.filter((_, i) => i !== index);
         setCartItems(updatedCart);
         sessionStorage.setItem("rentalCart", JSON.stringify(updatedCart));
+        props.onCartUpdate && props.onCartUpdate();
     };
 
     const handleClearCart = () => {
         setCartItems([]);
         sessionStorage.removeItem("rentalCart");
+        props.onCartUpdate && props.onCartUpdate();
     };
 
     return (
@@ -172,12 +175,12 @@ const RentalCart = () => {
                                     <p className="flex justify-between">
                                         Subtotal <span className="font-extrabold">${subtotal.toFixed(2)}</span>
                                     </p>
-                                    <p className="flex justify-between">
+                                    {/* <p className="flex justify-between">
                                         GST (5%) <span className="font-extrabold">${gst.toFixed(2)}</span>
                                     </p>
                                     <p className="flex justify-between">
                                         <strong>Total</strong> <span className="text-xl font-extrabold">${totalAmount.toFixed(2)}</span>
-                                    </p>
+                                    </p> */}
                                 </div>
                             </section>
                         )}

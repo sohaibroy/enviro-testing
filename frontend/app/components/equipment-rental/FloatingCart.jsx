@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import DeleteIcon from '@mui/icons-material/Delete';
 
-export default function FloatingCart() {
+
+export default function FloatingCart({ onProceedToCheckout }) {
     const [cartItems, setCartItems] = useState([]);
     const [subtotal, setSubtotal] = useState(0);
     const [gst, setGst] = useState(0);
@@ -57,21 +59,45 @@ export default function FloatingCart() {
             window.removeEventListener("cartUpdated", fetchCartData);
         };
     }, []);
+     const handleRemoveItem = (indexToRemove) => {
+        const updatedCart = cartItems.filter((_, i) => i !== indexToRemove);
+        sessionStorage.setItem("rentalCart", JSON.stringify(updatedCart));
+        setCartItems(updatedCart);
+        window.dispatchEvent(new Event("cartUpdated"));
+    };
+
+    const handleClearCart = () => {
+        sessionStorage.removeItem("rentalCart");
+        setCartItems([]);
+        setSubtotal(0);
+        setGst(0);
+        setTotalAmount(0);
+        window.dispatchEvent(new Event("cartUpdated"));
+    };
 
     return (
-        <div className="fixed top-80 right-20 w-[18rem] bg-white shadow-lg rounded-xl p-4 border border-gray-300">
+        <div className="fixed top-20 right-4 md:top-40 md:right-6 w-[90vw] md:w-[15rem] bg-white shadow-md rounded-lg p-3 border border-gray-200 z-50">
             <h3 className="text-lg font-bold text-gray-900">Your Cart</h3>
             <div className="mt-2 space-y-2">
                 {cartItems.length === 0 ? (
                     <p className="text-gray-500 text-sm text-center">No items in cart.</p>
                 ) : (
                     cartItems.map((item, index) => (
-                        <div key={index} className="flex justify-between items-center border-b py-2">
-                            <div className="text-sm font-medium text-gray-800">{item.EquipmentName}</div>
-                            <div className="text-sm text-gray-600">
-                                ${calculateTotalPrice(item).toFixed(2)}
+                            <div className="flex justify-between items-start">
+                            <div className="flex flex-col">
+                                <span className="font-semibold text-gray-900">{item.EquipmentName}</span>
+                                <button
+                                onClick={() => handleRemoveItem(index)}
+                                className="flex items-center text-xs text-red-600 hover:underline mt-1"
+                                >                             
+                                Remove
+                                </button>
                             </div>
-                        </div>
+                            <span className="text-sm font-medium text-gray-800">
+                                ${calculateTotalPrice(item).toFixed(2)}
+                            </span>
+                            </div>
+  
                     ))
                 )}
             </div>
@@ -87,11 +113,17 @@ export default function FloatingCart() {
                     <p className="flex justify-between text-lg font-bold">
                         Total: <span>${totalAmount.toFixed(2)}</span>
                     </p>
-                    <Link href="/rental-cart">
-                        <button className="w-full bg-[#003883] hover:bg-[#002f6c] text-white py-2 rounded-md mt-3 transition-all hover:scale-105">
+                        <button
+                         onClick = {onProceedToCheckout}
+                         className="w-full bg-[#003883] hover:bg-[#002f6c] text-white py-2 rounded-md mt-3 transition-all hover:scale-105">
                             Proceed to Checkout
                         </button>
-                    </Link>
+                      <button
+                        onClick={handleClearCart}
+                        className="w-full text-red-600 mt-2 text-sm underline"
+                    >
+                        Clear Cart
+                    </button>
                 </div>
             )}
         </div>
