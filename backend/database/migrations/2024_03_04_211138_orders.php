@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->unsignedBigInteger('order_id');
-            $table->unsignedBigInteger('account_id')->nullable();
-            $table->foreign('account_id')->references('account_id')->on('accounts')->onDelete('cascade');
-            $table->dateTime('order_date')->nullable();
-            $table->float('total_amount')->nullable();
-            $table->float('subtotal')->nullable();
-            $table->float('gst')->nullable();
-            $table->integer('is_processed')->nullable();
-        });
+        // Schema::table('orders', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('order_id');
+        //     $table->unsignedBigInteger('account_id')->nullable();
+        //     $table->foreign('account_id')->references('account_id')->on('accounts')->onDelete('cascade');
+        //     $table->dateTime('order_date')->nullable();
+        //     $table->float('total_amount')->nullable();
+        //     $table->float('subtotal')->nullable();
+        //     $table->float('gst')->nullable();
+        //     $table->integer('is_processed')->nullable();
+        // });
     }
 
     /**

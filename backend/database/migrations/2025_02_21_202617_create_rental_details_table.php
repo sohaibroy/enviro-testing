@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('rental_details', function (Blueprint $table) {
-            $table->unsignedBigInteger('rental_id');
-            $table->unsignedBigInteger('serial_id');
-            $table->foreign('serial_id')->references('serial_id')->on('equipment_details');
-            $table->dateTime('start_date');
-            $table->dateTime('end_date');
-            $table->dateTime('return_date')->nullable();
-            $table->integer('quantity');
-            $table->float('price');
-            $table->string('equipment_condition')->nullable();
-            $table->boolean('is_active');
-        });
+        // Schema::table('rental_details', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('rental_id');
+        //     $table->unsignedBigInteger('serial_id');
+        //     $table->foreign('serial_id')->references('serial_id')->on('equipment_details');
+        //     $table->dateTime('start_date');
+        //     $table->dateTime('end_date');
+        //     $table->dateTime('return_date')->nullable();
+        //     $table->integer('quantity');
+        //     $table->float('price');
+        //     $table->string('equipment_condition')->nullable();
+        //     $table->boolean('is_active');
+        // });
     }
 
     /**

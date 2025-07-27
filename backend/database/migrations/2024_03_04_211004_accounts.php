@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('accounts', function (Blueprint $table) {
-            $table->unsignedBigInteger('account_id');
-            $table->unsignedBigInteger('company_id')->nullable();
-            $table->foreign('company_id')->references('company_id')->on('companies')->onDelete('cascade');
-            $table->string('first_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('password')->nullable();
-            $table->string('email')->nullable();
-            $table->string('phone_number')->nullable();
-        });
+        // Schema::table('accounts', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('account_id');
+        //     $table->unsignedBigInteger('company_id')->nullable();
+        //     $table->foreign('company_id')->references('company_id')->on('companies')->onDelete('cascade');
+        //     $table->string('first_name')->nullable();
+        //     $table->string('last_name')->nullable();
+        //     $table->string('password')->nullable();
+        //     $table->string('email')->nullable();
+        //     $table->string('phone_number')->nullable();
+        // });
     }
 
     /**

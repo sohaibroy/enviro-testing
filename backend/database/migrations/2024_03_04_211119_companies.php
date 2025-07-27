@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('companies', function (Blueprint $table) {
-            $table->unsignedBigInteger('company_id');
-            $table->string('company_name')->nullable();
-            $table->string('company_phone')->nullable();
-            $table->string('address')->nullable();
-            $table->integer('is_active')->nullable();
-        });
+        // Schema::table('companies', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('company_id');
+        //     $table->string('company_name')->nullable();
+        //     $table->string('company_phone')->nullable();
+        //     $table->string('address')->nullable();
+        //     $table->integer('is_active')->nullable();
+        // });
     }
 
     /**

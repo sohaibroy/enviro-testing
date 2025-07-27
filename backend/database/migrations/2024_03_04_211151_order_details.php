@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('order_details', function (Blueprint $table) {
-            $table->unsignedBigInteger('analyte_id')->nullable();
-            $table->foreign('analyte_id')->references('analyte_id')->on('analytes')->onDelete('cascade');
-            $table->unsignedBigInteger('order_id')->nullable();
-            $table->foreign('order_id')->references('order_id')->on('orders')->onDelete('cascade');
-            $table->integer('quantity')->nullable();
-        });
+        // // Schema::table('order_details', function (Blueprint $table) {
+        // //     $table->unsignedBigInteger('analyte_id')->nullable();
+        // //     $table->foreign('analyte_id')->references('analyte_id')->on('analytes')->onDelete('cascade');
+        // //     $table->unsignedBigInteger('order_id')->nullable();
+        // //     $table->foreign('order_id')->references('order_id')->on('orders')->onDelete('cascade');
+        // //     $table->integer('quantity')->nullable();
+        // });
     }
 
     /**

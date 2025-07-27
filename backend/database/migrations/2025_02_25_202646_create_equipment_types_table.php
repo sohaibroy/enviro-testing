@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('equipment_types', function (Blueprint $table) {
-            $table->unsignedBigInteger('equipment_type_id');
-            $table->string('equipment_type_name')->nullable();
-        });
+        // Schema::table('equipment_types', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('equipment_type_id');
+        //     $table->string('equipment_type_name')->nullable();
+        // });
     }
 
     /**

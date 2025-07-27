@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('equipment_attributes', function (Blueprint $table) {
-            $table->unsignedBigInteger('attribute_id');
-            $table->unsignedBigInteger('equipment_type_id');
-            $table->foreign('equipment_type_id')->references('equipment_type_id')->on('equipment_types')->onDelete('cascade');
-            $table->string('attribute_name');
-            $table->string('attribute_data_type');
-        });
+        // Schema::table('equipment_attributes', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('attribute_id');
+        //     $table->unsignedBigInteger('equipment_type_id');
+        //     $table->foreign('equipment_type_id')->references('equipment_type_id')->on('equipment_types')->onDelete('cascade');
+        //     $table->string('attribute_name');
+        //     $table->string('attribute_data_type');
+        // });
     }
 
     /**

@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('equipment_details', function (Blueprint $table) {
-            $table->unsignedBigInteger('serial_id')->autoIncrement();
-            $table->unsignedBigInteger('equipment_id')->autoIncrement();
-            $table->foreign('equipment_id')->references('equipment_id')->on('equipment');
-            $table->string('serial_number', 255);
-            $table->enum('status', ['available', 'rented', 'maintenance', 'retired'])->default('available');
-        });
+        // Schema::table('equipment_details', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('serial_id')->autoIncrement();
+        //     $table->unsignedBigInteger('equipment_id')->autoIncrement();
+        //     $table->foreign('equipment_id')->references('equipment_id')->on('equipment');
+        //     $table->string('serial_number', 255);
+        //     $table->enum('status', ['available', 'rented', 'maintenance', 'retired'])->default('available');
+        // });
     }
 
     /**

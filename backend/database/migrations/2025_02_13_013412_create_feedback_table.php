@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('feedback', function (Blueprint $table) {
-            $table->bigIncrements('feedback_id');
-            $table->integer('rating');
-            $table->text('comment')->nullable();
-            $table->timestamps();
-        });
+        // Schema::create('feedback', function (Blueprint $table) {
+        //     $table->bigIncrements('feedback_id');
+        //     $table->integer('rating');
+        //     $table->text('comment')->nullable();
+        //     $table->timestamps();
+        // });
     }
 
     /**

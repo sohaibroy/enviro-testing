@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('equipment_values', function (Blueprint $table) {
-            $table->unsignedBigInteger('equipment_id');
-            $table->foreign('equipment_id')->references('equipment_id')->on('equipment')->onDelete('cascade');
-            $table->unsignedBigInteger('attribute_id');
-            $table->foreign('attribute_id')->references('attribute_id')->on('equipment_attributes')->onDelete('cascade');
-            $table->string('attribute_value')->nullable();
-        });
+        // Schema::table('equipment_values', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('equipment_id');
+        //     $table->foreign('equipment_id')->references('equipment_id')->on('equipment')->onDelete('cascade');
+        //     $table->unsignedBigInteger('attribute_id');
+        //     $table->foreign('attribute_id')->references('attribute_id')->on('equipment_attributes')->onDelete('cascade');
+        //     $table->string('attribute_value')->nullable();
+        // });
     }
 
     /**

@@ -91,6 +91,11 @@ class OrdersController extends Controller
 
     public function createOrder(Request $request)
 {
+     \Log::info('[DEBUG] createOrder() route hit');
+    \Log::info('[DEBUG] auth()->check(): ' . (auth()->check() ? 'YES' : 'NO'));
+    \Log::info('[DEBUG] auth()->user():', [auth()->user()]);
+    \Log::info('[DEBUG] XSRF-TOKEN header:', [$request->header('X-XSRF-TOKEN')]);
+    \Log::info('[DEBUG] Cookies:', $request->cookies->all());
     $order = $request->all();
 
     // Validate the incoming JSON data

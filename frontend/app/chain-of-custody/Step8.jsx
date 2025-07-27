@@ -84,27 +84,32 @@ const handleFinalSubmit = async () => {
   if (!confirm('Are you sure you want to submit this order?')) return;
 
   setSubmitting(true);
+  console.log('[DEBUG] Order submission started');
 
   try {
-    //Fetch CSRF cookie
+    // Step 1: Get CSRF cookie
+    console.log('[DEBUG] Fetching CSRF cookie...');
     const csrfRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sanctum/csrf-cookie`, {
       credentials: 'include',
     });
+    console.log(`[DEBUG] CSRF cookie response: ${csrfRes.status}`);
 
+    // Step 2: Extract XSRF token
     const xsrfToken = getXsrfTokenFromCookie();
+    console.log('[DEBUG] XSRF token:', xsrfToken);
 
     if (!xsrfToken) {
       throw new Error('[ERROR] XSRF-TOKEN not found in cookies');
     }
 
-    //Get user info
+    // Step 3: Get user info
     const userJson = sessionStorage.getItem('user');
     const user = userJson ? JSON.parse(userJson) : null;
+    console.log('[DEBUG] Loaded user from sessionStorage:', user);
 
-    //Guest mode fallback
     const isGuest = true;
 
-    //Build transaction payload
+    // Step 4: Build transaction payload
     const transactionPayload = {
       transaction: {
         subtotal,
@@ -129,7 +134,9 @@ const handleFinalSubmit = async () => {
         },
       }),
     };
+    console.log('[DEBUG] Transaction payload:', transactionPayload);
 
+    // Step 5: Submit transaction
     const transactionRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transactions/create`, {
       method: 'POST',
       headers: {
@@ -141,6 +148,8 @@ const handleFinalSubmit = async () => {
     });
 
     const transactionText = await transactionRes.text();
+    console.log(`[DEBUG] Transaction response status: ${transactionRes.status}`);
+    console.log('[DEBUG] Transaction response body:', transactionText);
 
     if (!transactionRes.ok || !transactionText.includes('transaction_id')) {
       throw new Error('Transaction creation failed');
@@ -149,15 +158,15 @@ const handleFinalSubmit = async () => {
     const transactionData = JSON.parse(transactionText);
     const transactionId = transactionData.transaction_id;
     sessionStorage.setItem('transactionId', transactionId);
+    console.log('[DEBUG] Transaction ID saved:', transactionId);
 
-    //Validate turnaround structure before submission
+    // Step 6: Validate turnaround structure
     if (selections.some((s) => typeof s.turnaround !== 'object' || !s.turnaround.id)) {
       alert('Please ensure all analytes have a valid turnaround time selected.');
       return;
     }
 
-    //Build order payload
-
+    // Step 7: Build order payload
     const orderPayload = {
       order: {
         transaction_id: transactionId,
@@ -165,18 +174,18 @@ const handleFinalSubmit = async () => {
         gst,
         total_amount: total,
       },
-      order_details: selections.map((s) => {
-        return {
-          turn_around_id: typeof s.turnaround === 'object' ? s.turnaround.id : undefined,
-          price: Number(s.price) || 0,
-          required_quantity: s.quantity ?? 1,
-          required_pumps: s.pumps ?? 0,
-          required_media: s.media ?? '',
-          customer_comment: s.comment ?? '',
-        };
-      }),
+      order_details: selections.map((s) => ({
+        turn_around_id: typeof s.turnaround === 'object' ? s.turnaround.id : undefined,
+        price: Number(s.price) || 0,
+        required_quantity: s.quantity ?? 1,
+        required_pumps: s.pumps ?? 0,
+        required_media: s.media ?? '',
+        customer_comment: s.comment ?? '',
+      })),
     };
+    console.log('[DEBUG] Order payload:', orderPayload);
 
+    // Step 8: Submit order
     const orderRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/create`, {
       method: 'POST',
       headers: {
@@ -188,6 +197,8 @@ const handleFinalSubmit = async () => {
     });
 
     const orderText = await orderRes.text();
+    console.log(`[DEBUG] Order response status: ${orderRes.status}`);
+    console.log('[DEBUG] Order response body:', orderText);
 
     if (!orderRes.ok || !orderText.includes('order_id')) {
       console.error('[ERROR] Order failed or did not return expected data');
@@ -197,16 +208,17 @@ const handleFinalSubmit = async () => {
 
     const orderData = JSON.parse(orderText);
     sessionStorage.setItem('lastOrderId', orderData.order_id);
+    console.log('[DEBUG] Order ID saved:', orderData.order_id);
 
-//Clear old form data state
-sessionStorage.removeItem('orderSelections');
-sessionStorage.removeItem('rentalCart');
-sessionStorage.removeItem('editIndex');
-sessionStorage.removeItem('selectedAnalyte');
-sessionStorage.removeItem('selectedEquipment');
+    // Step 9: Clean up and redirect
+    sessionStorage.removeItem('orderSelections');
+    sessionStorage.removeItem('rentalCart');
+    sessionStorage.removeItem('editIndex');
+    sessionStorage.removeItem('selectedAnalyte');
+    sessionStorage.removeItem('selectedEquipment');
 
+    console.log('[DEBUG] Order completed. Redirecting...');
     router.push('/order-confirmation');
-
   } catch (error) {
     console.error('Order submission error:', error);
     alert('Something went wrong.');

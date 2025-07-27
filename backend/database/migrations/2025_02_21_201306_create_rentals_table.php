@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('rentals', function (Blueprint $table) {
-            $table->unsignedBigInteger('rental_id');
-            $table->unsignedBigInteger('transaction_id');
-            $table->foreign('transaction_id')->references('transaction_id')->on('transactions')->onDelete('restrict');
-            $table->dateTime('rental_date');
-            $table->float('subtotal');
-            $table->float('gst');
-            $table->integer('is_complete');
-        });
+        // Schema::table('rentals', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('rental_id');
+        //     $table->unsignedBigInteger('transaction_id');
+        //     $table->foreign('transaction_id')->references('transaction_id')->on('transactions')->onDelete('restrict');
+        //     $table->dateTime('rental_date');
+        //     $table->float('subtotal');
+        //     $table->float('gst');
+        //     $table->integer('is_complete');
+        // });
     }
 
     /**

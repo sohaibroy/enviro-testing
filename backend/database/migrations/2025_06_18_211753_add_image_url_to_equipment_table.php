@@ -11,9 +11,9 @@ return new class extends Migration
      */
    public function up()
 {
-    Schema::table('equipment', function (Blueprint $table) {
-        $table->string('image_url')->nullable()->after('equipment_name');
-    });
+    // Schema::table('equipment', function (Blueprint $table) {
+    //     $table->string('image_url')->nullable()->after('equipment_name');
+    // });
 }
 
 public function down()

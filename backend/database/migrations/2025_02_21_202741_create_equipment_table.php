@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('equipment', function (Blueprint $table) {
-            $table->unsignedBigInteger('equipment_id')->autoIncrement();
-            $table->string('equipment_name');
-            $table->string('description')->nullable();
-            $table->string('specsheet')->nullable();
-            $table->float('daily_cost');
-            $table->integer('available_quantity');
-            $table->boolean('is_active');
-        });
+        // Schema::table('equipment', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('equipment_id')->autoIncrement();
+        //     $table->string('equipment_name');
+        //     $table->string('description')->nullable();
+        //     $table->string('specsheet')->nullable();
+        //     $table->float('daily_cost');
+        //     $table->integer('available_quantity');
+        //     $table->boolean('is_active');
+        // });
     }
 
     /**
