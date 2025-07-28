@@ -23,7 +23,8 @@ return [
 
    'allowed_origins' => [
     'https://two025-may-enviroworks-mainapplication.onrender.com',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://enviro-testing-frontend.onrender.com'
 ],
     
 
