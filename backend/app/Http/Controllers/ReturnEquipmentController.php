@@ -7,8 +7,9 @@ use Illuminate\Support\Facades\DB;
 
 class ReturnEquipmentController extends Controller
 {
-    public function returnEquipment(Request $request)
-    {
+   public function returnEquipment(Request $request)
+{
+    try {
         $orderId = $request->input('order_id');
         $equipmentName = $request->input('equipment_name');
         $quantity = $request->input('quantity');
@@ -21,24 +22,26 @@ class ReturnEquipmentController extends Controller
             return response()->json(['message' => 'Equipment not found'], 404);
         }
 
-        // Get rented serials for this order and equipment
+        //just fetch rented serials for this equipment
         $serialsToReturn = DB::table('equipment_details')
-            ->join('order_equipment', 'equipment_details.serial_id', '=', 'order_equipment.serial_id')
-            ->where('equipment_details.equipment_id', $equipmentId)
-            ->where('order_equipment.order_id', $orderId)
-            ->where('equipment_details.status', 'rented')
+            ->where('equipment_id', $equipmentId)
+            ->where('status', 'rented')
             ->limit($quantity)
-            ->pluck('equipment_details.serial_id');
+            ->pluck('serial_id');
 
         if ($serialsToReturn->isEmpty()) {
-            return response()->json(['message' => 'No rented units found for return'], 404);
+            return response()->json(['message' => 'No rented units found to return'], 404);
         }
 
-        // Update their status
+        // Mark them as available
         DB::table('equipment_details')
             ->whereIn('serial_id', $serialsToReturn)
             ->update(['status' => 'available']);
 
         return response()->json(['message' => 'Equipment returned successfully']);
+    } catch (\Exception $e) {
+        \Log::error('Return error', ['error' => $e->getMessage()]);
+        return response()->json(['message' => 'Server error'], 500);
     }
+}
 }
