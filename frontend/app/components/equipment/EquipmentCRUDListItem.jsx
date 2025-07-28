@@ -19,38 +19,39 @@ function EquipmentCRUDListItem({ equipment, fetchEquipment }) {
 
 
     useEffect(() => {
-        if (!equipment?.equipment_id) return;
+    if (!equipment?.equipment_id) return;
 
+    const accessToken = sessionStorage.getItem("accessToken");
 
-        const accessToken = sessionStorage.getItem("accessToken");
+    if (!accessToken) {
+        alert("You are not logged in as an admin.");
+        return;
+    }
 
-        if (!accessToken) {
-            alert("You are not logged in as an admin.");
-            return;
-        }
+    const fetchRelatedSerials = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch(`${baseUrl}/api/public/equipment/${equipment.equipment_id}/serials`);
 
-        const fetchRelatedSerials = async () => {
-            setIsLoading(true);
-            try {
-                //const res = await fetch(`http://localhost:80/api/public/equipment/${equipment.equipment_id}/serials`);
-                const res = await fetch(`${baseUrl}/api/public/equipment/${equipment.equipment_id}/serials`);
-
-if (!res.ok) {
-  const text = await res.text();
-  console.error("Serial fetch error:", res.status, text);
-  throw new Error(`Failed to fetch related serials (status ${res.status})`);
-}
-                calculateAvailableSerials(data);
-            } catch (err) {
-                console.error("Failed to load serial list:", err);
-                alert("Could not load related serials.");
-            } finally {
-                setIsLoading(false);
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("Serial fetch error:", res.status, text);
+                throw new Error(`Failed to fetch related serials (status ${res.status})`);
             }
-        };
 
-        fetchRelatedSerials();
-    }, [equipment?.equipment_id]);
+            const data = await res.json(); // ✅ FIX
+            setSerials(data);              // ✅ Needed for popup
+            calculateAvailableSerials(data);
+        } catch (err) {
+            console.error("Failed to load serial list:", err);
+            alert("Could not load related serials.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchRelatedSerials();
+}, [equipment?.equipment_id]);
 
     // Calculate how many serials are available
     const calculateAvailableSerials = (serialList) => {
