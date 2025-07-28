@@ -166,21 +166,33 @@ export default function Step8({ onBack, onStepChange, onSubmit }) {
 
     // Step 7: Build order payload
     const orderPayload = {
-      order: {
-        transaction_id: transactionId,
-        subtotal,
-        gst,
-        total_amount: total,
-      },
-      order_details: selections.map((s) => ({
-        turn_around_id: typeof s.turnaround === 'object' ? s.turnaround.id : undefined,
-        price: Number(s.price) || 0,
-        required_quantity: s.quantity ?? 1,
-        required_pumps: s.pumps ?? 0,
-        required_media: s.media ?? '',
-        customer_comment: s.comment ?? '',
-      })),
+  order: {
+    transaction_id: transactionId,
+    subtotal,
+    gst,
+    total_amount: total,
+  },
+  order_details: selections.map((s) => ({
+    turn_around_id: typeof s.turnaround === 'object' ? s.turnaround.id : undefined,
+    price: Number(s.price) || 0,
+    required_quantity: s.quantity ?? 1,
+    required_pumps: s.pumps ?? 0,
+    required_media: s.media ?? '',
+    customer_comment: s.comment ?? '',
+  })),
+ rental_items: cartItems.map((item) => {
+    const category = item.Category ?? item.EquipmentCategory ?? item.category ?? '';
+    console.log('[DEBUG] rental item category:', category);
+    return {
+      equipment_name: item.EquipmentName,
+      category,
+      start_date: item.StartDate,
+      return_date: item.ReturnDate,
+      quantity: item.Quantity,
+      daily_cost: item.DailyCost,
     };
+  }),
+};
     console.log('[DEBUG] Order payload:', orderPayload);
 
     // Step 8: Submit order (no CSRF token required)
@@ -353,7 +365,7 @@ const handleClearEquipment = () => {
         <li key={index} className="flex justify-between items-center">
           <div>
             <p><strong>Equipment:</strong> {item.EquipmentName}</p>
-            <p><strong>Category:</strong> {item.EquipmentCategory}</p>
+            <p><strong>Category:</strong> {item.EquipmentCategory ?? item.Category ?? item.category ?? 'N/A'}</p>
             <p><strong>Start Date:</strong> {item.StartDate}</p>
             <p><strong>Return Date:</strong> {item.ReturnDate}</p>
             <p><strong>Quantity:</strong> {item.Quantity}</p>

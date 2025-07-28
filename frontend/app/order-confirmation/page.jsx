@@ -43,22 +43,40 @@ export default function OrderConfirmationPage() {
       <hr className="my-6" />
 
       <h2 className="text-xl font-semibold mb-3">Analyte Details</h2>
-      {order.details?.length > 0 ? (
-        <ul className="space-y-4">
-          {order.details.map((item, index) => (
-            <li key={index} className="p-4 border rounded-md">
-              <p><strong>Analyte:</strong> {item.analyte_name}</p>
-              <p><strong>Method:</strong> {item.method_name}</p>
-              <p><strong>Turnaround:</strong> {item.turnaround_time}</p>
-              <p><strong>Quantity:</strong> {item.quantity}</p>
-              <p><strong>Price:</strong> ${parseFloat(item.price).toFixed(2)}</p>
-              {item.comments && <p><strong>Comments:</strong> {item.comments}</p>}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-gray-600 italic">No analytes listed for this order.</p>
-      )}
+{order.details?.length > 0 ? (
+  <ul className="space-y-4">
+    {order.details.map((item, index) => (
+      <li key={index} className="p-4 border rounded-md">
+        <p><strong>Analyte:</strong> {item.analyte_name}</p>
+        <p><strong>Method:</strong> {item.method_name}</p>
+        <p><strong>Turnaround:</strong> {item.turnaround_time}</p>
+        <p><strong>Quantity:</strong> {item.required_quantity}</p>
+        <p><strong>Price:</strong> ${parseFloat(item.price).toFixed(2)}</p>
+        {item.customer_comment && <p><strong>Comments:</strong> {item.customer_comment}</p>}
+      </li>
+    ))}
+  </ul>
+) : (
+  <p className="text-gray-600 italic">No analytes listed for this order.</p>
+)}
+
+      <h2 className="text-xl font-semibold mb-3">Equipment Rental</h2>
+{order.equipment_items?.length > 0 ? (
+  <ul className="space-y-4">
+    {order.equipment_items.map((item, index) => (
+      <li key={index} className="p-4 border rounded-md">
+        <p><strong>Equipment:</strong> {item.equipment_name}</p>
+        <p><strong>Category:</strong> {item.category}</p>
+        <p><strong>Start Date:</strong> {item.start_date}</p>
+        <p><strong>Return Date:</strong> {item.return_date}</p>
+        <p><strong>Quantity:</strong> {item.quantity}</p>
+        <p><strong>Daily Cost:</strong> ${parseFloat(item.daily_cost).toFixed(2)}</p>
+      </li>
+    ))}
+  </ul>
+) : (
+  <p className="text-gray-600 italic">No rental equipment for this order.</p>
+)}
 
       <div className="mt-8 text-center">
         <button

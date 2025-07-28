@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use App\Models\OrderEquipment;
 
 class OrdersController extends Controller
 {
@@ -89,26 +90,30 @@ class OrdersController extends Controller
     //     }
     // }
 
-    public function createOrder(Request $request)
+public function createOrder(Request $request)
 {
-     \Log::info('[DEBUG] createOrder() route hit');
-    \Log::info('[DEBUG] auth()->check(): ' . (auth()->check() ? 'YES' : 'NO'));
-    \Log::info('[DEBUG] auth()->user():', [auth()->user()]);
-    \Log::info('[DEBUG] XSRF-TOKEN header:', [$request->header('X-XSRF-TOKEN')]);
-    \Log::info('[DEBUG] Cookies:', $request->cookies->all());
-    $order = $request->all();
+    \Log::info('[DEBUG] createOrder() route hit');
+    $data = $request->all();
 
-    // Validate the incoming JSON data
-    $validator = Validator::make($order, [
+    $validator = Validator::make($data, [
         'order.transaction_id' => 'required|integer|exists:transactions,transaction_id',
         'order.subtotal' => 'required|numeric',
+        'order.gst' => 'required|numeric',
         'order.total_amount' => 'required|numeric',
-        'order_details.*.turn_around_id' => 'required|integer',
+
+        'order_details.*.turn_around_id' => 'required|integer|exists:turn_around_times,turn_around_id',
         'order_details.*.price' => 'required|numeric',
-        'order_details.*.required_quantity' => 'required|integer|min:1',
-        'order_details.*.required_pumps' => 'nullable|integer|max:11',
-        'order_details.*.required_media' => 'nullable|integer|max:11',
-        'order_details.*.customer_comment' => 'nullable|string|max:255',
+        'order_details.*.required_quantity' => 'required|integer',
+        'order_details.*.required_pumps' => 'nullable|integer',
+        'order_details.*.required_media' => 'nullable|string',
+        'order_details.*.customer_comment' => 'nullable|string',
+
+        'rental_items.*.equipment_name' => 'required|string|max:255',
+        'rental_items.*.category' => 'required|string|max:255',
+        'rental_items.*.start_date' => 'required|date',
+        'rental_items.*.return_date' => 'required|date',
+        'rental_items.*.quantity' => 'required|integer|min:1',
+        'rental_items.*.daily_cost' => 'required|numeric|min:0',
     ]);
 
     if ($validator->fails()) {
@@ -118,26 +123,47 @@ class OrdersController extends Controller
     try {
         \DB::beginTransaction();
 
-        // Create order
-        $orderRecord = new Orders();
-        $orderRecord->transaction_id = $order['order']['transaction_id'];
-        $orderRecord->total_amount = $order['order']['total_amount'];
-        $orderRecord->subtotal = $order['order']['subtotal'];
-        $orderRecord->save();
+        $order = new Orders();
+        $order->transaction_id = $data['order']['transaction_id'];
+        $order->subtotal = $data['order']['subtotal'];
+        $order->gst = $data['order']['gst'];
+        $order->total_amount = $data['order']['total_amount'];
+        $order->order_date = now();
+        $order->is_active = 1;
+        $order->save();
 
-        $order_id = $orderRecord->order_id;
+        $order_id = $order->order_id;
 
-        // Save order details
-        foreach ($order['order_details'] as $detail) {
-            $orderDetail = new OrderDetails();
-            $orderDetail->order_id = $order_id;
-            $orderDetail->turn_around_id = $detail['turn_around_id'];
-            $orderDetail->price = $detail['price'];
-            $orderDetail->quantity = $detail['required_quantity'];
-            $orderDetail->quantity_pumps = $detail['required_pumps'] ?? 0;
-            $orderDetail->quantity_media = $detail['required_media'] ?? 0;
-            $orderDetail->comments = $detail['customer_comment'];
-            $orderDetail->save();
+        // Save analyte-based order_details
+        if (!empty($data['order_details'])) {
+            foreach ($data['order_details'] as $detail) {
+                DB::table('order_details')->insert([
+                    'order_id' => $order_id,
+                    'turn_around_id' => $detail['turn_around_id'],
+                    'price' => $detail['price'],
+                    'required_quantity' => $detail['required_quantity'],
+                    'required_pumps' => $detail['required_pumps'] ?? null,
+                    'required_media' => $detail['required_media'] ?? null,
+                    'customer_comment' => $detail['customer_comment'] ?? null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        // Save equipment rental items
+        if (!empty($data['rental_items'])) {
+            foreach ($data['rental_items'] as $item) {
+                OrderEquipment::create([
+                    'order_id' => $order_id,
+                    'equipment_name' => $item['equipment_name'],
+                    'category' => $item['category'],
+                    'start_date' => $item['start_date'],
+                    'return_date' => $item['return_date'],
+                    'quantity' => $item['quantity'],
+                    'daily_cost' => $item['daily_cost'],
+                ]);
+            }
         }
 
         \DB::commit();
@@ -146,28 +172,47 @@ class OrdersController extends Controller
             'message' => 'Order created successfully',
             'order_id' => $order_id,
         ], 201);
+
     } catch (\Exception $e) {
         \DB::rollback();
-        return response()->json(['message' => 'Failed to create order', 'error' => $e->getMessage()], 500);
+        \Log::error('[ERROR] createOrder() failed', ['error' => $e->getMessage()]);
+        return response()->json([
+            'message' => 'Failed to create order',
+            'error' => $e->getMessage(),
+        ], 500);
     }
 }
 
     // Search for a specific order by order_id
     // search by company name and date
-    public function getOrderByOrderId($order_id)
-    {
-        if(!is_numeric($order_id) || $order_id < 1){
-            return response()->json(['message'=>'Please enter a valid order id'],400);
-        }
-
-        $order = Orders::find($order_id);
-
-        if (!$order) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        return response()->json($order);
+  public function getOrderByOrderId($order_id)
+{
+    if (!is_numeric($order_id) || $order_id < 1) {
+        return response()->json(['message' => 'Please enter a valid order id'], 400);
     }
+
+    $order = Orders::with('equipmentItems')->find($order_id);
+
+    if (!$order) {
+        return response()->json(['message' => 'Order not found'], 404);
+    }
+
+    return response()->json([
+        'order_id' => $order->order_id,
+        'transaction_id' => $order->transaction_id,
+        'account_id' => $order->account_id,
+        'order_date' => $order->order_date,
+        'subtotal' => $order->subtotal,
+        'gst' => $order->gst,
+        'total_amount' => $order->total_amount,
+        'is_active' => $order->is_active,
+        'created_at' => $order->created_at,
+        'updated_at' => $order->updated_at,
+
+        // Include all related rental equipment
+        'equipment_items' => $order->equipmentItems,
+    ]);
+}
 
     public function searchOrderTool($seachValue)
     {
@@ -280,27 +325,30 @@ class OrdersController extends Controller
     }
 
     //Get the order with its details passing order id
-    public function getOrderWithDetails($order_id)
+  public function getOrderWithDetails($order_id)
 {
     if (!is_numeric($order_id) || $order_id < 1) {
         return response()->json(['message' => 'Invalid order ID'], 400);
     }
 
-    $order = DB::table('orders')
-        ->where('order_id', $order_id)
-        ->first();
+    $order = DB::table('orders')->where('order_id', $order_id)->first();
 
     if (!$order) {
         return response()->json(['message' => 'Order not found'], 404);
     }
 
+    $equipment = DB::table('order_equipment')
+        ->select('equipment_name', 'category', 'start_date', 'return_date', 'quantity', 'daily_cost')
+        ->where('order_id', $order_id)
+        ->get();
+
     $details = DB::table('order_details as o')
         ->select(
             'o.price',
-            'o.quantity',
-            'o.quantity_pumps',
-            'o.quantity_media',
-            'o.comments',
+            'o.required_quantity',
+            'o.required_pumps',
+            'o.required_media',
+            'o.customer_comment',
             't.turnaround_time',
             'm.method_name',
             'm.media',
@@ -317,7 +365,8 @@ class OrdersController extends Controller
         'order_date' => $order->order_date,
         'subtotal' => $order->subtotal,
         'payment_status' => $order->payment_status ?? 'pending',
-        'details' => $details
+        'details' => $details,
+        'equipment_items' => $equipment,
     ]);
 }
 

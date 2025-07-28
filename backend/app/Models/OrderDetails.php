@@ -4,42 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Methods;
 
 class OrderDetails extends Model
 {
     use HasFactory;
 
-       /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'order_details'; // Your admin table name
-
+    protected $table = 'order_details';
+    public $timestamps = true;
 
     protected $fillable = [
-        'method_id',
         'order_id',
+        'turn_around_id',
         'price',
-        'quantity',
-        'quantity_pumps',
-        'comments',
+        'required_quantity',
+        'required_pumps',
+        'required_media',
+        'customer_comment',
     ];
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
 
-    public function method()
+    public function orders()
     {
-        return $this->belongsTo(Methods::class, 'method_id', 'method_id');
-    }
-
-    public function orders() {
         return $this->belongsTo(Orders::class, 'order_id', 'order_id');
     }
 
+    public function turnAround()
+    {
+        return $this->belongsTo(TurnAroundTime::class, 'turn_around_id', 'turn_around_id');
+    }
 }
