@@ -7,44 +7,48 @@ import { LoadingIcon } from "@/app/components/loading/LoadingIcon";
 import { ErrorMessage } from "@/app/components/basic/ErrorMessage";
 import { GeneralMessage } from "@/app/components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function OrderDetailsPage({ params }) {
-  const [order_details, setOrderDetails] = useState([]);
+  const [order, setOrder] = useState(null);
+  const [analytes, setAnalytes] = useState([]);
+  const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchOrderDetails = async () => {
-    try {
+  useEffect(() => {
+    const fetchData = async () => {
       if (isTokenExpired()) {
         window.location.href = "/admin-login";
         return;
       }
 
-      const response = await fetch(
-        //`http://localhost:80/api/orderdetails/${params.order_id}`,
-        `${baseUrl}/api/orderdetails/${params.order_id}`,
-        {
-          method: "POST",
+      try {
+        const res = await fetch(`${baseUrl}/api/orders/full/${params.order_id}`, {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        }
-      );
-      const data = await response.json();
-      setOrderDetails(data);
-      setLoading(false);
-    } catch (error) {
-      setError(error);
-      setLoading(false);
-    }
-  };
+        });
 
-  useEffect(() => {
-    if (params.order_id) {
-      fetchOrderDetails();
-    }
+        if (!res.ok) {
+          throw new Error(`Failed to fetch: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setOrder(data);
+        setAnalytes(data.details || []);
+        setEquipment(data.equipment_items || []);
+      } catch (err) {
+        setError(err.message || "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [params.order_id]);
 
   return (
@@ -58,17 +62,44 @@ function OrderDetailsPage({ params }) {
           <LoadingIcon />
         ) : error ? (
           <ErrorMessage error={error} />
-        ) : order_details.length > 0 ? (
-          <ul>
-            {order_details.map((orderDetailData, index) => (
-              <OrderDetailsListItem
-                key={`${orderDetailData.order_id}-${index}`}
-                orderDetail={orderDetailData}
-              />
-            ))}
-          </ul>
         ) : (
-          <GeneralMessage message={`No Order Details Found`} />
+          <>
+            {analytes.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-xl font-bold mb-2">Analyte Details</h2>
+                <ul>
+                  {analytes.map((detail, index) => (
+                    <OrderDetailsListItem
+                      key={`analyte-${index}`}
+                      orderDetail={detail}
+                    />
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {equipment.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold mb-2">Equipment Rentals</h2>
+                <ul>
+                  {equipment.map((item, index) => (
+                    <li key={`equipment-${index}`} className="p-4 border rounded-md mb-4 shadow-sm bg-white">
+                      <p><strong>Equipment:</strong> {item.equipment_name}</p>
+                      <p><strong>Category:</strong> {item.category}</p>
+                      <p><strong>Start Date:</strong> {item.start_date}</p>
+                      <p><strong>Return Date:</strong> {item.return_date}</p>
+                      <p><strong>Quantity:</strong> {item.quantity}</p>
+                      <p><strong>Daily Cost:</strong> ${item.daily_cost}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {analytes.length === 0 && equipment.length === 0 && (
+              <GeneralMessage message="No Order Details Found" />
+            )}
+          </>
         )}
       </section>
     </div>

@@ -26,10 +26,10 @@ function OrdersListItem({ order, fetchOrders }) {
     currency: "CAD",
   }).format(order.subtotal);
 
-  const formattedTotal = new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-  }).format(order.total_amount);
+ const formattedTotal = new Intl.NumberFormat("en-CA", {
+  style: "currency",
+  currency: "CAD",
+}).format(order.total_amount ?? 0); // fallback to 0 if nothing
 
   return (
     <BaseListItem>
@@ -54,12 +54,9 @@ function OrdersListItem({ order, fetchOrders }) {
 
         <div className="text-xl font-semibold mb-2 w-full flex justify-between">
           <div className="flex flex-col gap-2">
-            <Link
-              className="hover:underline"
-              href={`/manage-accounts/${order.company_id}`}
-            >
-              {`${order.company_name}`}
-            </Link>
+         <Link href={`/manage-accounts/${order.company_id}`}>
+  {order.company_name || "N/A"}
+</Link>
             <a
               className="font-normal hover:underline"
               href={`tel:${order.company_phone}`}
