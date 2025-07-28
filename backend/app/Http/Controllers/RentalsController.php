@@ -367,25 +367,54 @@ class RentalsController extends Controller
         }
     }
 
-    public function getEquipmentSerialIdsWithStatus($equipment_id)
-    {
-        try {
+    // public function getEquipmentSerialIdsWithStatus($equipment_id)
+    // {
+    //     try {
         
-            $equipmentSerials = DB::table('equipment_details')
-                ->join('equipment', 'equipment_details.equipment_id', '=', 'equipment.equipment_id')
-                ->where('equipment_details.equipment_id', $equipment_id)
-                ->select('equipment_details.serial_id', 'equipment_details.status', 'equipment.equipment_name', 'equipment_details.serial_number') // Make sure serial_number is included
-                ->get();
+    //         $equipmentSerials = DB::table('equipment_details')
+    //             ->join('equipment', 'equipment_details.equipment_id', '=', 'equipment.equipment_id')
+    //             ->where('equipment_details.equipment_id', $equipment_id)
+    //             ->select('equipment_details.serial_id', 'equipment_details.status', 'equipment.equipment_name', 'equipment_details.serial_number') // Make sure serial_number is included
+    //             ->get();
     
-            if ($equipmentSerials->isEmpty()) {
-                return response()->json(['message' => 'No serial numbers found for this equipment.'], 404);
-            }
+    //         if ($equipmentSerials->isEmpty()) {
+    //             return response()->json(['message' => 'No serial numbers found for this equipment.'], 404);
+    //         }
     
-            return response()->json($equipmentSerials, 200);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to fetch serial IDs', 'error' => $e->getMessage()], 500);
-        }
+    //         return response()->json($equipmentSerials, 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['message' => 'Failed to fetch serial IDs', 'error' => $e->getMessage()], 500);
+    //     }
+    // }
+
+    public function getEquipmentSerialIdsWithStatus($equipment_id)
+{
+    try {
+        $equipmentSerials = DB::table('equipment_details')
+            ->join('equipment', 'equipment_details.equipment_id', '=', 'equipment.equipment_id')
+            ->where('equipment_details.equipment_id', $equipment_id)
+            ->select(
+                'equipment_details.serial_id',
+                'equipment_details.status',
+                DB::raw("COALESCE(equipment.equipment_name, 'Unknown') as equipment_name"),
+                DB::raw("COALESCE(equipment_details.serial_number, 'Unknown') as serial_number")
+            )
+            ->get();
+
+        return response()->json($equipmentSerials, 200, [], JSON_UNESCAPED_UNICODE);
+    } catch (\Exception $e) {
+        \Log::error("Render failure on getEquipmentSerialIdsWithStatus", [
+            'equipment_id' => $equipment_id,
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'message' => 'Failed to fetch serial IDs',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
     
   }
 
