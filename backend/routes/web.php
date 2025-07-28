@@ -54,4 +54,11 @@ Route::get('/api/get-order', function (Request $request) {
     ]);
 });
 
+Route::get('/debug/equipment-columns', function () {
+    return [
+        'serial_number' => Schema::hasColumn('equipment_details', 'serial_number'),
+        'columns' => Schema::getColumnListing('equipment_details'),
+    ];
+});
+
 
