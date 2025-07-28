@@ -367,26 +367,6 @@ class RentalsController extends Controller
         }
     }
 
-    // public function getEquipmentSerialIdsWithStatus($equipment_id)
-    // {
-    //     try {
-        
-    //         $equipmentSerials = DB::table('equipment_details')
-    //             ->join('equipment', 'equipment_details.equipment_id', '=', 'equipment.equipment_id')
-    //             ->where('equipment_details.equipment_id', $equipment_id)
-    //             ->select('equipment_details.serial_id', 'equipment_details.status', 'equipment.equipment_name', 'equipment_details.serial_number') // Make sure serial_number is included
-    //             ->get();
-    
-    //         if ($equipmentSerials->isEmpty()) {
-    //             return response()->json(['message' => 'No serial numbers found for this equipment.'], 404);
-    //         }
-    
-    //         return response()->json($equipmentSerials, 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['message' => 'Failed to fetch serial IDs', 'error' => $e->getMessage()], 500);
-    //     }
-    // }
-
     public function getSerialsByEquipmentID($equipment_id)
 {
     try {
