@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { BaseListItem } from "../basic/BaseListItem";
 import { EquipmentUpdatePopup } from "./EquipmentUpdatePopup";
 import { EquipmentSerialStatusPopup } from "./EquipmentSerialList";
+import { ReturnEquipmentPopup } from "./ReturnEquipmentPopup";
 import BasePopup from "../basic/BasePopup";
 import { isTokenExpired } from "@/utils/session";
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -16,6 +17,7 @@ function EquipmentCRUDListItem({ equipment, fetchEquipment }) {
     const [serials, setSerials] = useState([]);
     const [calculatedAvailable, setCalculatedAvailable] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [isReturnPopupOpen, setIsReturnPopupOpen] = useState(false);
 
 
     useEffect(() => {
@@ -164,6 +166,13 @@ function EquipmentCRUDListItem({ equipment, fetchEquipment }) {
                 >
                     Delete
                 </button>
+                <button
+  className="bg-[#003883] p-2 rounded-md text-white shadow font-bold transition hover:scale-[101%]"
+  onClick={() => setIsReturnPopupOpen(true)}
+>
+  Return Equipment
+</button>
+
             </div>
 
             {/* Delete confirmation popup */}
@@ -195,7 +204,15 @@ function EquipmentCRUDListItem({ equipment, fetchEquipment }) {
                 onClose={handleSkuPopupClose}
                 serialList={serials}
             />
+
+            <ReturnEquipmentPopup
+  isOpen={isReturnPopupOpen}
+  onClose={() => setIsReturnPopupOpen(false)}
+  equipment={equipment}
+  onReturnSuccess={fetchEquipment}
+/>
         </BaseListItem>
+
     );
 }
 
