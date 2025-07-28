@@ -315,13 +315,9 @@ public function createOrder(Request $request)
 
     public function ExtremeOrderInfo()
 {
-    $user = Auth::user();
+    //disabling auth check here until admin guard is set up
 
-    if (strpos($user, 'admin') === false) {
-        return response()->json(['message' => 'You are not authorized to view this page'], 401);
-    }
-
-    $orders = DB::table('orders')
+     $orders = DB::table('orders')
         ->join('transactions', 'orders.transaction_id', '=', 'transactions.transaction_id')
         ->join('accounts', 'accounts.account_id', '=', 'transactions.account_id')
         ->join('companies', 'companies.company_id', '=', 'accounts.company_id')
