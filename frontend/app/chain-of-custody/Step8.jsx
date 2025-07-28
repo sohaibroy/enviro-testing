@@ -74,8 +74,7 @@ export default function Step8({ onBack, onStepChange, onSubmit }) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-  //handle for order submission with confiramtion dialogue
-const handleFinalSubmit = async () => {
+ const handleFinalSubmit = async () => {
   if (selections.length === 0 && cartItems.length === 0) {
     alert('You must select at least one analyte or equipment item.');
     return;
@@ -87,22 +86,21 @@ const handleFinalSubmit = async () => {
   console.log('[DEBUG] Order submission started');
 
   try {
-    // Step 1: Get CSRF cookie
+    // Step 1: Get CSRF cookie (for transaction endpoint only)
     console.log('[DEBUG] Fetching CSRF cookie...');
     const csrfRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sanctum/csrf-cookie`, {
       credentials: 'include',
     });
     console.log(`[DEBUG] CSRF cookie response: ${csrfRes.status}`);
 
-    // Step 2: Extract XSRF token
-    const xsrfToken = getXsrfTokenFromCookie();
+    // Step 2: Try to get token (only for transaction POST if needed)
+    const xsrfToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('XSRF-TOKEN='))
+      ?.split('=')[1];
     console.log('[DEBUG] XSRF token:', xsrfToken);
 
-    if (!xsrfToken) {
-      throw new Error('[ERROR] XSRF-TOKEN not found in cookies');
-    }
-
-    // Step 3: Get user info
+    // Step 3: Load user
     const userJson = sessionStorage.getItem('user');
     const user = userJson ? JSON.parse(userJson) : null;
     console.log('[DEBUG] Loaded user from sessionStorage:', user);
@@ -141,7 +139,7 @@ const handleFinalSubmit = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': xsrfToken,
+        ...(xsrfToken && { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken) }),
       },
       credentials: 'include',
       body: JSON.stringify(transactionPayload),
@@ -160,7 +158,7 @@ const handleFinalSubmit = async () => {
     sessionStorage.setItem('transactionId', transactionId);
     console.log('[DEBUG] Transaction ID saved:', transactionId);
 
-    // Step 6: Validate turnaround structure
+    // Step 6: Validate turnaround time
     if (selections.some((s) => typeof s.turnaround !== 'object' || !s.turnaround.id)) {
       alert('Please ensure all analytes have a valid turnaround time selected.');
       return;
@@ -185,12 +183,11 @@ const handleFinalSubmit = async () => {
     };
     console.log('[DEBUG] Order payload:', orderPayload);
 
-    // Step 8: Submit order
+    // Step 8: Submit order (no CSRF token required)
     const orderRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': xsrfToken,
       },
       credentials: 'include',
       body: JSON.stringify(orderPayload),
