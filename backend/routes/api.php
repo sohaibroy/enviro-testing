@@ -41,6 +41,9 @@ use App\Http\Controllers\ReturnEquipmentController;
 |
 */
 
+//Extreme Route Order  
+Route::get('/orders', [OrdersController::class, 'ExtremeOrderInfo']);
+
 //Eqipment Return Route
 Route::post('/equipment/return', [ReturnEquipmentController::class, 'returnEquipment']);
 
@@ -156,7 +159,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('priceoverride/reset/{company_id}', [PriceOverRideController::class, 'resetCustomerPricing']);//phpunit works
 
     // Orders
-    Route::get('/orders', [OrdersController::class, 'ExtremeOrderInfo']); // phpunit works
+    //Route::get('/orders', [OrdersController::class, 'ExtremeOrderInfo']); // phpunit works
     Route::put('/order/update/{order_id}', [OrdersController::class, 'updateOrders']); //---cant get phpunit to work
 
     // Order Details
