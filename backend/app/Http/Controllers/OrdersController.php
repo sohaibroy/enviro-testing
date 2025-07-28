@@ -154,6 +154,7 @@ public function createOrder(Request $request)
         // Save equipment rental items
         if (!empty($data['rental_items'])) {
             foreach ($data['rental_items'] as $item) {
+                // 1. Save the rental record
                 OrderEquipment::create([
                     'order_id' => $order_id,
                     'equipment_name' => $item['equipment_name'],
@@ -163,6 +164,29 @@ public function createOrder(Request $request)
                     'quantity' => $item['quantity'],
                     'daily_cost' => $item['daily_cost'],
                 ]);
+
+                // 2. Update status of rented serials
+                $equipmentId = DB::table('equipment')
+                    ->where('equipment_name', $item['equipment_name'])
+                    ->value('equipment_id');
+
+                if ($equipmentId) {
+                    $availableSerials = DB::table('equipment_details')
+                        ->where('equipment_id', $equipmentId)
+                        ->where('status', 'available')
+                        ->limit($item['quantity'])
+                        ->pluck('serial_id');
+
+                    if ($availableSerials->count() < $item['quantity']) {
+                        throw new \Exception("Not enough available units for equipment: {$item['equipment_name']}");
+                    }
+
+                    DB::table('equipment_details')
+                        ->whereIn('serial_id', $availableSerials)
+                        ->update(['status' => 'rented']);
+                } else {
+                    \Log::warning("[WARN] No equipment_id found for equipment_name: {$item['equipment_name']}");
+                }
             }
         }
 
