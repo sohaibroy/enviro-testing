@@ -17,19 +17,19 @@ function OrdersListItem({ order, fetchOrders }) {
   );
 
   const formattedGST = new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-  }).format(order.gst);
+  style: "currency",
+  currency: "CAD",
+}).format(order.gst ?? 0);
 
   const formattedSubtotal = new Intl.NumberFormat("en-CA", {
     style: "currency",
     currency: "CAD",
   }).format(order.subtotal);
 
- const formattedTotal = new Intl.NumberFormat("en-CA", {
+const formattedTotal = new Intl.NumberFormat("en-CA", {
   style: "currency",
   currency: "CAD",
-}).format(order.total_amount ?? 0); // fallback to 0 if nothing
+}).format(order.total_amount ?? 0);
 
   return (
     <BaseListItem>
@@ -74,7 +74,9 @@ function OrdersListItem({ order, fetchOrders }) {
             </a>
           </div>
           <div className="flex flex-col gap-2 text-sm">
-            <p className="font-normal text-end">{`${order.first_name} ${order.last_name}`}</p>
+            <p className="font-normal text-end">
+  {`${order.first_name ?? "Unknown"} ${order.last_name ?? ""}`}
+</p>
             <a
               className="font-normal text-end hover:underline"
               href={`tel:${order.phone_number}`}
