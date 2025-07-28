@@ -28,6 +28,7 @@ use App\Http\Controllers\ChainOfCustodyController;
 use App\Http\Controllers\MailController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\MonerisController;
+use App\Http\Controllers\ReturnEquipmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +40,9 @@ use App\Http\Controllers\MonerisController;
 | be assigned to the "api" middleware group.
 |
 */
+
+//Eqipment Return Route
+Route::post('/equipment/return', [ReturnEquipmentController::class, 'returnEquipment']);
 
 //Moneris Route
 Route::post('/api/moneris/checkout', [MonerisController::class, 'startCheckout']);
