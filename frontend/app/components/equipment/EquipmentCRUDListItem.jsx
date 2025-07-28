@@ -35,10 +35,11 @@ function EquipmentCRUDListItem({ equipment, fetchEquipment }) {
                 //const res = await fetch(`http://localhost:80/api/public/equipment/${equipment.equipment_id}/serials`);
                 const res = await fetch(`${baseUrl}/api/public/equipment/${equipment.equipment_id}/serials`);
 
-                if (!res.ok) throw new Error("Failed to fetch related serials");
-
-                const data = await res.json();
-                setSerials(data);
+if (!res.ok) {
+  const text = await res.text();
+  console.error("Serial fetch error:", res.status, text);
+  throw new Error(`Failed to fetch related serials (status ${res.status})`);
+}
                 calculateAvailableSerials(data);
             } catch (err) {
                 console.error("Failed to load serial list:", err);
