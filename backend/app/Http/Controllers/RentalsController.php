@@ -367,7 +367,7 @@ class RentalsController extends Controller
         }
     }
 
-    public function getSerialsByEquipmentID($equipment_id)
+    public function getEquipmentSerialIdsWithStatus($equipment_id)
 {
     try {
         $serials = DB::table('equipment_details')
