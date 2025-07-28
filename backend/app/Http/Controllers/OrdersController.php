@@ -313,33 +313,38 @@ public function createOrder(Request $request)
     }
 
 
-    public function ExtremeOrderInfo()
+//     public function ExtremeOrderInfo()
+// {
+//     //disabling auth check here until admin guard is set up
+
+//      $orders = DB::table('orders')
+//         ->join('transactions', 'orders.transaction_id', '=', 'transactions.transaction_id')
+//         ->join('accounts', 'accounts.account_id', '=', 'transactions.account_id')
+//         ->join('companies', 'companies.company_id', '=', 'accounts.company_id')
+//         ->select(
+//             'orders.order_id',
+//             'orders.order_date',
+//             'orders.subtotal',
+//             'orders.gst',
+//             'orders.total_amount',
+//             'orders.is_active',
+//             'accounts.first_name',
+//             'accounts.last_name',
+//             'accounts.email',
+//             'accounts.phone_number',
+//             'companies.company_id',
+//             'companies.company_name',
+//             'companies.address',
+//             'companies.company_phone'
+//         )
+//         ->get();
+
+//     return response()->json($orders);
+// }
+
+public function ExtremeOrderInfo()
 {
-    //disabling auth check here until admin guard is set up
-
-     $orders = DB::table('orders')
-        ->join('transactions', 'orders.transaction_id', '=', 'transactions.transaction_id')
-        ->join('accounts', 'accounts.account_id', '=', 'transactions.account_id')
-        ->join('companies', 'companies.company_id', '=', 'accounts.company_id')
-        ->select(
-            'orders.order_id',
-            'orders.order_date',
-            'orders.subtotal',
-            'orders.gst',
-            'orders.total_amount',
-            'orders.is_active',
-            'accounts.first_name',
-            'accounts.last_name',
-            'accounts.email',
-            'accounts.phone_number',
-            'companies.company_id',
-            'companies.company_name',
-            'companies.address',
-            'companies.company_phone'
-        )
-        ->get();
-
-    return response()->json($orders);
+    return DB::table('orders')->get();
 }
 
     //Get the order with its details passing order id
