@@ -129,7 +129,7 @@ public function createOrder(Request $request)
         $order->gst = $data['order']['gst'];
         $order->total_amount = $data['order']['total_amount'];
         $order->order_date = now();
-        $order->is_active = 1;
+        $order->status = 0;
         $order->save();
 
         $order_id = $order->order_id;
@@ -229,7 +229,13 @@ public function createOrder(Request $request)
         'subtotal' => $order->subtotal,
         'gst' => $order->gst,
         'total_amount' => $order->total_amount,
-        'is_active' => $order->is_active,
+        'status' => $order->status,
+'status_label' => match ($order->status) {
+    0 => 'Not Started',
+    1 => 'In Process',
+    2 => 'Completed',
+    default => 'Unknown',
+},
         'created_at' => $order->created_at,
         'updated_at' => $order->updated_at,
 
@@ -289,21 +295,21 @@ public function createOrder(Request $request)
             return response()->json(['message'=>'Please enter a valid order id'],400);
         }
 
-        $validator = Validator::make($request->all(), [
-            'is_active' => 'required|in:0,1',
-        ]);
+       $validator = Validator::make($request->all(), [
+    'status' => 'required|in:0,1,2',
+]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }
 
-        $is_active = $request->input('is_active');
+$status = $request->input('status');
 
-        $affectedRows = DB::table('orders')
-            ->where('order_id', $order_id)
-            ->update([
-                'is_active' => $is_active
-            ]);
+$affectedRows = DB::table('orders')
+    ->where('order_id', $order_id)
+    ->update([
+        'status' => $status
+    ]);
 
         if ($affectedRows === 0) {
             return response()->json(['message' => 'Order not found'], 404);
@@ -321,21 +327,27 @@ public function ExtremeOrderInfo()
         ->leftJoin('accounts', 'transactions.account_id', '=', 'accounts.account_id')
         ->leftJoin('companies', 'accounts.company_id', '=', 'companies.company_id')
         ->select(
-            'orders.order_id',
-            'orders.order_date',
-            'orders.subtotal',
-            'orders.gst',
-            'orders.total_amount',
-            'orders.is_active',
-            'accounts.first_name',
-            'accounts.last_name',
-            'accounts.email',
-            'accounts.phone_number',
-            'companies.company_id',
-            'companies.company_name',
-            'companies.address',
-            'companies.company_phone'
-        )
+    'orders.order_id',
+    'orders.order_date',
+    'orders.subtotal',
+    'orders.gst',
+    'orders.total_amount',
+    'orders.status',
+    DB::raw("CASE
+        WHEN orders.status = 0 THEN 'Not Started'
+        WHEN orders.status = 1 THEN 'In Process'
+        WHEN orders.status = 2 THEN 'Completed'
+        ELSE 'Unknown'
+    END AS status_label"),
+    'accounts.first_name',
+    'accounts.last_name',
+    'accounts.email',
+    'accounts.phone_number',
+    'companies.company_id',
+    'companies.company_name',
+    'companies.address',
+    'companies.company_phone'
+)
         ->get();
 }
 

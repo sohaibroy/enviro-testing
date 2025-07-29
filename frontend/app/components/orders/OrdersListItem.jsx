@@ -35,12 +35,20 @@ const formattedTotal = new Intl.NumberFormat("en-CA", {
     <BaseListItem>
       <div className="flex flex-wrap max-w-[58rem] mr-[.5rem]">
         <p
-          className={`text-xl font-bold mb-2 w-full ${
-            order.is_active ? "text-green-500" : "text-red-500"
-          }`}
-        >
-          {order.is_active ? "Active" : "Inactive"}
-        </p>
+  className={`text-xl font-bold mb-2 w-full ${
+    order.status === 2
+      ? "text-green-600"
+      : order.status === 1
+      ? "text-yellow-500"
+      : "text-red-500"
+  }`}
+>
+  {order.status === 2
+    ? "Completed"
+    : order.status === 1
+    ? "In Process"
+    : "Not Started"}
+</p>
         <p className="text-xl font-semibold mb-2 w-1/2">
           <span className="font-normal mr-[.25rem]">Order #</span>
           {order.order_id}

@@ -14,6 +14,7 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'api/account/update/*', //disabling CSRF check for all update accounts
         'api/orders/create',
-        'api/equipment/return'
+        'api/equipment/return',
+        'api/order/update/*'
     ];
 }

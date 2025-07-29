@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import BasePopup from "../basic/BasePopup";
-import { RadioBoolInput } from "../basic/RadioBoolInput";
 import { isTokenExpired } from "@/utils/session";
-const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const OrderUpdatePopup = ({ order, isOpen, onClose, title }) => {
   if (!isOpen) return null;
 
   const [currentOrder, setOrder] = useState({
-    is_active: order.is_active !== null ? order.is_active : 1,
+    status: order.status !== null ? order.status : 0,
   });
+
+  const [loading, setLoading] = useState(false);
 
   const updateOrder = () => {
     if (isTokenExpired()) {
@@ -18,7 +19,8 @@ const OrderUpdatePopup = ({ order, isOpen, onClose, title }) => {
       return;
     }
 
-    //fetch(`http://localhost:80/api/order/update/${order.order_id}`, {
+    setLoading(true);
+
     fetch(`${baseUrl}/api/order/update/${order.order_id}`, {
       method: "PUT",
       headers: {
@@ -26,7 +28,7 @@ const OrderUpdatePopup = ({ order, isOpen, onClose, title }) => {
         Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
       },
       body: JSON.stringify({
-        is_active: currentOrder.is_active,
+        status: currentOrder.status,
       }),
     })
       .then((response) => {
@@ -41,6 +43,9 @@ const OrderUpdatePopup = ({ order, isOpen, onClose, title }) => {
       })
       .catch((error) => {
         console.error("Error:", error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
@@ -49,17 +54,50 @@ const OrderUpdatePopup = ({ order, isOpen, onClose, title }) => {
       isOpen={isOpen}
       onClose={onClose}
       title={title}
-      activityText="Update"
+      activityText={loading ? "Updating..." : "Update"}
       onActivityClicked={updateOrder}
     >
-      <form className="flex flex-wrap justify-between gap-y-4 min-w-[20rem]">
-        <RadioBoolInput
-          title="Status"
-          value={currentOrder.is_active}
-          onChange={(selectedValue) => {
-            setOrder({ ...currentOrder, is_active: selectedValue });
-          }}
-        />
+      <form className="flex flex-col gap-4">
+        <label className="text-lg font-semibold">Order Status</label>
+
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="order_status"
+            value={0}
+            checked={currentOrder.status === 0}
+            onChange={(e) =>
+              setOrder({ ...currentOrder, status: parseInt(e.target.value) })
+            }
+          />
+          Not Started
+        </label>
+
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="order_status"
+            value={1}
+            checked={currentOrder.status === 1}
+            onChange={(e) =>
+              setOrder({ ...currentOrder, status: parseInt(e.target.value) })
+            }
+          />
+          In Process
+        </label>
+
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="order_status"
+            value={2}
+            checked={currentOrder.status === 2}
+            onChange={(e) =>
+              setOrder({ ...currentOrder, status: parseInt(e.target.value) })
+            }
+          />
+          Completed
+        </label>
       </form>
     </BasePopup>
   );

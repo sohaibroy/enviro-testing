@@ -15,6 +15,7 @@ function ManageOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const fetchOrders = async () => {
     try {
@@ -87,6 +88,24 @@ function ManageOrders() {
             setSearchTerm={setSearchTerm}
           />
         </div>
+
+<div className="my-4 flex items-center gap-4">
+  <label htmlFor="status-filter" className="font-semibold">
+    Filter by Status:
+  </label>
+  <select
+    id="status-filter"
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+    className="border border-gray-300 rounded-md px-2 py-1"
+  >
+    <option value="">All</option>
+    <option value="0">Not Started</option>
+    <option value="1">In Process</option>
+    <option value="2">Completed</option>
+  </select>
+</div>
+
         <ul>
           {loading ? (
             <LoadingIcon />
@@ -94,13 +113,17 @@ function ManageOrders() {
             <ErrorMessage error={error} />
           ) : Array.isArray(orders) && orders.length > 0 ? (
             <ul>
-              {orders.map((orderData) => (
-                <OrdersListItem
-                  key={orderData.order_id}
-                  order={orderData}
-                  fetchOrders={fetchOrders}
-                />
-              ))}
+             {orders
+  .filter((order) =>
+    statusFilter === "" ? true : order.status === parseInt(statusFilter)
+  )
+  .map((orderData) => (
+    <OrdersListItem
+      key={orderData.order_id}
+      order={orderData}
+      fetchOrders={fetchOrders}
+    />
+))}
             </ul>
           ) : (
             <GeneralMessage message={`No Orders Found`} />
