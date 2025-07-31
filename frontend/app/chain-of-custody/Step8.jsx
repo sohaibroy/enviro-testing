@@ -74,19 +74,20 @@ useEffect(() => {
   console.log("🧰 Cart Items =", cartItems);
 
   try {
-    // Step 1: Get CSRF cookie
-    console.log("🔐 [1] Fetching CSRF cookie from:", `${baseUrl}/sanctum/csrf-cookie`);
-    const csrfRes = await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
+    // Step 1: Fetch CSRF cookie (optional)
+    console.log("🔐 [1] Fetching CSRF cookie...");
+    await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
       credentials: 'include',
     });
-    console.log("✅ [1] CSRF cookie response status:", csrfRes.status);
 
     const xsrfToken = document.cookie
       .split('; ')
       .find(row => row.startsWith('XSRF-TOKEN='))
       ?.split('=')[1];
 
-    if (!xsrfToken) throw new Error('❌ CSRF token not found in cookies');
+    if (!xsrfToken) {
+      console.warn("⚠️ CSRF token not found in cookies. Continuing with CSRF disabled (bypass must exist).");
+    }
 
     const userJson = sessionStorage.getItem('user');
     const user = userJson ? JSON.parse(userJson) : null;
@@ -115,7 +116,7 @@ useEffect(() => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': decodeURIComponent(xsrfToken),
+        ...(xsrfToken && { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken) }),
       },
       credentials: 'include',
       body: JSON.stringify(transactionPayload),
@@ -130,28 +131,28 @@ useEffect(() => {
     sessionStorage.setItem('transactionId', transactionId);
 
     // Step 3: Stripe Checkout
-   const stripePayload = {
-  amount: Math.round(total * 100),
-  transaction_id: transactionId,
-  user: {
-    first_name: user?.first_name ?? '',
-    last_name: user?.last_name ?? '',
-    email: user?.email ?? '',
-  },
-  analytes: selections.map(s => ({
-    analyte: s.analyte,
-    method: s.method,
-    turnaround_time_id: s.turnaround?.id ?? null,
-    price: s.price,
-  })),
-  equipment: cartItems.map(e => ({
-    equipment_id: e.EquipmentID,
-    start_date: e.StartDate,
-    return_date: e.ReturnDate,
-    quantity: e.Quantity,
-    daily_cost: e.DailyCost,
-  })),
-};
+    const stripePayload = {
+      amount: Math.round(total * 100),
+      transaction_id: transactionId,
+      user: {
+        first_name: user?.first_name ?? '',
+        last_name: user?.last_name ?? '',
+        email: user?.email ?? '',
+      },
+      analytes: selections.map(s => ({
+        analyte: s.analyte,
+        method: s.method,
+        turnaround_time_id: s.turnaround?.id ?? null,
+        price: s.price,
+      })),
+      equipment: cartItems.map(e => ({
+        equipment_id: e.EquipmentID,
+        start_date: e.StartDate,
+        return_date: e.ReturnDate,
+        quantity: e.Quantity,
+        daily_cost: e.DailyCost,
+      })),
+    };
 
     console.log("💳 [3] Creating Stripe session at:", `${baseUrl}/api/create-checkout-session`);
     console.log("📦 Stripe Payload:", stripePayload);
@@ -160,7 +161,7 @@ useEffect(() => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': decodeURIComponent(xsrfToken),
+        ...(xsrfToken && { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken) }),
       },
       credentials: 'include',
       body: JSON.stringify(stripePayload),
