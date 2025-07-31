@@ -68,14 +68,8 @@ useEffect(() => {
   setSubmitting(true);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-  console.log("🚀 Starting Order Submit Flow");
-  console.log("🌐 BASE URL =", baseUrl);
-  console.log("🧪 Selections =", selections);
-  console.log("🧰 Cart Items =", cartItems);
-
   try {
     // Step 1: Fetch CSRF cookie (optional)
-    console.log("🔐 [1] Fetching CSRF cookie...");
     await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
       credentials: 'include',
     });
@@ -84,10 +78,6 @@ useEffect(() => {
       .split('; ')
       .find(row => row.startsWith('XSRF-TOKEN='))
       ?.split('=')[1];
-
-    if (!xsrfToken) {
-      console.warn("⚠️ CSRF token not found in cookies. Continuing with CSRF disabled (bypass must exist).");
-    }
 
     const userJson = sessionStorage.getItem('user');
     const user = userJson ? JSON.parse(userJson) : null;
@@ -109,9 +99,6 @@ useEffect(() => {
       },
     };
 
-    console.log("💳 [2] Creating transaction at:", `${baseUrl}/api/transactions/create`);
-    console.log("📦 Transaction Payload:", transactionPayload);
-
     const transactionRes = await fetch(`${baseUrl}/api/transactions/create`, {
       method: 'POST',
       headers: {
@@ -122,12 +109,9 @@ useEffect(() => {
       body: JSON.stringify(transactionPayload),
     });
 
-    console.log("✅ [2] Transaction response status:", transactionRes.status);
     const transactionData = await transactionRes.json();
-    console.log("📥 [2] Transaction response body:", transactionData);
-
     const transactionId = transactionData.transaction_id;
-    if (!transactionId) throw new Error('❌ Missing transaction_id in response');
+    if (!transactionId) throw new Error('Missing transaction_id in response');
     sessionStorage.setItem('transactionId', transactionId);
 
     // Step 3: Stripe Checkout
@@ -154,9 +138,6 @@ useEffect(() => {
       })),
     };
 
-    console.log("💳 [3] Creating Stripe session at:", `${baseUrl}/api/create-checkout-session`);
-    console.log("📦 Stripe Payload:", stripePayload);
-
     const stripeRes = await fetch(`${baseUrl}/api/create-checkout-session`, {
       method: 'POST',
       headers: {
@@ -167,20 +148,14 @@ useEffect(() => {
       body: JSON.stringify(stripePayload),
     });
 
-    console.log("✅ [3] Stripe response status:", stripeRes.status);
     const stripeData = await stripeRes.json();
-    console.log("📥 [3] Stripe response body:", stripeData);
-
     if (!stripeData?.url) {
-      throw new Error('❌ Stripe session did not return a redirect URL.');
+      throw new Error('Stripe session did not return a redirect URL.');
     }
 
-    // Step 4: Redirect
-    console.log("🚀 [4] Redirecting to Stripe URL:", stripeData.url);
     window.location.href = stripeData.url;
 
   } catch (err) {
-    console.error('[ERROR] Order flow failed:', err);
     alert(err.message || 'Something went wrong while submitting the order.');
   }
 
