@@ -49,6 +49,18 @@ const formattedTotal = new Intl.NumberFormat("en-CA", {
     ? "In Process"
     : "Not Started"}
 </p>
+<p
+  className={`text-md font-semibold mb-4 w-full ${
+    order.payment_status === "paid"
+      ? "text-green-600"
+      : "text-orange-500"
+  }`}
+>
+  Payment Status:{" "}
+  {order.payment_status
+    ? order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)
+    : "Unpaid"}
+</p>
         <p className="text-xl font-semibold mb-2 w-1/2">
           <span className="font-normal mr-[.25rem]">Order #</span>
           {order.order_id}

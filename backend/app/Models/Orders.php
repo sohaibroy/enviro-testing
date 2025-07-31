@@ -13,14 +13,17 @@ class Orders extends Model
     protected $primaryKey = 'order_id';
     public $timestamps = false;
 
-    protected $fillable = [
-        'transaction_id',
-        'order_date',
-        'subtotal',
-        'gst',
-        'total_amount',
-        'is_active',
-    ];
+protected $fillable = [
+    'transaction_id',
+    'order_date',
+    'subtotal',
+    'gst',
+    'total_amount',
+    'status',
+    'payment_status',
+    'created_at',
+    'updated_at'
+];
 
     public function transactions()
     {

@@ -187,73 +187,64 @@ class EquipmentController extends Controller
 
 
     public function getAllEquipment(Request $request)
-    {
-        \Log::info('EquipmentController@getAllEquipment reached');
-        $accessToken = $request->bearerToken();
-        $user = null;
+{
 
-        if ($accessToken) {
-            $tokenModel = PersonalAccessToken::findToken($accessToken);
-            if ($tokenModel) {
-                $user = $tokenModel->tokenable;
-            }
-        }
+    $accessToken = $request->bearerToken();
+    $user = null;
 
-        \Log::info('Token:', ['token' => $accessToken]);
-        \Log::info('User:', ['user' => optional($user)->id]);
-
-        \Log::info('User loading equipment:', ['user' => optional($user)->account_id]);
-
-        //$companyId = $user ? $user->company_id : null;
-        $companyId = $user && property_exists($user, 'company_id') ? $user->company_id : null; //ADDED THIS FOR DEBUG
-
-        try {
-            // $equipment = DB::table('equipment')
-            //     ->leftjoin('equipment_values', 'equipment.equipment_id', '=', 'equipment_values.equipment_id')
-            //     ->leftjoin('equipment_attributes', 'equipment_values.attribute_id', '=', 'equipment_attributes.attribute_id')
-            //     ->leftjoin('equipment_types', 'equipment_attributes.equipment_type_id', '=', 'equipment_types.equipment_type_id')
-            //     ->where('equipment.is_active', 1)
-            //     ->select(
-            //         'equipment.*',
-            //         'equipment_types.equipment_type_id as type_id',
-            //         'equipment_types.equipment_type_name',
-            //         'equipment_attributes.attribute_id',
-            //         'equipment_attributes.attribute_name',
-            //         'equipment_values.attribute_value'
-            //     )   //COMMENTED THIS FOR TESTING
-       $equipment = DB::table('equipment')
-    ->join('equipment_types', 'equipment.type_id', '=', 'equipment_types.equipment_type_id')
-    ->leftJoin('equipment_values', 'equipment.equipment_id', '=', 'equipment_values.equipment_id')
-    ->leftJoin('equipment_attributes', 'equipment_values.attribute_id', '=', 'equipment_attributes.attribute_id')
-    ->select(
-        'equipment.*',
-        'equipment_types.equipment_type_id as type_id',
-        'equipment_types.equipment_type_name',
-        'equipment_attributes.attribute_id',
-        'equipment_attributes.attribute_name',
-        'equipment_values.attribute_value'
-    )
-    ->get()
-    ->map(function ($item) {
-        if ($item->image_path) {
-            $item->image_url = url('storage/equipment-images/' . $item->image_path);
-        } else {
-            $item->image_url = null;
-        }
-        return $item;
-    });
-
-            if ($equipment->isEmpty()) {
-                return response()->json(['message' => 'No active equipment found'], 404);
-            }
-
-            return response()->json($equipment, 200);
-
-        } catch (\Throwable $e) {
-            \Log::error('Failed to fetch equipment list', ['error' => $e->getMessage()]);
-            return response()->json(['message' => 'Failed to fetch equipment list'], 500);
+    if ($accessToken) {
+        $tokenModel = PersonalAccessToken::findToken($accessToken);
+        if ($tokenModel) {
+            $user = $tokenModel->tokenable;
         }
     }
+
+    $companyId = $user && property_exists($user, 'company_id') ? $user->company_id : null;
+
+    try {
+        $rawEquipment = DB::table('equipment')
+            ->join('equipment_types', 'equipment.type_id', '=', 'equipment_types.equipment_type_id')
+            ->leftJoin('equipment_values', 'equipment.equipment_id', '=', 'equipment_values.equipment_id')
+            ->leftJoin('equipment_attributes', 'equipment_values.attribute_id', '=', 'equipment_attributes.attribute_id')
+            ->select(
+                'equipment.equipment_id', //this has to be selected
+                'equipment.*',
+                'equipment_types.equipment_type_id as type_id',
+                'equipment_types.equipment_type_name',
+                'equipment_attributes.attribute_id',
+                'equipment_attributes.attribute_name',
+                'equipment_values.attribute_value'
+            )
+            ->get();
+
+        $equipmentWithCounts = $rawEquipment->map(function ($item) {
+            //Attach image URL
+            $item->image_url = $item->image_path
+                ? url('storage/equipment-images/' . $item->image_path)
+                : null;
+
+            //Dynamically count available serials
+            $item->available_quantity = DB::table('equipment_details')
+                ->where('equipment_id', $item->equipment_id)
+                ->where('status', 'available')
+                ->count();
+
+            //Log for verification
+            \Log::info("Available for {$item->equipment_name} (ID {$item->equipment_id}): {$item->available_quantity}");
+
+            return $item;
+        });
+
+        if ($equipmentWithCounts->isEmpty()) {
+            return response()->json(['message' => 'No active equipment found'], 404);
+        }
+
+        return response()->json($equipmentWithCounts, 200);
+
+    } catch (\Throwable $e) {
+        return response()->json(['message' => 'Failed to fetch equipment list'], 500);
+    }
+}
 
 
     public function deleteEquipment($equipment_id)

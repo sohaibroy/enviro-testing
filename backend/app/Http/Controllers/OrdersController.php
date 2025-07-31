@@ -333,6 +333,7 @@ public function ExtremeOrderInfo()
     'orders.gst',
     'orders.total_amount',
     'orders.status',
+    'orders.payment_status',
     DB::raw("CASE
         WHEN orders.status = 0 THEN 'Not Started'
         WHEN orders.status = 1 THEN 'In Process'

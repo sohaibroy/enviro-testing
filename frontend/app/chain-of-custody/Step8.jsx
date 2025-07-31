@@ -3,76 +3,59 @@
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Edit, Delete } from '@mui/icons-material';
-import RentalCart from '../components/equipment-rental/RentalCart';
-import { useRouter } from 'next/navigation'; //App Router
+import { useRouter } from 'next/navigation';
 
-export default function Step8({ onBack, onStepChange, onSubmit }) {
-
+export default function Step8({ onBack, onStepChange }) {
   const router = useRouter();
-
-  const [cartItems, setCartItems] = useState([]);
- 
-  useEffect(() => {
-  refreshCartItems();
-  }, []);
-
-  const refreshCartItems = () => {
-  const storedCart = JSON.parse(sessionStorage.getItem('rentalCart')) || [];
-  setCartItems(storedCart);
-  }; 
-
-   // React Hook Form context
   const { getValues, setValue } = useFormContext();
   const values = getValues();
-  // Selections from Step 6 (analyte method quantity turnaround page)
+
+  const [cartItems, setCartItems] = useState([]);
   const [selections, setSelections] = useState([]);
-  //Tracking load state during final submit
   const [submitting, setSubmitting] = useState(false);
 
-  // load the saved selections from session storage 
-  useEffect(() => {
-    const saved = sessionStorage.getItem('orderSelections');
-    if (saved) {
-      setSelections(JSON.parse(saved));
-    }
-  }, []);
-  
-    // Calculate total price for analytes
-    const analyteTotal = selections.reduce((sum, item) => {
-      return sum + (parseFloat(item.price) || 0);
-    }, 0);
+useEffect(() => {
+  refreshCartItems();
 
-   // Calculate total price for equipment rentals
-    const equipmentTotal = cartItems.reduce((sum, item) => {
-      const startDate = new Date(item.StartDate);
-      const endDate = new Date(item.ReturnDate);
-      //convert milliseconds to days
-      let rentalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-      rentalDays = rentalDays > 0 ? rentalDays : 1;
+  const saved = sessionStorage.getItem('orderSelections');
+  if (saved) {
+    setSelections(JSON.parse(saved));
+  }
 
-      return sum + (rentalDays * (item.DailyCost || 0) * (item.Quantity || 0));
-    }, 0);
+  // user info 
+  const userJson = sessionStorage.getItem('user');
+  const user = userJson ? JSON.parse(userJson) : null;
+  const formValues = getValues();
 
-  //Combined pricing
-  const analyteCount = selections.length;
-  const equipmentCount = values.equipment?.length || 0;
+  if (user) {
+    if (!formValues.firstName) setValue('firstName', user.first_name);
+    if (!formValues.lastName) setValue('lastName', user.last_name);
+    if (!formValues.email) setValue('email', user.email);
+    if (!formValues.phone) setValue('phone', user.phone_number);
+  }
+}, []);
 
-  //combined pricing
+  const refreshCartItems = () => {
+    const storedCart = JSON.parse(sessionStorage.getItem('rentalCart')) || [];
+    setCartItems(storedCart);
+  };
+
+  const analyteTotal = selections.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+  const equipmentTotal = cartItems.reduce((sum, item) => {
+    const startDate = new Date(item.StartDate);
+    const endDate = new Date(item.ReturnDate);
+    const rentalDays = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)));
+    return sum + (rentalDays * (item.DailyCost || 0) * (item.Quantity || 0));
+  }, 0);
+
   const subtotal = analyteTotal + equipmentTotal;
   const gst = subtotal * 0.05;
   const total = subtotal + gst;
 
-  //setting default order date and paument method in the form state
   const orderDate = values.orderDate || new Date().toLocaleDateString();
   setValue('orderDate', orderDate);
-
   const paymentMethod = values.paymentMethod || 'Credit Card';
   setValue('paymentMethod', paymentMethod);
-
-  function getXsrfTokenFromCookie() {
-  const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
 
  const handleFinalSubmit = async () => {
   if (selections.length === 0 && cartItems.length === 0) {
@@ -83,180 +66,133 @@ export default function Step8({ onBack, onStepChange, onSubmit }) {
   if (!confirm('Are you sure you want to submit this order?')) return;
 
   setSubmitting(true);
-  console.log('[DEBUG] Order submission started');
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  console.log("🚀 Starting Order Submit Flow");
+  console.log("🌐 BASE URL =", baseUrl);
+  console.log("🧪 Selections =", selections);
+  console.log("🧰 Cart Items =", cartItems);
 
   try {
-    // Step 1: Get CSRF cookie (for transaction endpoint only)
-    console.log('[DEBUG] Fetching CSRF cookie...');
-    const csrfRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sanctum/csrf-cookie`, {
+    // Step 1: Get CSRF cookie
+    console.log("🔐 [1] Fetching CSRF cookie from:", `${baseUrl}/sanctum/csrf-cookie`);
+    const csrfRes = await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
       credentials: 'include',
     });
-    console.log(`[DEBUG] CSRF cookie response: ${csrfRes.status}`);
+    console.log("✅ [1] CSRF cookie response status:", csrfRes.status);
 
-    // Step 2: Try to get token (only for transaction POST if needed)
     const xsrfToken = document.cookie
       .split('; ')
       .find(row => row.startsWith('XSRF-TOKEN='))
       ?.split('=')[1];
-    console.log('[DEBUG] XSRF token:', xsrfToken);
 
-    // Step 3: Load user
+    if (!xsrfToken) throw new Error('❌ CSRF token not found in cookies');
+
     const userJson = sessionStorage.getItem('user');
     const user = userJson ? JSON.parse(userJson) : null;
-    console.log('[DEBUG] Loaded user from sessionStorage:', user);
 
-    const isGuest = true;
-
-    // Step 4: Build transaction payload
+    // Step 2: Create Transaction
     const transactionPayload = {
-      transaction: {
-        subtotal,
-        gst,
-        total_amount: total,
+      transaction: { subtotal, gst, total_amount: total },
+      account: {
+        first_name: user?.first_name ?? '',
+        last_name: user?.last_name ?? '',
+        email: user?.email ?? '',
+        phone_number: user?.phone_number ?? '',
+        street_address: user?.street_address ?? '',
+        city: user?.city ?? '',
+        province: user?.province ?? '',
+        postal_code: user?.postal_code ?? '',
+        country: user?.country ?? '',
+        cardholder_name: `${user?.first_name ?? ''} ${user?.last_name ?? ''}`,
       },
-      ...(isGuest && {
-        account: {
-          first_name: user?.first_name ?? '',
-          last_name: user?.last_name ?? '',
-          email: user?.email ?? '',
-          phone_number: user?.phone_number ?? '',
-          street_address: user?.street_address ?? '',
-          city: user?.city ?? '',
-          province: user?.province ?? '',
-          postal_code: user?.postal_code ?? '',
-          country: user?.country ?? '',
-          cardholder_name: `${user?.first_name ?? ''} ${user?.last_name ?? ''}`,
-          credit_card: null,
-          expiry_month: '',
-          expiry_year: '',
-        },
-      }),
     };
-    console.log('[DEBUG] Transaction payload:', transactionPayload);
 
-    // Step 5: Submit transaction
-    const transactionRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transactions/create`, {
+    console.log("💳 [2] Creating transaction at:", `${baseUrl}/api/transactions/create`);
+    console.log("📦 Transaction Payload:", transactionPayload);
+
+    const transactionRes = await fetch(`${baseUrl}/api/transactions/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(xsrfToken && { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken) }),
+        'X-XSRF-TOKEN': decodeURIComponent(xsrfToken),
       },
       credentials: 'include',
       body: JSON.stringify(transactionPayload),
     });
 
-    const transactionText = await transactionRes.text();
-    console.log(`[DEBUG] Transaction response status: ${transactionRes.status}`);
-    console.log('[DEBUG] Transaction response body:', transactionText);
+    console.log("✅ [2] Transaction response status:", transactionRes.status);
+    const transactionData = await transactionRes.json();
+    console.log("📥 [2] Transaction response body:", transactionData);
 
-    if (!transactionRes.ok || !transactionText.includes('transaction_id')) {
-      throw new Error('Transaction creation failed');
-    }
-
-    const transactionData = JSON.parse(transactionText);
     const transactionId = transactionData.transaction_id;
+    if (!transactionId) throw new Error('❌ Missing transaction_id in response');
     sessionStorage.setItem('transactionId', transactionId);
-    console.log('[DEBUG] Transaction ID saved:', transactionId);
 
-    // Step 6: Validate turnaround time
-    if (selections.some((s) => typeof s.turnaround !== 'object' || !s.turnaround.id)) {
-      alert('Please ensure all analytes have a valid turnaround time selected.');
-      return;
-    }
-
-    // Step 7: Build order payload
-    const orderPayload = {
-  order: {
-    transaction_id: transactionId,
-    subtotal,
-    gst,
-    total_amount: total,
+    // Step 3: Stripe Checkout
+   const stripePayload = {
+  amount: Math.round(total * 100),
+  transaction_id: transactionId,
+  user: {
+    first_name: user?.first_name ?? '',
+    last_name: user?.last_name ?? '',
+    email: user?.email ?? '',
   },
-  order_details: selections.map((s) => ({
-    turn_around_id: typeof s.turnaround === 'object' ? s.turnaround.id : undefined,
-    price: Number(s.price) || 0,
-    required_quantity: s.quantity ?? 1,
-    required_pumps: s.pumps ?? 0,
-    required_media: s.media ?? '',
-    customer_comment: s.comment ?? '',
+  analytes: selections.map(s => ({
+    analyte: s.analyte,
+    method: s.method,
+    turnaround_time_id: s.turnaround?.id ?? null,
+    price: s.price,
   })),
- rental_items: cartItems.map((item) => {
-    const category = item.Category ?? item.EquipmentCategory ?? item.category ?? '';
-    console.log('[DEBUG] rental item category:', category);
-    return {
-      equipment_name: item.EquipmentName,
-      category,
-      start_date: item.StartDate,
-      return_date: item.ReturnDate,
-      quantity: item.Quantity,
-      daily_cost: item.DailyCost,
-    };
-  }),
+  equipment: cartItems.map(e => ({
+    equipment_id: e.EquipmentID,
+    start_date: e.StartDate,
+    return_date: e.ReturnDate,
+    quantity: e.Quantity,
+    daily_cost: e.DailyCost,
+  })),
 };
-    console.log('[DEBUG] Order payload:', orderPayload);
 
-    // Step 8: Submit order (no CSRF token required)
-    const orderRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/create`, {
+    console.log("💳 [3] Creating Stripe session at:", `${baseUrl}/api/create-checkout-session`);
+    console.log("📦 Stripe Payload:", stripePayload);
+
+    const stripeRes = await fetch(`${baseUrl}/api/create-checkout-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': decodeURIComponent(xsrfToken),
       },
       credentials: 'include',
-      body: JSON.stringify(orderPayload),
+      body: JSON.stringify(stripePayload),
     });
 
-    const orderText = await orderRes.text();
-    console.log(`[DEBUG] Order response status: ${orderRes.status}`);
-    console.log('[DEBUG] Order response body:', orderText);
+    console.log("✅ [3] Stripe response status:", stripeRes.status);
+    const stripeData = await stripeRes.json();
+    console.log("📥 [3] Stripe response body:", stripeData);
 
-    if (!orderRes.ok || !orderText.includes('order_id')) {
-      console.error('[ERROR] Order failed or did not return expected data');
-      alert('Order submission failed.');
-      return;
+    if (!stripeData?.url) {
+      throw new Error('❌ Stripe session did not return a redirect URL.');
     }
 
-    const orderData = JSON.parse(orderText);
-    sessionStorage.setItem('lastOrderId', orderData.order_id);
-    console.log('[DEBUG] Order ID saved:', orderData.order_id);
+    // Step 4: Redirect
+    console.log("🚀 [4] Redirecting to Stripe URL:", stripeData.url);
+    window.location.href = stripeData.url;
 
-    // Step 9: Clean up and redirect
-    sessionStorage.removeItem('orderSelections');
-    sessionStorage.removeItem('rentalCart');
-    sessionStorage.removeItem('editIndex');
-    sessionStorage.removeItem('selectedAnalyte');
-    sessionStorage.removeItem('selectedEquipment');
-
-    console.log('[DEBUG] Order completed. Redirecting...');
-    router.push('/order-confirmation');
-  } catch (error) {
-    console.error('Order submission error:', error);
-    alert('Something went wrong.');
+  } catch (err) {
+    console.error('[ERROR] Order flow failed:', err);
+    alert(err.message || 'Something went wrong while submitting the order.');
   }
 
   setSubmitting(false);
-  console.log('[DEBUG] Final submit finished.');
 };
 
-  //handle for deleting one analyte information and also browser confirmation pops up for confirmation
-const handleDelete = (indexToDelete) => {
-  const confirmed = confirm("Are you sure you want to delete this analyte?");
-  if (!confirmed) return;
-
-  const updated = selections.filter((_, i) => i !== indexToDelete);
-  setSelections(updated);
-  sessionStorage.setItem("orderSelections", JSON.stringify(updated));
-};
-  //handle clearing all equippment
-const [refreshCount, setRefreshCount] = useState(0);
-
-const handleClearEquipment = () => {
-  if (!confirm('Are you sure you want to clear all equipment selections?')) return;
-
-  sessionStorage.removeItem('rentalCart');
-  refreshCartItems();
-  setRefreshCount(prev => prev + 1);
-};
-
+  const handleDelete = (indexToDelete) => {
+    const confirmed = confirm("Are you sure you want to delete this analyte?");
+    if (!confirmed) return;
+    const updated = selections.filter((_, i) => i !== indexToDelete);
+    setSelections(updated);
+    sessionStorage.setItem("orderSelections", JSON.stringify(updated));
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -405,11 +341,8 @@ const handleClearEquipment = () => {
 
         </div>
         </div>
-          
-    
       </div>
         
-
         {/* Right Column */}
         {/* Pricing */}
         <div className="space-y-6 bg-white shadow-md rounded-lg p-8 h-fit">

@@ -54,6 +54,10 @@ Route::get('/orders/full/{order_id}', [OrdersController::class, 'getOrderWithDet
 
 //Stripe Route
 Route::post('/create-payment-intent', [StripeController::class, 'create']);
+Route::post('/create-checkout-session', [StripeController::class, 'createCheckoutSession']);
+Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
+Route::get('/stripe/session/{session_id}', [StripeController::class, 'getOrderIdFromSession']);
+
 
 // Public Routes
 

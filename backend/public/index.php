@@ -32,6 +32,8 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 // */
 
 require __DIR__.'/../vendor/autoload.php';
+// putenv('STRIPE_SECRET=sk_test_your_real_secret_here');
+// putenv('FRONTEND_URL=http://localhost:3000');
 
 // /*
 // |--------------------------------------------------------------------------

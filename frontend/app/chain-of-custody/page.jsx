@@ -37,6 +37,14 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
+  const savedStep = parseInt(sessionStorage.getItem('currentStep'));
+  if (savedStep && savedStep >= 1 && savedStep <= 8) {
+    setStep(savedStep);
+    sessionStorage.removeItem('currentStep');
+  }
+}, []);
+
+  useEffect(() => {
   const skipped = sessionStorage.getItem("skippedAnalytes") === "true";
   setSkippedAnalytes(skipped);
 }, []);
