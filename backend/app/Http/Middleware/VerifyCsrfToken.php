@@ -15,6 +15,7 @@ class VerifyCsrfToken extends Middleware
         'api/account/update/*', //disabling CSRF check for all update accounts
         'api/orders/create',
         'api/equipment/return',
-        'api/order/update/*'
+        'api/order/update/*',
+        'api/orders',
     ];
 }
