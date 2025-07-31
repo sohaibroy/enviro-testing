@@ -16,6 +16,8 @@ class VerifyCsrfToken extends Middleware
         'api/orders/create',
         'api/equipment/return',
         'api/order/update/*',
-        'api/orders',
+            'api/orders',
+    'api/transactions/create',
+    'api/create-checkout-session'
     ];
 }
