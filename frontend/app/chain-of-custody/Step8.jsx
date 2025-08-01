@@ -124,11 +124,14 @@ useEffect(() => {
         email: user?.email ?? '',
       },
       analytes: selections.map(s => ({
-        analyte: s.analyte,
-        method: s.method,
-        turnaround_time_id: s.turnaround?.id ?? null,
-        price: s.price,
-      })),
+  analyte: s.analyte,
+  method: s.method,
+  turnaround_time_id: s.turnaround?.id ?? null,
+  price: s.price,
+  required_pumps: s.required_pumps ?? 0,
+  required_media: s.required_media ?? 0,
+  customer_comment: s.customer_comment || '',
+})),
       equipment: cartItems.map(e => ({
         equipment_id: e.EquipmentID,
         start_date: e.StartDate,
@@ -170,10 +173,12 @@ useEffect(() => {
     sessionStorage.setItem("orderSelections", JSON.stringify(updated));
   };
 
+
   return (
+   
     <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
     {/* Left Coloumn*/}
-    <div className="lg:col-span-2 bg-white shadow-md rounded-lg p-8 space-y-6 overflow-y-auto max-h-[80vh]">
+    <div className="lg:col-span-2 bg-white shadow-md rounded-lg p-8 space-y-6 max-h-none overflow-y-visible lg:max-h-[85vh] lg:overflow-y-auto">
         <h2 className="text-2xl font-semibold mb-4">Order Summary</h2>
 
         {/* Contact Info */}
@@ -199,10 +204,10 @@ useEffect(() => {
 
       
   <div className="border border-gray-200 rounded-md p-4 text-gray-700 mb-4">
-  <div className="flex justify-between items-center mb-4">
+  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
      <h3 className="text-lg font-semibold">Analytes Selected</h3>
   <button
-    className="w-36 flex items-center justify-center gap-1 px-4 py-2 rounded bg-enviro_blue text-white text-sm font-semibold hover:bg-blue-700 transition"
+    className="w-full sm:w-36 px-4 py-2 rounded bg-enviro_blue text-white text-sm font-semibold hover:bg-blue-700 transition"
     onClick={() => onStepChange(4)}
   >
     Add Analyte
@@ -221,6 +226,9 @@ useEffect(() => {
             <p><strong>Method:</strong> {s.method}</p>
             <p><strong>Turnaround Time:</strong> {s.turnaround?.label}</p>
             <p><strong>Price:</strong> ${parseFloat(s.price || 0).toFixed(2)}</p>
+              <p><strong>Pump Quantity:</strong> {s.required_pumps ?? 0}</p>
+  <p><strong>Media Quantity:</strong> {s.required_media ?? 0}</p>
+  <p><strong>Comments:</strong> {s.customer_comment || 'N/A'}</p>
           </div>
           <div className= "flex items-center gap-2">
               <button
@@ -254,11 +262,11 @@ useEffect(() => {
         {/* Equipment Rental */}
           <div className="mt-10">
           <div className="border border-gray-200 rounded-md p-4 text-gray-700 mb-4">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                   <h3 className="text-lg font-semibold">Equipment Rental Summary</h3>
               <div className="flex gap-2">
                 <button
-                  className="w-36 flex items-center justify-center gap-1 px-4 py-2 rounded bg-enviro_blue text-white text-sm font-semibold hover:bg-blue-700 transition"
+                  className="w-full sm:w-36 px-4 py-2 rounded bg-enviro_blue text-white text-sm font-semibold hover:bg-blue-700 transition"
                   onClick={() => onStepChange(7)}
                 >
                   Add Equipment
@@ -317,8 +325,11 @@ useEffect(() => {
 
         </div>
         </div>
+          
+    
       </div>
         
+
         {/* Right Column */}
         {/* Pricing */}
         <div className="space-y-6 bg-white shadow-md rounded-lg p-8 h-fit">
@@ -340,7 +351,7 @@ useEffect(() => {
                
           
                 {/* Buttons */}
-                <div className="flex justify-between mt-8">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-2 mt-8 pb-10">
           <button
             type="button"
             onClick={onBack}

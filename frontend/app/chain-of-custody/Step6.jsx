@@ -12,6 +12,12 @@ export default function Step6({ onBack, onNext }) {
   const [error, setError] = useState(null);
   const { setValue } = useFormContext();
 
+  const [additionalFields, setAdditionalFields] = useState({
+    required_pumps: 0,
+    required_media: 0,
+    customer_comment: '',
+  });
+
   useEffect(() => {
     const selectedMethodId = sessionStorage.getItem('selectedMethodId');
     if (!selectedMethodId) {
@@ -51,15 +57,18 @@ export default function Step6({ onBack, onNext }) {
     const newSelection = {
       analyte: selectedAnalyte.analyte_name,
       method: selectedMethod.method_name,
-      turnaround, //includes { id, label }
+      turnaround, // includes { id, label }
       price,
+      required_pumps: additionalFields.required_pumps || 0,
+      required_media: additionalFields.required_media || 0,
+      customer_comment: additionalFields.customer_comment || '',
     };
 
     let storedSelections = JSON.parse(sessionStorage.getItem('orderSelections')) || [];
 
     if (editIndex !== null) {
       storedSelections[parseInt(editIndex)] = newSelection;
-      sessionStorage.removeItem("editIndex");
+      sessionStorage.removeItem('editIndex');
     } else {
       const isDuplicate = storedSelections.some(
         (s) =>
@@ -91,10 +100,17 @@ export default function Step6({ onBack, onNext }) {
         ) : quantityData ? (
           <QuantityDetails
             quantityData={quantityData}
-            onSelectOptions={(turnaround, calculatedPrice) => {
-              //Store full object, not just label
-              sessionStorage.setItem('selectedTurnaround', JSON.stringify(turnaround));
-              sessionStorage.setItem('selectedPrice', calculatedPrice);
+            onSelectOptions={(data) => {
+              // Save additional fields from QuantityDetails
+              setAdditionalFields({
+                required_pumps: data.required_pumps || 0,
+                required_media: data.required_media || 0,
+                customer_comment: data.customer_comment || '',
+              });
+
+              // Store turnaround & price in sessionStorage
+              sessionStorage.setItem('selectedTurnaround', JSON.stringify(data.turnaround));
+              sessionStorage.setItem('selectedPrice', data.price);
             }}
           />
         ) : (

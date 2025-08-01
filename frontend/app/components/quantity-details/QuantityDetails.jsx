@@ -2,68 +2,47 @@
 
 import React, { useState, useEffect } from "react";
 import { LoadingIcon } from "../loading/LoadingIcon";
-import { MdAddShoppingCart } from "react-icons/md";
-import { useRouter } from "next/navigation";
 
-const QuantityDetails = ({ quantityData }) => {
+const QuantityDetails = ({ quantityData, onSelectOptions }) => {
   const [required_pumps, setRequiredPumps] = useState(0);
   const [required_media, setRequiredMedia] = useState(0);
   const [customer_comment, setCustomerComment] = useState("");
-  const router = useRouter();
 
   const [selectedTurnaroundTime, setSelectedTurnaroundTime] = useState(
     quantityData[0]?.turn_around_times.find((time) => time.is_default_price === 1) || null
   );
 
-  //Store full turnaround object in sessionStorage when selection changes
+  // Update sessionStorage and notify parent with all selections
   useEffect(() => {
     if (selectedTurnaroundTime) {
-      sessionStorage.setItem("selectedTurnaround", JSON.stringify({
+      const turnaround = {
         id: selectedTurnaroundTime.turn_around_id,
-        label: selectedTurnaroundTime.turnaround_time
-      }));
-      sessionStorage.setItem("selectedPrice", selectedTurnaroundTime.price?.toString() || "0");
-    }
-  }, [selectedTurnaroundTime]);
+        label: selectedTurnaroundTime.turnaround_time,
+      };
+      const price = selectedTurnaroundTime.price?.toString() || "0";
 
-  //dropdown change, update selectedTurnaroundTime and sessionStorage
+      sessionStorage.setItem("selectedTurnaround", JSON.stringify(turnaround));
+      sessionStorage.setItem("selectedPrice", price);
+
+      if (onSelectOptions) {
+        onSelectOptions({
+          turnaround,
+          price,
+          required_pumps,
+          required_media,
+          customer_comment,
+        });
+      }
+    }
+  }, [selectedTurnaroundTime, required_pumps, required_media, customer_comment]);
+
   const handleTurnaroundTimeChange = (e) => {
     const selected = quantityData[0]?.turn_around_times.find(
       (time) => time.turn_around_id === parseInt(e.target.value)
     );
-
     if (selected) {
-      sessionStorage.setItem("selectedTurnaround", JSON.stringify({
-        id: selected.turn_around_id,
-        label: selected.turnaround_time
-      }));
-      sessionStorage.setItem("selectedPrice", selected.price?.toString() || "0");
       setSelectedTurnaroundTime(selected);
     }
-  };
-
-  const handleAddToCart = () => {
-    const existingCartItems = JSON.parse(sessionStorage.getItem("cartItems")) || [];
-    const updatedCartItems = [
-      ...existingCartItems,
-      {
-        ...quantityData[0],
-        matrix: quantityData[0]?.matrix,
-        media: quantityData[0]?.media,
-        measurement: quantityData[0]?.measurement,
-        sample_rate: quantityData[0]?.sample_rate,
-        limit_of_quantification: quantityData[0]?.limit_of_quantification,
-        required_pumps,
-        required_media,
-        customer_comment,
-        required_quantity: 1,
-        selectedTurnaroundTime,
-      },
-    ];
-
-    sessionStorage.setItem("cartItems", JSON.stringify(updatedCartItems));
-    sessionStorage.setItem("selectedMethodId", quantityData[0]?.method_id);
-    router.push("/view-cart");
   };
 
   if (!quantityData) return <LoadingIcon />;
@@ -122,8 +101,8 @@ const QuantityDetails = ({ quantityData }) => {
                 type="number"
                 id="required_media"
                 min="0"
-                defaultValue={0}
-                onChange={(e) => setRequiredMedia(parseInt(e.target.value))}
+                value={required_media}
+                onChange={(e) => setRequiredMedia(parseInt(e.target.value) || 0)}
                 className="w-full border border-gray-300 p-2 rounded-md"
               />
             </div>
@@ -137,8 +116,8 @@ const QuantityDetails = ({ quantityData }) => {
                 type="number"
                 id="required_pumps"
                 min="0"
-                defaultValue={0}
-                onChange={(e) => setRequiredPumps(parseInt(e.target.value))}
+                value={required_pumps}
+                onChange={(e) => setRequiredPumps(parseInt(e.target.value) || 0)}
                 className="w-full border border-gray-300 p-2 rounded-md"
               />
             </div>
@@ -160,22 +139,6 @@ const QuantityDetails = ({ quantityData }) => {
             </div>
           </div>
         </div>
-
-        {/* Optional Add to Cart button (commented out) */}
-        {/* 
-        <div className="flex justify-end">
-          <button
-            onClick={handleAddToCart}
-            className={`flex items-center bg-enviro_blue text-white px-6 py-3 rounded-md hover:scale-105 transition-transform ${
-              !selectedTurnaroundTime ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            disabled={!selectedTurnaroundTime}
-          >
-            <MdAddShoppingCart className="mr-2" />
-            Add to Cart
-          </button>
-        </div>
-        */}
       </div>
     </div>
   );

@@ -173,6 +173,9 @@ public function handleWebhook(Request $request)
                         'method_id' => $method->method_id,
                         'turn_around_id' => $a['turnaround_time_id'] ?? ($a['turnaround']['id'] ?? null),
                         'price' => $a['price'],
+                        'required_pumps' => $a['required_pumps'] ?? null,
+    'required_media' => $a['required_media'] ?? null,
+    'customer_comment' => $a['customer_comment'] ?? null,
                     ]);
                 }
 
