@@ -58,4 +58,9 @@ class Methods extends Model
         $methods = TurnAroundTime::where('method_id', $method_id)->get();
         return response()->json($methods);
     }
+
+    //ADDED THIS
+    public function analyte() {
+    return $this->belongsTo(\App\Models\Analytes::class, 'analyte_id', 'analyte_id');
+}
 }

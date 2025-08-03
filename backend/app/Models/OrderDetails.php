@@ -14,6 +14,8 @@ class OrderDetails extends Model
 
     protected $fillable = [
         'order_id',
+        'method_id',
+    'analyte_id',
         'turn_around_id',
         'price',
         'required_quantity',
@@ -31,4 +33,11 @@ class OrderDetails extends Model
     {
         return $this->belongsTo(TurnAroundTime::class, 'turn_around_id', 'turn_around_id');
     }
+
+    //ADDED THIS 
+
+    public function method() {
+    return $this->belongsTo(\App\Models\Methods::class, 'method_id', 'method_id');
+}
+
 }

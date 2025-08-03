@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Orders;
 use App\Models\OrderDetails;
 use App\Models\OrderEquipment;
@@ -14,6 +15,9 @@ use Stripe\Stripe;
 use Stripe\PaymentIntent;
 use Stripe\Checkout\Session;
 use Stripe\Webhook;
+use App\Mail\CustomerOrderConfirmationMail;
+use App\Mail\CompanyOrderNotificationMail;
+
 
 class StripeController extends Controller
 {
@@ -222,6 +226,22 @@ if ($availableSerials->count() < $e['quantity']) {
 }
 
                 DB::commit();
+                //I AM ADDING THIS MAIL LINE
+                // Get customer email (you can also get it from session metadata if passed)
+$account = \App\Models\Accounts::find($transaction->account_id);
+$customerEmail = $account?->email ?? '';
+
+//Send confirmation to customer
+if ($customerEmail) {
+    Mail::to($customerEmail)->send(new CustomerOrderConfirmationMail($order));
+}
+
+//Send notification to company
+Mail::to('roysohaib@hotmail.com')->send(new CompanyOrderNotificationMail($order, $customerEmail));
+
+Cache::forget("order_session_$transactionId");
+return response('Order created', 200);
+//ENDING THE MAIL LINE
                 Cache::forget("order_session_$transactionId");
 
                 return response('Order created', 200);
