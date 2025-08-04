@@ -73,12 +73,8 @@ const QuantityDetails = ({ quantityData, onSelectOptions }) => {
             <p><span className="font-semibold">Sample Rate:</span> {method.sample_rate}</p>
             <p><span className="font-semibold">Limit of Quantification:</span> {method.limit_of_quantification}</p>
             <p><span className="font-semibold">Time Frame:</span> {selectedTurnaroundTime?.turnaround_time || "N/A"}</p>
-            <p>
-  <span className="font-semibold">Price:</span> ${totalPrice.toFixed(2)}{" "}
-  <span className="text-sm text-gray-500">
-    ({required_quantity} * ${selectedTurnaroundTime?.price || 0})
-  </span>
-</p>
+            <p><span className="font-semibold">Price:</span> ${totalPrice.toFixed(2)}{" "}
+ <span className="text-sm text-gray-500">({required_quantity} * ${selectedTurnaroundTime?.price || 0})</span></p>
           </div>
 
           {/* Right Controls */}

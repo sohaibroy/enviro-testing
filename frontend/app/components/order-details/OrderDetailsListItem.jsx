@@ -16,7 +16,7 @@ function OrderDetailsListItem({ orderDetail }) {
   const totalPrice = parseFloat(price) || 0;
   const quantity = parseInt(required_quantity) || 1;
 
-  const formattedUnitPrice = new Intl.NumberFormat("en-CA", {
+  const formattedTotalPrice = new Intl.NumberFormat("en-CA", {
     style: "currency",
     currency: "CAD",
   }).format(totalPrice);
@@ -51,7 +51,7 @@ function OrderDetailsListItem({ orderDetail }) {
          <section className="flex flex-col w-full md:w-1/2 lg:w-1/3 mb-4">
           <p className="text-lg font-semibold mb-2">
             <span className="text-gray-600 mr-2">Total Price:</span>
-            {formattedUnitPrice}
+            {formattedTotalPrice}
           </p>
           <p className="text-lg font-semibold mb-2">
             <span className="text-gray-600 mr-2">Turn Around Time:</span>
