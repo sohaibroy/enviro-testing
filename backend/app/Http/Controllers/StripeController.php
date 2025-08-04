@@ -43,46 +43,48 @@ class StripeController extends Controller
     }
 
     public function createCheckoutSession(Request $request)
-    {
-        require_once base_path('stripe-php-17.3.0/init.php');
-        Stripe::setApiKey(env('STRIPE_SECRET'));
+{
+    require_once base_path('stripe-php-17.3.0/init.php');
+    Stripe::setApiKey(env('STRIPE_SECRET'));
 
-        $amount = $request->input('amount');
-        $transactionId = $request->input('transaction_id');
-        $frontendUrl = env('FRONTEND_URL');
+    $amount = $request->input('amount');
+    $transactionId = $request->input('transaction_id');
+    $frontendUrl = env('FRONTEND_URL');
 
-        if (!$frontendUrl || !filter_var($frontendUrl, FILTER_VALIDATE_URL)) {
-
-            return response()->json(['error' => 'Invalid FRONTEND_URL'], 500);
-        }
-
-        try {
-            $session = Session::create([
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'cad',
-                        'product_data' => ['name' => 'Your Order'],
-                        'unit_amount' => $amount,
-                    ],
-                    'quantity' => 1,
-                ]],
-                'mode' => 'payment',
-                'success_url' => $frontendUrl . '/order-confirmation?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => $frontendUrl . '/payment-failed',
-                'metadata' => [
-  'transaction_id' => $transactionId,
-  'analytes' => json_encode($request->input('analytes', [])),
-  'equipment' => json_encode($request->input('equipment', [])),
-],
-            ]);
-
-            return response()->json(['url' => $session->url]);
-        } catch (\Exception $e) {
-
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+    if (!$frontendUrl || !filter_var($frontendUrl, FILTER_VALIDATE_URL)) {
+        return response()->json(['error' => 'Invalid FRONTEND_URL'], 500);
     }
+
+    try {
+        //Cache analyte + equipment with potentially long comments
+        Cache::put("order_session_$transactionId", [
+            'analytes' => $request->input('analytes', []),
+            'equipment' => $request->input('equipment', []),
+        ], now()->addMinutes(60));
+
+        $session = Session::create([
+            'payment_method_types' => ['card'],
+            'line_items' => [[
+                'price_data' => [
+                    'currency' => 'cad',
+                    'product_data' => ['name' => 'Your Order'],
+                    'unit_amount' => $amount,
+                ],
+                'quantity' => 1,
+            ]],
+            'mode' => 'payment',
+            'success_url' => $frontendUrl . '/order-confirmation?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => $frontendUrl . '/payment-failed',
+            'metadata' => [
+                'transaction_id' => $transactionId, //only metadata now
+            ],
+        ]);
+
+        return response()->json(['url' => $session->url]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
 
 
 public function handleWebhook(Request $request)
@@ -101,7 +103,6 @@ public function handleWebhook(Request $request)
             $session = $event->data->object;
 
             if ($session->payment_status !== 'paid') {
-
                 return response('Payment not completed', 200);
             }
 
@@ -109,7 +110,6 @@ public function handleWebhook(Request $request)
             $transactionId = $metadata['transaction_id'] ?? null;
 
             if (!$transactionId) {
-
                 return response('Missing transaction_id', 400);
             }
 
@@ -126,18 +126,18 @@ public function handleWebhook(Request $request)
                     'payment_status' => 'paid',
                     'updated_at' => now(),
                 ]);
-
                 return response('Order updated', 200);
             }
 
             $transaction = Transactions::where('transaction_id', $transactionId)->first();
             if (!$transaction) {
-
                 return response('Transaction not found', 404);
             }
 
-            $analytes = json_decode($metadata['analytes'] ?? '[]', true);
-            $equipment = json_decode($metadata['equipment'] ?? '[]', true);
+            //Load from cache instead of Stripe metadata
+            $cached = Cache::get("order_session_$transactionId");
+            $analytes = $cached['analytes'] ?? [];
+            $equipment = $cached['equipment'] ?? [];
 
             DB::beginTransaction();
             try {
@@ -156,9 +156,7 @@ public function handleWebhook(Request $request)
                 ]);
 
                 foreach ($analytes as $a) {
-                    if (!isset($a['analyte']) || !isset($a['method'])) {
-                        continue;
-                    }
+                    if (!isset($a['analyte']) || !isset($a['method'])) continue;
 
                     $analyte = \App\Models\Analytes::where('analyte_name', $a['analyte'])->first();
                     $method = \App\Models\Methods::where('method_name', $a['method'])->first();
@@ -176,90 +174,74 @@ public function handleWebhook(Request $request)
                         'analyte_id' => $analyte->analyte_id,
                         'method_id' => $method->method_id,
                         'turn_around_id' => $a['turnaround_time_id'] ?? ($a['turnaround']['id'] ?? null),
-                        'price' => $a['price'],
+                        'required_quantity' => $a['required_quantity'] ?? 1,
+                        'price' => ($a['required_quantity'] ?? 1) * $a['price'],
                         'required_pumps' => $a['required_pumps'] ?? null,
-    'required_media' => $a['required_media'] ?? null,
-    'customer_comment' => $a['customer_comment'] ?? null,
+                        'required_media' => $a['required_media'] ?? null,
+                        'customer_comment' => $a['customer_comment'] ?? null,
                     ]);
                 }
 
                 foreach ($equipment as $e) {
-                    if (!isset($e['equipment_id'])) {
-                        continue;
-                    }
+                    if (!isset($e['equipment_id'])) continue;
 
-                        $equipmentMeta = \App\Models\Equipment::with('equipmentType')->find($e['equipment_id']);
-
-    if (!$equipmentMeta) {
-
-        continue;
-    }
+                    $equipmentMeta = \App\Models\Equipment::with('equipmentType')->find($e['equipment_id']);
+                    if (!$equipmentMeta) continue;
 
                     OrderEquipment::create([
-        'order_id' => $order->order_id,
-        'equipment_id' => $e['equipment_id'],
-        'equipment_name' => $equipmentMeta->equipment_name,
-        'category' => $equipmentMeta->equipmentType->equipment_type_name ?? 'Unknown',
-        'start_date' => $e['start_date'],
-        'return_date' => $e['return_date'],
-        'quantity' => $e['quantity'],
-        'daily_cost' => $e['daily_cost'],
-    ]);
+                        'order_id' => $order->order_id,
+                        'equipment_id' => $e['equipment_id'],
+                        'equipment_name' => $equipmentMeta->equipment_name,
+                        'category' => $equipmentMeta->equipmentType->equipment_type_name ?? 'Unknown',
+                        'start_date' => $e['start_date'],
+                        'return_date' => $e['return_date'],
+                        'quantity' => $e['quantity'],
+                        'daily_cost' => $e['daily_cost'],
+                    ]);
 
-    // Update status of rented serials
-$availableSerials = DB::table('equipment_details')
-    ->where('equipment_id', $e['equipment_id'])
-    ->where('status', 'available')
-    ->limit($e['quantity'])
-    ->pluck('serial_id');
+                    //Update serial status
+                    $availableSerials = DB::table('equipment_details')
+                        ->where('equipment_id', $e['equipment_id'])
+                        ->where('status', 'available')
+                        ->limit($e['quantity'])
+                        ->pluck('serial_id');
 
-if ($availableSerials->count() < $e['quantity']) {
+                    if ($availableSerials->count() >= $e['quantity']) {
+                        DB::table('equipment_details')
+                            ->whereIn('serial_id', $availableSerials)
+                            ->update(['status' => 'rented']);
 
-} else {
-    DB::table('equipment_details')
-        ->whereIn('serial_id', $availableSerials)
-        ->update(['status' => 'rented']);
-
-    Log::info("[Webhook] Serial(s) marked rented for equipment_id {$e['equipment_id']}: " . implode(',', $availableSerials->toArray()));
-}
-
-}
+                        Log::info("[Webhook] Serial(s) marked rented for equipment_id {$e['equipment_id']}: " . implode(',', $availableSerials->toArray()));
+                    }
+                }
 
                 DB::commit();
-                //I AM ADDING THIS MAIL LINE
-                // Get customer email (you can also get it from session metadata if passed)
-$account = \App\Models\Accounts::find($transaction->account_id);
-$customerEmail = $account?->email ?? '';
 
-//Send confirmation to customer
-if ($customerEmail) {
-    Mail::to($customerEmail)->send(new CustomerOrderConfirmationMail($order));
-}
+                //Email sending
+                $account = \App\Models\Accounts::find($transaction->account_id);
+                $customerEmail = $account?->email ?? '';
 
-//Send notification to company
-Mail::to('roysohaib@hotmail.com')->send(new CompanyOrderNotificationMail($order, $customerEmail));
+                if ($customerEmail) {
+                    Mail::to($customerEmail)->send(new CustomerOrderConfirmationMail($order));
+                }
+                Mail::to('roysohaib@hotmail.com')->send(new CompanyOrderNotificationMail($order, $customerEmail));
 
-Cache::forget("order_session_$transactionId");
-return response('Order created', 200);
-//ENDING THE MAIL LINE
                 Cache::forget("order_session_$transactionId");
 
                 return response('Order created', 200);
             } catch (\Exception $e) {
                 DB::rollBack();
-
                 return response('Order creation failed', 500);
             }
         }
 
         return response('Webhook event ignored', 200);
     } catch (\Exception $e) {
-
         return response('Webhook error', 400);
     }
 }
 
-    public function getOrderIdFromSession($sessionId)
+public function getOrderIdFromSession($sessionId)
     {
         require_once base_path('stripe-php-17.3.0/init.php');
         Stripe::setApiKey(env('STRIPE_SECRET'));

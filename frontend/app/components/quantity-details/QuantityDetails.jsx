@@ -4,13 +4,17 @@ import React, { useState, useEffect } from "react";
 import { LoadingIcon } from "../loading/LoadingIcon";
 
 const QuantityDetails = ({ quantityData, onSelectOptions }) => {
+
   const [required_pumps, setRequiredPumps] = useState(0);
   const [required_media, setRequiredMedia] = useState(0);
+  const [required_quantity, setRequiredQuantity] = useState(1);
   const [customer_comment, setCustomerComment] = useState("");
 
   const [selectedTurnaroundTime, setSelectedTurnaroundTime] = useState(
     quantityData[0]?.turn_around_times.find((time) => time.is_default_price === 1) || null
   );
+
+    const totalPrice = (required_quantity || 1) * (parseFloat(selectedTurnaroundTime?.price) || 0);
 
   // Update sessionStorage and notify parent with all selections
   useEffect(() => {
@@ -28,6 +32,7 @@ const QuantityDetails = ({ quantityData, onSelectOptions }) => {
         onSelectOptions({
           turnaround,
           price,
+          required_quantity,
           required_pumps,
           required_media,
           customer_comment,
@@ -68,7 +73,12 @@ const QuantityDetails = ({ quantityData, onSelectOptions }) => {
             <p><span className="font-semibold">Sample Rate:</span> {method.sample_rate}</p>
             <p><span className="font-semibold">Limit of Quantification:</span> {method.limit_of_quantification}</p>
             <p><span className="font-semibold">Time Frame:</span> {selectedTurnaroundTime?.turnaround_time || "N/A"}</p>
-            <p><span className="font-semibold">Price:</span> ${selectedTurnaroundTime?.price || "N/A"}</p>
+            <p>
+  <span className="font-semibold">Price:</span> ${totalPrice.toFixed(2)}{" "}
+  <span className="text-sm text-gray-500">
+    ({required_quantity} * ${selectedTurnaroundTime?.price || 0})
+  </span>
+</p>
           </div>
 
           {/* Right Controls */}
@@ -91,6 +101,21 @@ const QuantityDetails = ({ quantityData, onSelectOptions }) => {
                 ))}
               </select>
             </div>
+
+            {/* Required Quantity */}
+<div>
+  <label htmlFor="required_quantity" className="block font-semibold mb-1">
+    Required Quantity:
+  </label>
+  <input
+    type="number"
+    id="required_quantity"
+    min="1"
+    value={required_quantity}
+    onChange={(e) => setRequiredQuantity(parseInt(e.target.value) || 1)}
+    className="w-full border border-gray-300 p-2 rounded-md"
+  />
+</div>
 
             {/* Required Media */}
             <div>

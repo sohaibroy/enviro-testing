@@ -40,7 +40,10 @@ useEffect(() => {
     setCartItems(storedCart);
   };
 
-  const analyteTotal = selections.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+  const analyteTotal = selections.reduce(
+  (sum, item) => sum + (parseFloat(item.price || 0) * (item.required_quantity ?? 1)),
+  0
+);
   const equipmentTotal = cartItems.reduce((sum, item) => {
     const startDate = new Date(item.StartDate);
     const endDate = new Date(item.ReturnDate);
@@ -67,20 +70,25 @@ useEffect(() => {
 
   setSubmitting(true);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  console.log('[Submit] API base URL:', baseUrl);
 
   try {
     // Step 1: Fetch CSRF cookie (optional)
     await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
       credentials: 'include',
     });
+    console.log('[Submit] CSRF cookie requested');
 
     const xsrfToken = document.cookie
       .split('; ')
       .find(row => row.startsWith('XSRF-TOKEN='))
       ?.split('=')[1];
 
+    console.log('[Submit] Extracted XSRF-TOKEN:', xsrfToken ? 'FOUND' : 'NOT FOUND');
+
     const userJson = sessionStorage.getItem('user');
     const user = userJson ? JSON.parse(userJson) : null;
+    console.log('[Submit] User:', user);
 
     // Step 2: Create Transaction
     const transactionPayload = {
@@ -99,6 +107,8 @@ useEffect(() => {
       },
     };
 
+    console.log('[Submit] Transaction payload:', transactionPayload);
+
     const transactionRes = await fetch(`${baseUrl}/api/transactions/create`, {
       method: 'POST',
       headers: {
@@ -110,6 +120,8 @@ useEffect(() => {
     });
 
     const transactionData = await transactionRes.json();
+    console.log('[Submit] Transaction response:', transactionData);
+
     const transactionId = transactionData.transaction_id;
     if (!transactionId) throw new Error('Missing transaction_id in response');
     sessionStorage.setItem('transactionId', transactionId);
@@ -124,14 +136,15 @@ useEffect(() => {
         email: user?.email ?? '',
       },
       analytes: selections.map(s => ({
-  analyte: s.analyte,
-  method: s.method,
-  turnaround_time_id: s.turnaround?.id ?? null,
-  price: s.price,
-  required_pumps: s.required_pumps ?? 0,
-  required_media: s.required_media ?? 0,
-  customer_comment: s.customer_comment || '',
-})),
+        analyte: s.analyte,
+        method: s.method,
+        turnaround_time_id: s.turnaround?.id ?? null,
+        price: s.price,
+        required_quantity: s.required_quantity ?? 1,
+        required_pumps: s.required_pumps ?? 0,
+        required_media: s.required_media ?? 0,
+        customer_comment: s.customer_comment || '',
+      })),
       equipment: cartItems.map(e => ({
         equipment_id: e.EquipmentID,
         start_date: e.StartDate,
@@ -140,6 +153,8 @@ useEffect(() => {
         daily_cost: e.DailyCost,
       })),
     };
+
+    console.log('[Submit] Stripe payload:', stripePayload);
 
     const stripeRes = await fetch(`${baseUrl}/api/create-checkout-session`, {
       method: 'POST',
@@ -152,13 +167,17 @@ useEffect(() => {
     });
 
     const stripeData = await stripeRes.json();
+    console.log('[Submit] Stripe response:', stripeData);
+
     if (!stripeData?.url) {
       throw new Error('Stripe session did not return a redirect URL.');
     }
 
+    console.log('[Submit] Redirecting to Stripe Checkout...');
     window.location.href = stripeData.url;
 
   } catch (err) {
+    console.error('[Submit] Error occurred:', err);
     alert(err.message || 'Something went wrong while submitting the order.');
   }
 
@@ -225,7 +244,8 @@ useEffect(() => {
             <p><strong>Name:</strong> {s.analyte}</p>
             <p><strong>Method:</strong> {s.method}</p>
             <p><strong>Turnaround Time:</strong> {s.turnaround?.label}</p>
-            <p><strong>Price:</strong> ${parseFloat(s.price || 0).toFixed(2)}</p>
+            <p><strong>Quantity:</strong> {s.required_quantity ?? 1}</p>
+            <p><strong>Price:</strong> ${(parseFloat(s.price || 0) * (s.required_quantity ?? 1)).toFixed(2)}</p>
               <p><strong>Pump Quantity:</strong> {s.required_pumps ?? 0}</p>
   <p><strong>Media Quantity:</strong> {s.required_media ?? 0}</p>
   <p><strong>Comments:</strong> {s.customer_comment || 'N/A'}</p>

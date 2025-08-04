@@ -13,6 +13,7 @@ export default function Step6({ onBack, onNext }) {
   const { setValue } = useFormContext();
 
   const [additionalFields, setAdditionalFields] = useState({
+    required_quantity: 1,
     required_pumps: 0,
     required_media: 0,
     customer_comment: '',
@@ -59,6 +60,7 @@ export default function Step6({ onBack, onNext }) {
       method: selectedMethod.method_name,
       turnaround, // includes { id, label }
       price,
+      required_quantity: additionalFields.required_quantity,
       required_pumps: additionalFields.required_pumps || 0,
       required_media: additionalFields.required_media || 0,
       customer_comment: additionalFields.customer_comment || '',
@@ -103,6 +105,7 @@ export default function Step6({ onBack, onNext }) {
             onSelectOptions={(data) => {
               // Save additional fields from QuantityDetails
               setAdditionalFields({
+                required_quantity: data.required_quantity || 1,
                 required_pumps: data.required_pumps || 0,
                 required_media: data.required_media || 0,
                 customer_comment: data.customer_comment || '',

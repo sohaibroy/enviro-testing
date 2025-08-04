@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mariadb
--- Generation Time: Jul 31, 2025 at 07:18 AM
+-- Generation Time: Aug 03, 2025 at 09:13 PM
 -- Server version: 10.9.8-MariaDB-1:10.9.8+maria~ubu2204
 -- PHP Version: 8.2.27
 
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
   `job_title` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`account_id`),
   KEY `company_id` (`company_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=173 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=177 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `accounts`
@@ -180,7 +180,11 @@ INSERT INTO `accounts` (`account_id`, `company_id`, `first_name`, `last_name`, `
 (169, NULL, 'Unknown', 'Person', NULL, 'roysohaib@hotmail.com', '7801234567', 1, '123 Smackdown Street', 'Edmonton', 'AB', 'T6L2X8', 'Canada', '', NULL),
 (170, NULL, 'Unknown', 'Person', NULL, 'roysohaib@hotmail.com', '7801234567', 1, '123 Smackdown Street', 'Edmonton', 'AB', 'T6L2X8', 'Canada', '', NULL),
 (171, NULL, '', '', NULL, 'admin@gmail.com', '', 1, '', '', '', '', '', '', NULL),
-(172, NULL, 'Unknown', 'Person', NULL, 'roysohaib@hotmail.com', '7801234567', 1, '123 Smackdown Street', 'Edmonton', 'AB', 'T6L2X8', 'Canada', '', NULL);
+(172, NULL, 'Unknown', 'Person', NULL, 'roysohaib@hotmail.com', '7801234567', 1, '123 Smackdown Street', 'Edmonton', 'AB', 'T6L2X8', 'Canada', '', NULL),
+(173, NULL, 'Unknown', 'Person', NULL, 'roysohaib@hotmail.com', '7801234567', 1, '123 Smackdown Street', 'Edmonton', 'AB', 'T6L2X8', 'Canada', '', NULL),
+(174, NULL, 'Unknown', 'Person', NULL, 'roysohaib@hotmail.com', '7801234567', 1, '123 Smackdown Street', 'Edmonton', 'AB', 'T6L2X8', 'Canada', '', NULL),
+(175, NULL, 'Unknown', 'Person', NULL, 'roysohaib@hotmail.com', '7801234567', 1, '123 Smackdown Street', 'Edmonton', 'AB', 'T6L2X8', 'Canada', '', NULL),
+(176, NULL, 'Unknown', 'Person', NULL, 'roysohaib@hotmail.com', '7801234567', 1, '123 Smackdown Street', 'Edmonton', 'AB', 'T6L2X8', 'Canada', '', NULL);
 
 -- --------------------------------------------------------
 
@@ -671,7 +675,7 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `payment_status` varchar(255) NOT NULL DEFAULT 'pending',
   PRIMARY KEY (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `orders`
@@ -726,7 +730,11 @@ INSERT INTO `orders` (`order_id`, `transaction_id`, `order_date`, `subtotal`, `g
 (52, 123, '2025-07-31 03:32:33', 367.50, 18.38, 367.50, 0, '2025-07-31 03:32:33', '2025-07-31 03:32:33', 'paid'),
 (53, 124, '2025-07-31 03:48:47', 157.50, 7.88, 157.50, 0, '2025-07-31 03:48:47', '2025-07-31 03:48:47', 'paid'),
 (54, 125, '2025-07-31 03:56:13', 157.50, 7.88, 157.50, 1, '2025-07-31 03:56:13', '2025-07-31 03:56:13', 'paid'),
-(55, 126, '2025-07-31 04:10:46', 315.00, 15.75, 315.00, 0, '2025-07-31 04:10:46', '2025-07-31 04:10:46', 'paid');
+(55, 126, '2025-07-31 04:10:46', 315.00, 15.75, 315.00, 2, '2025-07-31 04:10:46', '2025-07-31 04:10:46', 'paid'),
+(56, 128, '2025-08-01 23:19:27', 210.00, 10.50, 210.00, 2, '2025-08-01 23:19:27', '2025-08-01 23:19:27', 'paid'),
+(57, 129, '2025-08-02 20:58:45', 367.50, 18.38, 367.50, 2, '2025-08-02 20:58:45', '2025-08-02 20:58:45', 'paid'),
+(58, 130, '2025-08-03 01:51:04', 262.50, 13.13, 262.50, 1, '2025-08-03 01:51:04', '2025-08-03 01:51:04', 'paid'),
+(59, 131, '2025-08-03 03:15:26', 630.00, 31.50, 630.00, 2, '2025-08-03 03:15:26', '2025-08-03 03:15:26', 'paid');
 
 -- --------------------------------------------------------
 
@@ -738,6 +746,8 @@ DROP TABLE IF EXISTS `order_details`;
 CREATE TABLE IF NOT EXISTS `order_details` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `order_id` bigint(20) UNSIGNED NOT NULL,
+  `method_id` int(11) DEFAULT NULL,
+  `analyte_id` int(11) DEFAULT NULL,
   `turn_around_id` bigint(20) UNSIGNED DEFAULT NULL,
   `price` decimal(8,2) NOT NULL,
   `required_quantity` int(11) NOT NULL DEFAULT 1,
@@ -747,41 +757,45 @@ CREATE TABLE IF NOT EXISTS `order_details` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `order_details`
 --
 
-INSERT INTO `order_details` (`id`, `order_id`, `turn_around_id`, `price`, `required_quantity`, `required_pumps`, `required_media`, `customer_comment`, `created_at`, `updated_at`) VALUES
-(2, 6, 26, 250.00, 1, 0, NULL, NULL, '2025-07-28 17:27:48', '2025-07-28 17:27:48'),
-(3, 7, 26, 250.00, 1, 0, NULL, NULL, '2025-07-28 23:59:31', '2025-07-28 23:59:31'),
-(4, 8, 26, 250.00, 1, 0, NULL, NULL, '2025-07-29 18:44:46', '2025-07-29 18:44:46'),
-(5, 9, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 20:56:30', '2025-07-29 20:56:30'),
-(6, 10, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:02:32', '2025-07-29 21:02:32'),
-(7, 11, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:05:34', '2025-07-29 21:05:34'),
-(8, 12, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:08:14', '2025-07-29 21:08:14'),
-(9, 13, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:13:35', '2025-07-29 21:13:35'),
-(10, 14, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:27:35', '2025-07-29 21:27:35'),
-(11, 15, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:29:48', '2025-07-29 21:29:48'),
-(12, 16, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:34:46', '2025-07-29 21:34:46'),
-(13, 17, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:37:59', '2025-07-29 21:37:59'),
-(14, 18, 27, 300.00, 1, 0, NULL, NULL, '2025-07-29 22:47:57', '2025-07-29 22:47:57'),
-(15, 19, 26, 250.00, 1, 0, NULL, NULL, '2025-07-30 03:39:43', '2025-07-30 03:39:43'),
-(16, 20, 28, 350.00, 1, 0, NULL, NULL, '2025-07-30 03:49:10', '2025-07-30 03:49:10'),
-(17, 21, 28, 350.00, 1, 0, NULL, NULL, '2025-07-30 03:59:57', '2025-07-30 03:59:57'),
-(18, 22, 13, 200.00, 1, 0, NULL, NULL, '2025-07-30 04:07:56', '2025-07-30 04:07:56'),
-(19, 23, 28, 350.00, 1, 0, NULL, NULL, '2025-07-30 04:17:51', '2025-07-30 04:17:51'),
-(20, 24, 28, 350.00, 1, 0, NULL, NULL, '2025-07-30 04:27:54', '2025-07-30 04:27:54'),
-(21, 42, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 00:48:39', '2025-07-31 00:48:39'),
-(22, 43, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 00:56:08', '2025-07-31 00:56:08'),
-(23, 44, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 02:36:09', '2025-07-31 02:36:09'),
-(27, 48, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 02:57:01', '2025-07-31 02:57:01'),
-(28, 49, NULL, 300.00, 1, NULL, NULL, NULL, '2025-07-31 03:05:01', '2025-07-31 03:05:01'),
-(29, 50, NULL, 300.00, 1, NULL, NULL, NULL, '2025-07-31 03:14:10', '2025-07-31 03:14:10'),
-(30, 51, NULL, 250.00, 1, NULL, NULL, NULL, '2025-07-31 03:25:30', '2025-07-31 03:25:30'),
-(31, 52, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 03:32:33', '2025-07-31 03:32:33'),
-(32, 55, 27, 300.00, 1, NULL, NULL, NULL, '2025-07-31 04:10:46', '2025-07-31 04:10:46');
+INSERT INTO `order_details` (`id`, `order_id`, `method_id`, `analyte_id`, `turn_around_id`, `price`, `required_quantity`, `required_pumps`, `required_media`, `customer_comment`, `created_at`, `updated_at`) VALUES
+(2, 6, NULL, NULL, 26, 250.00, 1, 0, NULL, NULL, '2025-07-28 17:27:48', '2025-07-28 17:27:48'),
+(3, 7, NULL, NULL, 26, 250.00, 1, 0, NULL, NULL, '2025-07-28 23:59:31', '2025-07-28 23:59:31'),
+(4, 8, NULL, NULL, 26, 250.00, 1, 0, NULL, NULL, '2025-07-29 18:44:46', '2025-07-29 18:44:46'),
+(5, 9, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 20:56:30', '2025-07-29 20:56:30'),
+(6, 10, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:02:32', '2025-07-29 21:02:32'),
+(7, 11, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:05:34', '2025-07-29 21:05:34'),
+(8, 12, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:08:14', '2025-07-29 21:08:14'),
+(9, 13, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:13:35', '2025-07-29 21:13:35'),
+(10, 14, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:27:35', '2025-07-29 21:27:35'),
+(11, 15, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:29:48', '2025-07-29 21:29:48'),
+(12, 16, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:34:46', '2025-07-29 21:34:46'),
+(13, 17, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-29 21:37:59', '2025-07-29 21:37:59'),
+(14, 18, NULL, NULL, 27, 300.00, 1, 0, NULL, NULL, '2025-07-29 22:47:57', '2025-07-29 22:47:57'),
+(15, 19, NULL, NULL, 26, 250.00, 1, 0, NULL, NULL, '2025-07-30 03:39:43', '2025-07-30 03:39:43'),
+(16, 20, NULL, NULL, 28, 350.00, 1, 0, NULL, NULL, '2025-07-30 03:49:10', '2025-07-30 03:49:10'),
+(17, 21, NULL, NULL, 28, 350.00, 1, 0, NULL, NULL, '2025-07-30 03:59:57', '2025-07-30 03:59:57'),
+(18, 22, NULL, NULL, 13, 200.00, 1, 0, NULL, NULL, '2025-07-30 04:07:56', '2025-07-30 04:07:56'),
+(19, 23, NULL, NULL, 28, 350.00, 1, 0, NULL, NULL, '2025-07-30 04:17:51', '2025-07-30 04:17:51'),
+(20, 24, NULL, NULL, 28, 350.00, 1, 0, NULL, NULL, '2025-07-30 04:27:54', '2025-07-30 04:27:54'),
+(21, 42, NULL, NULL, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 00:48:39', '2025-07-31 00:48:39'),
+(22, 43, NULL, NULL, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 00:56:08', '2025-07-31 00:56:08'),
+(23, 44, NULL, NULL, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 02:36:09', '2025-07-31 02:36:09'),
+(27, 48, NULL, NULL, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 02:57:01', '2025-07-31 02:57:01'),
+(28, 49, NULL, NULL, NULL, 300.00, 1, NULL, NULL, NULL, '2025-07-31 03:05:01', '2025-07-31 03:05:01'),
+(29, 50, NULL, NULL, NULL, 300.00, 1, NULL, NULL, NULL, '2025-07-31 03:14:10', '2025-07-31 03:14:10'),
+(30, 51, NULL, NULL, NULL, 250.00, 1, NULL, NULL, NULL, '2025-07-31 03:25:30', '2025-07-31 03:25:30'),
+(31, 52, NULL, NULL, NULL, 200.00, 1, NULL, NULL, NULL, '2025-07-31 03:32:33', '2025-07-31 03:32:33'),
+(32, 55, NULL, NULL, 27, 300.00, 1, NULL, NULL, NULL, '2025-07-31 04:10:46', '2025-07-31 04:10:46'),
+(33, 56, NULL, NULL, 13, 200.00, 1, 2, '2', 'i need everything', '2025-08-01 23:19:27', '2025-08-01 23:19:27'),
+(34, 57, NULL, NULL, 25, 200.00, 1, 1, '1', 'none', '2025-08-02 20:58:45', '2025-08-02 20:58:45'),
+(35, 58, NULL, NULL, 26, 250.00, 1, 0, '0', NULL, '2025-08-03 01:51:04', '2025-08-03 01:51:04'),
+(36, 59, 22, 27, 26, 250.00, 1, 0, '0', NULL, '2025-08-03 03:15:26', '2025-08-03 03:15:26');
 
 -- --------------------------------------------------------
 
@@ -803,7 +817,7 @@ CREATE TABLE IF NOT EXISTS `order_equipment` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `order_equipment_order_id_foreign` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `order_equipment`
@@ -826,7 +840,9 @@ INSERT INTO `order_equipment` (`id`, `order_id`, `equipment_name`, `category`, `
 (14, 51, 'Zefon Diaphragm Pump', 'Calibrator', '2025-07-30', '2025-08-02', 1, 50.00, '2025-07-31 03:25:30', '2025-07-31 03:25:30'),
 (15, 52, 'Zefon Diaphragm Pump', 'Calibrator', '2025-07-30', '2025-08-02', 1, 50.00, '2025-07-31 03:32:33', '2025-07-31 03:32:33'),
 (16, 53, 'Zefon Diaphragm Pump', 'Calibrator', '2025-07-30', '2025-08-02', 1, 50.00, '2025-07-31 03:48:47', '2025-07-31 03:48:47'),
-(17, 54, 'Zefon Diaphragm Pump', 'Calibrator', '2025-07-30', '2025-08-02', 1, 50.00, '2025-07-31 03:56:13', '2025-07-31 03:56:13');
+(17, 54, 'Zefon Diaphragm Pump', 'Calibrator', '2025-07-30', '2025-08-02', 1, 50.00, '2025-07-31 03:56:13', '2025-07-31 03:56:13'),
+(18, 57, 'Zefon Diaphragm Pump', 'Calibrator', '2025-08-02', '2025-08-05', 1, 50.00, '2025-08-02 20:58:46', '2025-08-02 20:58:46'),
+(19, 59, 'Zefon Diaphragm Pump', 'Calibrator', '2025-08-02', '2025-08-09', 1, 50.00, '2025-08-03 03:15:26', '2025-08-03 03:15:26');
 
 -- --------------------------------------------------------
 
@@ -851,7 +867,7 @@ CREATE TABLE IF NOT EXISTS `payments` (
   `payment_token` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`payment_id`),
   KEY `transaction_id` (`transaction_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=116 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `payments`
@@ -971,7 +987,11 @@ INSERT INTO `payments` (`payment_id`, `transaction_id`, `payment_method`, `payme
 (112, 124, 'credit_card', 'pending', NULL, 157.50, '2025-07-31 03:48:30', '2025-07-31 03:48:30', 'Unknown Person', '', '', '', NULL),
 (113, 125, 'credit_card', 'pending', NULL, 157.50, '2025-07-31 03:54:55', '2025-07-31 03:54:55', 'Unknown Person', '', '', '', NULL),
 (114, 126, 'credit_card', 'pending', NULL, 315.00, '2025-07-31 04:10:29', '2025-07-31 04:10:29', '', '', '', '', NULL),
-(115, 127, 'credit_card', 'pending', NULL, 262.50, '2025-07-31 07:11:47', '2025-07-31 07:11:47', 'Unknown Person', '', '', '', NULL);
+(115, 127, 'credit_card', 'pending', NULL, 262.50, '2025-07-31 07:11:47', '2025-07-31 07:11:47', 'Unknown Person', '', '', '', NULL),
+(116, 128, 'credit_card', 'pending', NULL, 210.00, '2025-08-01 23:19:11', '2025-08-01 23:19:11', 'Unknown Person', '', '', '', NULL),
+(117, 129, 'credit_card', 'pending', NULL, 367.50, '2025-08-02 20:58:30', '2025-08-02 20:58:30', 'Unknown Person', '', '', '', NULL),
+(118, 130, 'credit_card', 'pending', NULL, 262.50, '2025-08-03 01:50:42', '2025-08-03 01:50:42', 'Unknown Person', '', '', '', NULL),
+(119, 131, 'credit_card', 'pending', NULL, 630.00, '2025-08-03 03:15:02', '2025-08-03 03:15:02', 'Unknown Person', '', '', '', NULL);
 
 -- --------------------------------------------------------
 
@@ -994,7 +1014,7 @@ CREATE TABLE IF NOT EXISTS `personal_access_tokens` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `personal_access_tokens_token_unique` (`token`),
   KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=387 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=402 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `personal_access_tokens`
@@ -1128,7 +1148,22 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (383, 'App\\Models\\Admin', 1, '1_admin_token', '5b3f5590bbba23ba7ae211084a8d6596badf1aacf670b873b9ae6f85ced2bdd3', '[\"*\"]', NULL, '2025-07-31 04:16:17', '2025-07-31 03:16:17', '2025-07-31 03:16:17'),
 (384, 'App\\Models\\Accounts', 81, '81_account_token', '5649880be5ae45bd12957aaeb6f0f94171d4b10c84b4a75bc584c2cc0e0f5182', '[\"*\"]', NULL, '2025-07-31 04:23:31', '2025-07-31 03:23:31', '2025-07-31 03:23:31'),
 (385, 'App\\Models\\Admin', 1, '1_admin_token', '14cd0f89f3d8261ec518ad2243d280f9566c2de08e923ad033979cbb1259056a', '[\"*\"]', '2025-07-31 04:10:14', '2025-07-31 04:58:02', '2025-07-31 03:58:02', '2025-07-31 04:10:14'),
-(386, 'App\\Models\\Accounts', 81, '81_account_token', '86038fad7f903090cd77a24f62a6d0f528aa1ca59316f32ca9c8066ea05495b4', '[\"*\"]', NULL, '2025-07-31 08:09:35', '2025-07-31 07:09:36', '2025-07-31 07:09:36');
+(386, 'App\\Models\\Accounts', 81, '81_account_token', '86038fad7f903090cd77a24f62a6d0f528aa1ca59316f32ca9c8066ea05495b4', '[\"*\"]', NULL, '2025-07-31 08:09:35', '2025-07-31 07:09:36', '2025-07-31 07:09:36'),
+(387, 'App\\Models\\Accounts', 81, '81_account_token', '9c018c22a809d58b1b3722bc78364b0733fc3788d4f46345b03c4c2aa77aeca9', '[\"*\"]', NULL, '2025-07-31 19:13:15', '2025-07-31 18:13:15', '2025-07-31 18:13:15'),
+(388, 'App\\Models\\Admin', 1, '1_admin_token', 'ba0c9b26595acf3d78257a3fe53050f185effb49ce1b0bdb74a3891aac6eb595', '[\"*\"]', NULL, '2025-07-31 19:13:32', '2025-07-31 18:13:33', '2025-07-31 18:13:33'),
+(389, 'App\\Models\\Accounts', 81, '81_account_token', 'e441bc593a7537fea16c596fe8ffab0cab377ccef54323d98933cb083e2854b6', '[\"*\"]', NULL, '2025-08-02 00:17:52', '2025-08-01 23:17:52', '2025-08-01 23:17:52'),
+(390, 'App\\Models\\Admin', 1, '1_admin_token', '73da6551b949a67dbdb980c392afa6e306fa642ae631794126a350417feeebfa', '[\"*\"]', '2025-08-01 23:35:50', '2025-08-02 00:27:52', '2025-08-01 23:27:52', '2025-08-01 23:35:50'),
+(391, 'App\\Models\\Accounts', 81, '81_account_token', 'dfe5b1197422922bc8f509dc6f41f7a98dfa05c3a128a6ceef39b545cd3952fb', '[\"*\"]', NULL, '2025-08-02 21:57:28', '2025-08-02 20:57:28', '2025-08-02 20:57:28'),
+(392, 'App\\Models\\Admin', 1, '1_admin_token', '45a9ecaf7334c067320740a08ba200b6e56b4712d711a4f20f064241b8ae8d93', '[\"*\"]', '2025-08-02 21:01:10', '2025-08-02 22:00:30', '2025-08-02 21:00:31', '2025-08-02 21:01:10'),
+(393, 'App\\Models\\Accounts', 81, '81_account_token', '39eba0939753a71594e77d2389371805898f4a8f043b0145c0458de4e36508dc', '[\"*\"]', NULL, '2025-08-03 02:49:43', '2025-08-03 01:49:43', '2025-08-03 01:49:43'),
+(394, 'App\\Models\\Admin', 1, '1_admin_token', '9b215741d579950b49a43616db521213ca4c81a5f6f7fbcbe08e3d549f753db0', '[\"*\"]', '2025-08-03 01:53:53', '2025-08-03 02:53:28', '2025-08-03 01:53:28', '2025-08-03 01:53:53'),
+(395, 'App\\Models\\Accounts', 81, '81_account_token', '6af581995c50be7bee697a312e044be75ec494b6f264d1a0b195bc9b76116bff', '[\"*\"]', NULL, '2025-08-03 04:11:07', '2025-08-03 03:11:08', '2025-08-03 03:11:08'),
+(396, 'App\\Models\\Admin', 1, '1_admin_token', 'dd88cdbe276bec7f88d96673a05ca42da9aef6c3ecd43e24ef81b6298061aff8', '[\"*\"]', '2025-08-03 03:17:57', '2025-08-03 04:16:51', '2025-08-03 03:16:51', '2025-08-03 03:17:57'),
+(397, 'App\\Models\\Admin', 1, '1_admin_token', '723076d4d5b78f1a7d4a4448e29a85519b2757ac8a0a02b99dd6625a18b79879', '[\"*\"]', NULL, '2025-08-03 05:08:55', '2025-08-03 04:08:55', '2025-08-03 04:08:55'),
+(398, 'App\\Models\\Admin', 1, '1_admin_token', '208e30782a2e5316f5c40a71217ef40e85c0bdbacb5ba6e50d2b8015afaf1ce2', '[\"*\"]', NULL, '2025-08-03 05:09:50', '2025-08-03 04:09:50', '2025-08-03 04:09:50'),
+(399, 'App\\Models\\Accounts', 81, '81_account_token', '5daa436bec4b4c06a9568f6dbf09cb8a01379d92ee3303942439d9d3ad62b7e6', '[\"*\"]', NULL, '2025-08-03 05:40:22', '2025-08-03 04:40:22', '2025-08-03 04:40:22'),
+(400, 'App\\Models\\Accounts', 81, '81_account_token', '54ab99b07399aab9d9ab0b2691d40789d322a065388abc8d80d5861f3e6831a6', '[\"*\"]', NULL, '2025-08-03 05:50:42', '2025-08-03 04:50:42', '2025-08-03 04:50:42'),
+(401, 'App\\Models\\Accounts', 81, '81_account_token', '73104b88a0febf84952db0cb1e6de2cc691ac48389ca53b26c1c2a1fbfde7299', '[\"*\"]', NULL, '2025-08-03 06:22:20', '2025-08-03 05:22:21', '2025-08-03 05:22:21');
 
 -- --------------------------------------------------------
 
@@ -1309,7 +1344,7 @@ CREATE TABLE IF NOT EXISTS `transactions` (
   `status` varchar(50) NOT NULL DEFAULT 'pending',
   `is_active` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`transaction_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=128 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=132 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `transactions`
@@ -1430,7 +1465,11 @@ INSERT INTO `transactions` (`transaction_id`, `account_id`, `transaction_date`, 
 (124, 169, '2025-07-31 03:48:30', 157.50, 150.00, 7.50, 'pending', 1),
 (125, 170, '2025-07-31 03:54:55', 157.50, 150.00, 7.50, 'pending', 1),
 (126, 171, '2025-07-31 04:10:29', 315.00, 300.00, 15.00, 'pending', 1),
-(127, 172, '2025-07-31 07:11:47', 262.50, 250.00, 12.50, 'pending', 1);
+(127, 172, '2025-07-31 07:11:47', 262.50, 250.00, 12.50, 'pending', 1),
+(128, 173, '2025-08-01 23:19:11', 210.00, 200.00, 10.00, 'pending', 1),
+(129, 174, '2025-08-02 20:58:30', 367.50, 350.00, 17.50, 'pending', 1),
+(130, 175, '2025-08-03 01:50:42', 262.50, 250.00, 12.50, 'pending', 1),
+(131, 176, '2025-08-03 03:15:02', 630.00, 600.00, 30.00, 'pending', 1);
 
 -- --------------------------------------------------------
 

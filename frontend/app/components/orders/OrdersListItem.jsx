@@ -21,10 +21,12 @@ function OrdersListItem({ order, fetchOrders }) {
   currency: "CAD",
 }).format(order.gst ?? 0);
 
-  const formattedSubtotal = new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-  }).format(order.subtotal);
+const calculatedSubtotal = (order.total_amount ?? 0) - (order.gst ?? 0);
+
+const formattedSubtotal = new Intl.NumberFormat("en-CA", {
+  style: "currency",
+  currency: "CAD",
+}).format(calculatedSubtotal);
 
 const formattedTotal = new Intl.NumberFormat("en-CA", {
   style: "currency",
