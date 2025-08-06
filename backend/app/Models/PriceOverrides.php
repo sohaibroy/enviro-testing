@@ -26,9 +26,5 @@ class PriceOverrides extends Model
         'price_override',
     ];
     public $timestamps = false;
-    
-    public function company()
-    {
-        return $this->belongsTo(Accounts::class 'company_id','company_id');
-    }
+
 }

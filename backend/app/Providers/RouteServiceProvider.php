@@ -37,5 +37,7 @@ class RouteServiceProvider extends ServiceProvider
                 //->prefix('web')
                 ->group(base_path('routes/web.php'));
         });
+
+        Route::model('method', Methods::class);
     }
 }

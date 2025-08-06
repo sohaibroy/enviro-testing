@@ -29,6 +29,7 @@ use App\Http\Controllers\MailController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\MonerisController;
 use App\Http\Controllers\ReturnEquipmentController;
+use App\Models\Methods;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +41,9 @@ use App\Http\Controllers\ReturnEquipmentController;
 | be assigned to the "api" middleware group.
 |
 */
+
+
+Route::get('/methods/{method_id}/turnaround-times', [MethodController::class, 'getTurnaroundTimesWithPricing']);
 
 //Extreme Route Order  
 Route::get('/orders', [OrdersController::class, 'ExtremeOrderInfo']);
@@ -86,6 +90,11 @@ Route::middleware('auth:sanctum')->post('/logout', [AdminController::class,'logo
 
 // Use a single middleware declaration for all ADMIN ROUTES
 Route::middleware('auth:sanctum')->group(function () {
+
+//Company Account assigning users 
+    Route::get('/accounts/unassigned', [AccountsController::class, 'getUnassignedAccounts']);
+    Route::post('/accounts/{account_id}/assign-company', [AccountsController::class, 'assignCompany']);
+    Route::post('/accounts/{account_id}/remove-company', [AccountsController::class, 'removeCompany']);
 
     Route::post('/send-estimate-email', [EstimateController::class, 'sendEstimateEmail']);
     // Get all companies
@@ -227,7 +236,7 @@ Route::get('/method/{method_id}', [MethodsController::class, 'showMethodByMethod
 Route::get('/methods/{analyte_id}', [MethodsController::class, 'getMethodsByAnalyteId']); //phpunit work
 Route::get('/method-details/{method_id}', [MethodsController::class, 'getMethodByMethodId']);//phpunit works
 
-Route::get('/quantity-details/{method_id}', [MethodsController::class, 'getMethodByMethodId']);
+Route::get('/quantity-details/{method_id}', [MethodsController::class, 'getQuantityDetails']);
 
 // Orders Routes
 Route::get('/orders/searchorderdetails/{order_id}', [OrdersController::class, 'show']);// phpunit walk

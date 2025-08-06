@@ -19,6 +19,8 @@ class VerifyCsrfToken extends Middleware
             'api/orders',
     'api/transactions/create',
     'api/create-checkout-session',
-    'api/send-contact-email'
+    'api/send-contact-email',
+    'api/accounts/*/assign-company',
+    'api/accounts/*/remove-company'
     ];
 }

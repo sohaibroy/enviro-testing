@@ -2,16 +2,9 @@
 
 import React, { useState } from "react";
 import { BaseListItem } from "../basic/BaseListItem";
-import { AccountUpdatePopup } from "./AccountUpdatePopup";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function AccountListItem({ account, company, fetchAccounts }) {
-  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-
-  const handleUpdateOpen = () => setIsUpdateOpen(true);
-  const handleUpdateClose = () => {
-    fetchAccounts();
-    setIsUpdateOpen(false);
-  };
 
   return (
     <BaseListItem>
@@ -42,19 +35,33 @@ function AccountListItem({ account, company, fetchAccounts }) {
       </div>
       <div className="flex flex-col justify-evenly gap-1">
         <button
-          className="bg-[#003883] w-[4rem] flex justify-center p-2 rounded-md text-white shadow-2xl font-bold transition-all hover:scale-[101%]"
-          onClick={handleUpdateOpen}
-        >
-          Edit
-        </button>
+  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+  onClick={async () => {
+    const confirm = window.confirm("Are you sure you want to unassign this account?");
+    if (!confirm) return;
+
+    const res = await fetch(`${baseUrl}/api/accounts/${account.account_id}/remove-company`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      },
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("Account unassigned successfully.");
+      fetchAccounts(); // Refresh list
+    } else {
+      console.error("Unassign failed:", data);
+      alert("Failed to unassign account.");
+    }
+  }}
+>
+  Delete
+</button>
       </div>
-      <AccountUpdatePopup
-        account={account}
-        company={company}
-        title="Update Account"
-        isOpen={isUpdateOpen}
-        onClose={handleUpdateClose}
-      />
+      
     </BaseListItem>
   );
 }

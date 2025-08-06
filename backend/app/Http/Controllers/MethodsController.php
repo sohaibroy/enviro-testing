@@ -9,6 +9,7 @@ use App\Models\TurnAroundTime;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use App\Models\PriceOverride;
 
 class MethodsController extends Controller
 {
@@ -312,4 +313,43 @@ class MethodsController extends Controller
         }
         return response()->json($methods);
     }
+
+public function getQuantityDetails($methodId, Request $request)
+{
+    $companyId = $request->query('company_id');
+
+    $method = Methods::with('analyte', 'turnaroundtime')->find($methodId);
+
+    if (!$method) {
+        return response()->json(['error' => 'Method not found'], 404);
+    }
+
+    $turnarounds = $method->turnaroundtime->map(function ($ta) use ($companyId) {
+        $override = DB::table('price_overrides')
+            ->where('company_id', $companyId)
+            ->where('turn_around_id', $ta->turn_around_id)
+            ->first();
+
+        return [
+            'turn_around_id'   => $ta->turn_around_id,
+            'turnaround_time'  => $ta->turnaround_time,
+            'is_default_price' => $ta->is_default_price,
+            'price'            => optional($override)->price_override ?? $ta->price ?? 0,
+        ];
+    });
+
+    return response()->json([[
+        'method_id'               => $method->method_id,
+        'method_name'             => $method->method_name,
+        'analyte_name'            => $method->analyte->analyte_name ?? '',
+        'general_comments'        => $method->general_comments,
+        'limit_of_quantification' => $method->limit_of_quantification,
+        'matrix'                  => $method->matrix,
+        'media'                   => $method->media,
+        'measurement'             => $method->measurement,
+        'sample_rate'             => $method->sample_rate,
+        'turn_around_times'       => $turnarounds,
+    ]]);
+}
+
 }

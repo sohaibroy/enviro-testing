@@ -96,25 +96,26 @@ class AccountsController extends Controller
         // Retrieve expiration time from personal access token
         $expiresAt = optional($account->tokens->last())->expires_at;
     
-        $response = [
-            'token' => $token,
-            'user' => [
-    'account_id' => $account->account_id,
-    'first_name' => $account->first_name,
-    'last_name' => $account->last_name,
-    'email' => $account->email,
-    'phone_number' => $account->phone_number,
-    'street_address' => $account->street_address,
-    'city' => $account->city,
-    'province' => $account->province,
-    'postal_code' => $account->postal_code,
-    'country' => $account->country,
-    'credit_card' => $account->credit_card,
-    'job_title' => $account->job_title
-],
-            'company_name' => $companyName,
-            'expires_at' => $expiresAt->format('Y-m-d H:i:s') 
-        ];
+       $response = [
+    'token' => $token,
+    'user' => [
+        'account_id' => $account->account_id,
+        'first_name' => $account->first_name,
+        'last_name' => $account->last_name,
+        'email' => $account->email,
+        'phone_number' => $account->phone_number,
+        'street_address' => $account->street_address,
+        'city' => $account->city,
+        'province' => $account->province,
+        'postal_code' => $account->postal_code,
+        'country' => $account->country,
+        'credit_card' => $account->credit_card,
+        'job_title' => $account->job_title,
+        'company_id' => $companyId,
+        'company_name' => $companyName
+    ],
+    'expires_at' => $expiresAt->format('Y-m-d H:i:s')
+];
         
         return response()->json($response);
     }
@@ -354,4 +355,60 @@ $user = $accessToken->tokenable; //  Account model
         // Return JSON response with accounts data
         return response()->json($accounts, 200);
     }
+
+
+    public function assignCompany(Request $request, $account_id)
+{
+    $user = Auth::user();
+
+    if (!($user instanceof \App\Models\Admin)) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    $request->validate([
+        'company_id' => 'required|exists:companies,company_id',
+    ]);
+
+    $account = Accounts::find($account_id);
+    if (!$account) {
+        return response()->json(['message' => 'Account not found'], 404);
+    }
+
+    $account->company_id = $request->input('company_id');
+    $account->save();
+
+    return response()->json(['message' => 'Account assigned to company successfully'], 200);
+}
+
+public function getUnassignedAccounts()
+{
+    $user = Auth::user();
+
+    if (!($user instanceof \App\Models\Admin)) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    $accounts = Accounts::whereNull('company_id')->get(); // Only accounts with no company
+    return response()->json($accounts, 200);
+}
+
+public function removeCompany($account_id)
+{
+    $user = Auth::user();
+
+    if (!($user instanceof \App\Models\Admin)) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    $account = Accounts::find($account_id);
+    if (!$account) {
+        return response()->json(['message' => 'Account not found'], 404);
+    }
+
+    $account->company_id = null;
+    $account->save();
+
+    return response()->json(['message' => 'Account unassigned successfully'], 200);
+}
+
 }

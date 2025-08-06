@@ -49,10 +49,16 @@ class Methods extends Model
         return $this->belongsTo(Analytes::class, 'analyte_id', 'analyte_id');
     }
 
-    public function turnaroundtime()
-    {
-        return $this->hasMany(TurnAroundTime::class);
-    }
+    // public function turnaroundtime()
+    // {
+    //     return $this->hasMany(TurnAroundTime::class);
+    // }
+
+public function turnaroundtime()
+{
+    return $this->hasMany(TurnAroundTime::class, 'method_id', 'method_id');
+}
+
     public function getTurnAroundTimeByMethodId($method_id)
     {
         $methods = TurnAroundTime::where('method_id', $method_id)->get();
@@ -63,4 +69,7 @@ class Methods extends Model
     public function analyte() {
     return $this->belongsTo(\App\Models\Analytes::class, 'analyte_id', 'analyte_id');
 }
+
+
+
 }

@@ -40,7 +40,11 @@ function Login({ title, link, apiPath, isAdmin }) {
         const data = await response.json();
 
         if (data.user) {
-          sessionStorage.setItem("user", JSON.stringify(data.user));
+          if (data.user) {
+  sessionStorage.setItem("user", JSON.stringify(data.user));
+  sessionStorage.setItem("accountType", "true");
+}
+
           sessionStorage.setItem("accountType", "true");
         }
 

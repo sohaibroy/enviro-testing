@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import QuantityDetails from '../components/quantity-details/QuantityDetails';
-import { useFormContext } from 'react-hook-form';
+import React, { useState, useEffect } from "react";
+import QuantityDetails from "../components/quantity-details/QuantityDetails";
+import { useFormContext } from "react-hook-form";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -16,18 +16,24 @@ export default function Step6({ onBack, onNext }) {
     required_quantity: 1,
     required_pumps: 0,
     required_media: 0,
-    customer_comment: '',
+    customer_comment: "",
   });
 
+  const [selectedTurnaround, setSelectedTurnaround] = useState(null);
+  const [selectedPrice, setSelectedPrice] = useState("0");
+
   useEffect(() => {
-    const selectedMethodId = sessionStorage.getItem('selectedMethodId');
-    if (!selectedMethodId) {
-      setError('No method selected. Please go back and select a method.');
+    const selectedMethodId = sessionStorage.getItem("selectedMethodId");
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+    const companyId = user?.company_id;
+
+    if (!selectedMethodId || !companyId) {
+      setError("Please go back and select a method.");
       setLoading(false);
       return;
     }
 
-    fetch(`${baseUrl}/api/quantity-details/${selectedMethodId}`)
+    fetch(`${baseUrl}/api/quantity-details/${selectedMethodId}?company_id=${companyId}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
@@ -36,55 +42,42 @@ export default function Step6({ onBack, onNext }) {
         setQuantityData(data);
         setLoading(false);
       })
-      .catch((e) => {
-        console.error('Failed to fetch quantity details:', e);
-        setError('Failed to load quantity details. Please try again.');
+      .catch(() => {
+        setError("Failed to load quantity details.");
         setLoading(false);
       });
   }, []);
 
   const handleContinue = () => {
-    const selectedAnalyte = JSON.parse(sessionStorage.getItem('selectedAnalyte'));
-    const selectedMethod = JSON.parse(sessionStorage.getItem('selectedMethod'));
-    const turnaround = JSON.parse(sessionStorage.getItem('selectedTurnaround')) || { id: 1, label: 'N/A' };
-    const price = sessionStorage.getItem('selectedPrice') || null;
-    const editIndex = sessionStorage.getItem('editIndex');
+    const selectedAnalyte = JSON.parse(sessionStorage.getItem("selectedAnalyte"));
+    const selectedMethod = JSON.parse(sessionStorage.getItem("selectedMethod"));
+    const editIndex = sessionStorage.getItem("editIndex");
+    const existingSelections = JSON.parse(sessionStorage.getItem("orderSelections") || "[]");
 
     if (!selectedAnalyte || !selectedMethod) {
-      alert('Missing analyte or method');
+      alert("Missing analyte or method");
       return;
     }
 
     const newSelection = {
       analyte: selectedAnalyte.analyte_name,
       method: selectedMethod.method_name,
-      turnaround, // includes { id, label }
-      price,
+      turnaround: selectedTurnaround,
+      price: selectedPrice,
       required_quantity: additionalFields.required_quantity,
-      required_pumps: additionalFields.required_pumps || 0,
-      required_media: additionalFields.required_media || 0,
-      customer_comment: additionalFields.customer_comment || '',
+      required_pumps: additionalFields.required_pumps,
+      required_media: additionalFields.required_media,
+      customer_comment: additionalFields.customer_comment,
     };
 
-    let storedSelections = JSON.parse(sessionStorage.getItem('orderSelections')) || [];
-
-    if (editIndex !== null) {
-      storedSelections[parseInt(editIndex)] = newSelection;
-      sessionStorage.removeItem('editIndex');
+    if (editIndex !== null && !isNaN(parseInt(editIndex))) {
+      existingSelections[parseInt(editIndex)] = newSelection;
+      sessionStorage.removeItem("editIndex");
     } else {
-      const isDuplicate = storedSelections.some(
-        (s) =>
-          s.analyte === newSelection.analyte &&
-          s.method === newSelection.method &&
-          s.turnaround?.id === newSelection.turnaround?.id
-      );
-      if (!isDuplicate) {
-        storedSelections.push(newSelection);
-      }
+      existingSelections.push(newSelection);
     }
 
-    sessionStorage.setItem('orderSelections', JSON.stringify(storedSelections));
-    setValue('orderSelections', storedSelections);
+    sessionStorage.setItem("orderSelections", JSON.stringify(existingSelections));
     onNext();
   };
 
@@ -103,17 +96,18 @@ export default function Step6({ onBack, onNext }) {
           <QuantityDetails
             quantityData={quantityData}
             onSelectOptions={(data) => {
-              // Save additional fields from QuantityDetails
+              setSelectedTurnaround(data.turnaround);
+              setSelectedPrice(data.price);
+
               setAdditionalFields({
                 required_quantity: data.required_quantity || 1,
                 required_pumps: data.required_pumps || 0,
                 required_media: data.required_media || 0,
-                customer_comment: data.customer_comment || '',
+                customer_comment: data.customer_comment || "",
               });
 
-              // Store turnaround & price in sessionStorage
-              sessionStorage.setItem('selectedTurnaround', JSON.stringify(data.turnaround));
-              sessionStorage.setItem('selectedPrice', data.price);
+              sessionStorage.setItem("selectedTurnaround", JSON.stringify(data.turnaround));
+              sessionStorage.setItem("selectedPrice", data.price);
             }}
           />
         ) : (

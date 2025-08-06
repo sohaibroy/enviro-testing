@@ -8,14 +8,18 @@ import { LoadingIcon } from "@/app/components/loading/LoadingIcon";
 import { ErrorMessage } from "@/app/components/basic/ErrorMessage";
 import { GeneralMessage } from "@/app/components/basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+import { AccountAssignPopup } from "@/app/components/accounts/AccountAssignPopup";
+import { AddAccountPopup } from "@/app/components/accounts/AddAccountPopup";
+
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function ManageAccountsPage({ params }) {
+ const [isAddNewOpen, setIsAddNewOpen] = useState(false);
   const [company, setCompany] = useState([]);
   const [accounts, setAccounts] = useState([]);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAssignOpen, setIsAssignOpen] = useState(false); // assign existing
 
   const fetchCompany = async () => {
     try {
@@ -25,7 +29,6 @@ function ManageAccountsPage({ params }) {
       }
 
       const response = await fetch(
-        //`http://localhost:80/api/company/${params.company_id}`,
         `${baseUrl}/api/company/${params.company_id}`,
         {
           headers: {
@@ -48,7 +51,6 @@ function ManageAccountsPage({ params }) {
       }
 
       const response = await fetch(
-        //`http://localhost:80/api/accounts/${company.company_id}`,
         `${baseUrl}/api/accounts/${company.company_id}`,
         {
           headers: {
@@ -63,12 +65,6 @@ function ManageAccountsPage({ params }) {
       setError(error.message);
       setLoading(false);
     }
-  };
-
-  const handleCreateOpen = () => setIsCreateOpen(true);
-  const handleCreateClose = () => {
-    fetchAccounts();
-    setIsCreateOpen(false);
   };
 
   useEffect(() => {
@@ -91,9 +87,16 @@ function ManageAccountsPage({ params }) {
         <div className="flex gap-[.25rem]">
           <button
             className="bg-[#003883] p-2 shadow-2xl font-bold text-center rounded-md transition-all hover:scale-[101%] text-white"
-            onClick={handleCreateOpen}
+            onClick={() => setIsAssignOpen(true)}
           >
-            Create New
+            Assign Existing
+          </button>
+
+          <button
+            onClick={() => setIsAddNewOpen(true)}
+            className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+          >
+            Add New Account
           </button>
         </div>
 
@@ -118,14 +121,23 @@ function ManageAccountsPage({ params }) {
           />
         )}
       </section>
-      <AccountCreatePopup
-        title={`Create Account For ${company.company_name}`}
-        isOpen={isCreateOpen}
+
+      <AccountAssignPopup
+        isOpen={isAssignOpen}
+        onClose={() => setIsAssignOpen(false)}
         company={company}
-        onClose={handleCreateClose}
+        fetchAccounts={fetchAccounts}
+      />
+
+      <AddAccountPopup
+        isOpen={isAddNewOpen}
+        onClose={() => setIsAddNewOpen(false)}
+        fetchAccounts={fetchAccounts}
+        companyId={company?.company_id}
       />
     </div>
   );
 }
 
 export default ManageAccountsPage;
+
