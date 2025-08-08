@@ -10,6 +10,9 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const ManagePriceOverrides = ({ company, method, isOpen, onClose, title }) => {
   const [turnAroundTimes, setTurnAroundTimes] = useState([]);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const getPriceOverrides = async () => {
     try {
@@ -33,62 +36,77 @@ const ManagePriceOverrides = ({ company, method, isOpen, onClose, title }) => {
 
       const data = await response.json();
       setTurnAroundTimes(data);
+      setErrorMessage("");
     } catch (error) {
       console.error("Error fetching data:", error);
+      setErrorMessage("Failed to load price overrides.");
     }
   };
 
- const setPriceOverrides = async () => {
-  try {
-    if (isTokenExpired()) {
-      window.location.href = "/admin-login";
-      return;
-    }
+  const setPriceOverrides = async () => {
+    try {
+      if (isTokenExpired()) {
+        window.location.href = "/admin-login";
+        return;
+      }
 
-    const turnAroundTimesWithoutDefaultPrice = turnAroundTimes.map(
-      ({ default_price, ...rest }) => rest
-    );
+      setIsSaving(true);
+      setSuccessMessage("");
+      setErrorMessage("");
 
-    // 1. Get the CSRF cookie
-    await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
-      credentials: "include",
-    });
+      const turnAroundTimesWithoutDefaultPrice = turnAroundTimes.map(
+        ({ default_price, ...rest }) => rest
+      );
 
-    // 2. Make the POST request with XSRF token
-    const xsrfToken = decodeURIComponent(
-      document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("XSRF-TOKEN="))
-        ?.split("=")[1] ?? ""
-    );
-
-    fetch(`${baseUrl}/api/priceoverride/reset/${company.company_id}`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-        "X-XSRF-TOKEN": xsrfToken,
-      },
-      body: JSON.stringify(turnAroundTimesWithoutDefaultPrice),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("Success:", data);
-        onClose();
-      })
-      .catch((error) => {
-        console.error("Error:", error);
+      //Get CSRF cookie
+      await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
+        credentials: "include",
       });
-  } catch (error) {
-    console.error("Error:", error);
-  }
-};
+
+      //Extract XSRF token
+      const xsrfToken = decodeURIComponent(
+        document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("XSRF-TOKEN="))
+          ?.split("=")[1] ?? ""
+      );
+
+      //Save overrides
+      const res = await fetch(
+        `${baseUrl}/api/priceoverride/reset/${company.company_id}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            "X-XSRF-TOKEN": xsrfToken,
+          },
+          body: JSON.stringify(turnAroundTimesWithoutDefaultPrice),
+        }
+      );
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
+
+      await res.json();
+
+      setSuccessMessage("Price overrides have been updated successfully.");
+      //close after a short delay
+      setTimeout(() => {
+        onClose();
+        //Clear message for the next open
+        setSuccessMessage("");
+      }, 1500);
+    } catch (error) {
+      console.error("Error:", error);
+      setErrorMessage("Failed to update price overrides.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handlePriceChange = (index, value) => {
     const updated = [...turnAroundTimes];
@@ -112,6 +130,9 @@ const ManagePriceOverrides = ({ company, method, isOpen, onClose, title }) => {
 
   useEffect(() => {
     if (isOpen) {
+      //Clear messages each time popup opens
+      setSuccessMessage("");
+      setErrorMessage("");
       getPriceOverrides();
     }
   }, [isOpen]);
@@ -121,16 +142,30 @@ const ManagePriceOverrides = ({ company, method, isOpen, onClose, title }) => {
   return (
     <BasePopup
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        setSuccessMessage("");
+        setErrorMessage("");
+        onClose();
+      }}
       title={title}
-      activityText="Set"
-      onActivityClicked={setPriceOverrides}
+      activityText={isSaving ? "Saving..." : "Set"}
+      onActivityClicked={isSaving ? undefined : setPriceOverrides}
       className="max-w-[30rem]"
     >
+      {/* Messages */}
+      {successMessage && (
+        <p className="text-green-600 font-semibold mb-2">{successMessage}</p>
+      )}
+      {errorMessage && (
+        <p className="text-red-600 font-semibold mb-2">{errorMessage}</p>
+      )}
+
       <section className="w-full flex justify-end">
         <button
-          className="bg-red-400 p-2 shadow-2xl w-[6rem] font-bold rounded-md text-center transition-all hover:scale-[101%] text-white"
+          className="bg-red-400 p-2 shadow-2xl w-[6rem] font-bold rounded-md text-center transition-all hover:scale-[101%] text-white disabled:opacity-60"
           onClick={handleResetPriceOverrides}
+          disabled={isSaving}
+          type="button"
         >
           Reset
         </button>
@@ -151,6 +186,7 @@ const ManagePriceOverrides = ({ company, method, isOpen, onClose, title }) => {
                   min="0"
                   className="md:w-full"
                   onChange={(e) => handlePriceChange(index, e.target.value)}
+                  disabled={isSaving}
                 />
                 <div className="flex flex-col justify-end text-center w-[8rem] text-enviro_blue">
                   <h2 className="text-xs font-semibold">Default</h2>

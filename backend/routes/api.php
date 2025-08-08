@@ -42,8 +42,18 @@ use App\Models\Methods;
 |
 */
 
+Route::get('/analyte/{id}', [AnalytesController::class, 'show']);
+Route::post('/synonym/create/{category_id}',[SynonymsController::class, 'createSynonym']); // phpunit works
+Route::delete('/synonym/delete/{synonym_id}',[SynonymsController::class,'deleteSynonyms']);//  phpunit works
 
-Route::get('/methods/{method_id}/turnaround-times', [MethodController::class, 'getTurnaroundTimesWithPricing']);
+Route::delete('/category/{category_id}', [CategoriesController::class, 'destroy']);
+Route::post('/category/create/{analyte_id}',[CategoriesController::class, 'createCategory']);
+
+Route::post('/method/create/{analyte_id}', [MethodsController::class, 'createMethod']); //phpunit works
+
+Route::delete('method/{method_id}', [MethodsController::class, 'destroy']);
+
+Route::get('/methods/{method_id}/turnaround-times', [MethodsController::class, 'getTurnaroundTimesWithPricing']);
 
 //Extreme Route Order  
 Route::get('/orders', [OrdersController::class, 'ExtremeOrderInfo']);
@@ -106,6 +116,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Update an existing company
     Route::put('company/update/{company_id}', [CompanyController::class, 'updateCompany']);// phpunit works
 
+    //Delete Company
+    Route::delete('company/{company_id}', [CompanyController::class, 'deleteCompany']);
+
     // Get a company by ID
     Route::get('company/{company_id}', [CompanyController::class, 'getCompanyByCompanyId']); // phpunit works
 
@@ -127,8 +140,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Update an existing analyte
     Route::put('/analyte/update/{analyte_id}',[AnalytesController::class, 'updateAnalyte']); // phpunit works
 
+    //Delete Analyte 
+    Route::delete('/analyte/{analyte_id}', [AnalytesController::class, 'destroy']);
+
     // Category Route
-    Route::post('/category/create/{analyte_id}',[CategoriesController::class, 'createCategory']);// works
     Route::put('/category/update/{category_id}',[CategoriesController::class, 'updateCategory']); // phpunit works
     Route::get('/categories/{analyte_id}', [CategoriesController::class, 'getCategoriesByAnalyteID']); // phpunit works
 
@@ -156,13 +171,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/equipment-values/update', [EquipmentValuesController::class, 'updateEquipmentValue']);
 
     // Synonyms
-    Route::post('/synonym/create/{category_id}',[SynonymsController::class, 'createSynonym']); // phpunit works
-    Route::delete('/synonym/delete/{synonym_id}',[SynonymsController::class,'deleteSynonyms']);//  phpunit works
     Route::get('/synonyms/{category_id}',[SynonymsController::class,'index']); //phpunit works
 
     // Methods
     Route::get('/methods/analyte/{analyte_id}', [MethodsController::class, 'searchMethodByAnalyteId']); //phpunit works
-    Route::post('/method/create/{analyte_id}', [MethodsController::class, 'createMethod']); //phpunit works
     Route::put('/method/update/{method_id}', [MethodsController::class, 'updateMethod']); // phpunit works
     Route::get('/methods/company/{analyte_id}', [MethodsController::class, 'getMethodsByAnalyteIdPricing']); //phpunit works
     Route::get('/method-details/company/{method_id}', [MethodsController::class, 'getMethodByMethodIdPricing']); // phpunit works
@@ -186,7 +198,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rentaldetails/{rental_id}', [RentalDetailsController::class, 'getRentalDetailsByRentalID']);
 
     // Transactions
-    Route::get('transactions', [TransactionsController::class, 'getAllTransactionsWithRelatedTables']);
+    Route::get('transactions', [TransactionsController::class, 'index']);
     Route::put('transactions/update/{transaction_id}', [TransactionsController::class, 'updateTransaction']);
     Route::get('transactions/search/{searchValue}', [TransactionsController::class, 'searchTransactions']);
 

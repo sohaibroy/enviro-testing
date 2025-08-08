@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSession } from "@/utils/session";
 import { AiFillAlert } from "react-icons/ai";
@@ -20,56 +19,61 @@ function Login({ title, link, apiPath, isAdmin }) {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
+      // Get CSRF cookie for session-based login
       await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
         credentials: "include",
       });
 
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
+      const xsrfToken = Cookies.get("XSRF-TOKEN"); // may be undefined briefly
 
       const response = await fetch(apiPath, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
+          ...(xsrfToken ? { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) } : {}),
         },
-        credentials: "include",
+        credentials: "include", // send/receive session cookie
         body: JSON.stringify({ email, password }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.user) {
-          if (data.user) {
-  sessionStorage.setItem("user", JSON.stringify(data.user));
-  sessionStorage.setItem("accountType", "true");
-}
-
-          sessionStorage.setItem("accountType", "true");
-        }
-
-        Cookies.set("token", data.token, { path: '/' });
-        Cookies.set("role", isAdmin ? "admin" : "customer", { path: '/' });
-        sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
-
-        createSession(
-          data.token,
-          isAdmin,
-          data.expires_at,
-          data.user,
-          data.company_name
-        );
-
-        setTimeout(() => {
-          // window.location.href = isAdmin ? "/admin-selection" : "/multi-step-form";
-          window.location.href = isAdmin ? "/admin-selection" : "/chain-of-custody";
-        }, 200);
-      } else {
+      if (!response.ok) {
         setError("Incorrect email or password");
         setLoading(false);
+        return;
       }
-    } catch (error) {
-      setError(error.message || "Something went wrong...");
+
+      const data = await response.json();
+
+      // Store profile info for your app
+      if (data.user) {
+        sessionStorage.setItem("user", JSON.stringify(data.user));
+        sessionStorage.setItem("accountType", "true");
+      }
+
+      // ✅ Save token for Bearer-token API calls (Option B endpoints)
+      if (data.token) {
+        sessionStorage.setItem("accessToken", data.token);
+      }
+
+      // (Optional) legacy cookies; fine to keep if other code reads them
+      Cookies.set("token", data.token, { path: "/" });
+      Cookies.set("role", isAdmin ? "admin" : "customer", { path: "/" });
+      sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
+
+      // Keep your existing helper
+      createSession(
+        data.token,
+        isAdmin,
+        data.expires_at,
+        data.user,
+        data.company_name
+      );
+
+      setTimeout(() => {
+        window.location.href = isAdmin ? "/admin-selection" : "/chain-of-custody";
+      }, 200);
+    } catch (err) {
+      setError(err.message || "Something went wrong...");
       setLoading(false);
     }
   };
@@ -95,8 +99,9 @@ function Login({ title, link, apiPath, isAdmin }) {
           >
             <section className="flex flex-col gap-2">
               <div className="flex justify-between items-center">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{title || "Login"}</h1>
-                {/* <h2 className="text-enviro_blue text-lg font-bold">Enviro-Works</h2> */}
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+                  {title || "Login"}
+                </h1>
               </div>
               {error && (
                 <div className="flex items-center gap-2 text-sm text-red-600 font-semibold">

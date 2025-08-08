@@ -4,7 +4,6 @@ import { ValidationInput } from "../basic/ValidationInput";
 import { isTokenExpired } from "@/utils/session";
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-
 const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
   const [turnAroundTimes, setTurnAroundTimes] = useState([]);
   const [regularPrice, setRegularPrice] = useState(0);
@@ -23,6 +22,8 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
     isActiveSameDay: true,
   });
 
+  const [successMessage, setSuccessMessage] = useState("");
+
   useEffect(() => {
     if (isOpen) {
       async function fetchTurnAroundData() {
@@ -36,9 +37,7 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
             `${baseUrl}/api/turnaroundtimes/${method.method_id}`,
             {
               headers: {
-                Authorization: `Bearer ${sessionStorage.getItem(
-                  "accessToken"
-                )}`,
+                Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
               },
             }
           );
@@ -49,15 +48,15 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
         }
       }
       fetchTurnAroundData();
+      setSuccessMessage(""); // clear old banner when reopened
     }
-  }, [isOpen]);
+  }, [isOpen, method?.method_id]);
 
   useEffect(() => {
-    if (turnAroundTimes === undefined || turnAroundTimes === null) return;
+    if (!turnAroundTimes) return;
 
     setRegularDay(
-      turnAroundTimes.find((item) => item.is_default_price === 1)
-        ?.turnaround_time ?? "7 Days"
+      turnAroundTimes.find((item) => item.is_default_price === 1)?.turnaround_time ?? "7 Days"
     );
 
     setRegularPrice(
@@ -66,36 +65,17 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
 
     setValues((prevState) => ({
       ...prevState,
-      days5:
-        turnAroundTimes.find((item) => item.turnaround_time === "5 Days")
-          ?.price ?? 0,
-      days3:
-        turnAroundTimes.find((item) => item.turnaround_time === "3 Days")
-          ?.price ?? 0,
-      hours48:
-        turnAroundTimes.find((item) => item.turnaround_time === "48 Hours")
-          ?.price ?? 0,
-      hours24:
-        turnAroundTimes.find((item) => item.turnaround_time === "24 Hours")
-          ?.price ?? 0,
-      sameDay:
-        turnAroundTimes.find((item) => item.turnaround_time === "Same Day")
-          ?.price ?? 0,
-      isActive5:
-        turnAroundTimes.find((item) => item.turnaround_time === "5 Days")
-          ?.is_active ?? false,
-      isActive3:
-        turnAroundTimes.find((item) => item.turnaround_time === "3 Days")
-          ?.is_active ?? false,
-      isActive48:
-        turnAroundTimes.find((item) => item.turnaround_time === "48 Hours")
-          ?.is_active ?? false,
-      isActive24:
-        turnAroundTimes.find((item) => item.turnaround_time === "24 Hours")
-          ?.is_active ?? false,
+      days5: turnAroundTimes.find((i) => i.turnaround_time === "5 Days")?.price ?? 0,
+      days3: turnAroundTimes.find((i) => i.turnaround_time === "3 Days")?.price ?? 0,
+      hours48: turnAroundTimes.find((i) => i.turnaround_time === "48 Hours")?.price ?? 0,
+      hours24: turnAroundTimes.find((i) => i.turnaround_time === "24 Hours")?.price ?? 0,
+      sameDay: turnAroundTimes.find((i) => i.turnaround_time === "Same Day")?.price ?? 0,
+      isActive5: turnAroundTimes.find((i) => i.turnaround_time === "5 Days")?.is_active ?? false,
+      isActive3: turnAroundTimes.find((i) => i.turnaround_time === "3 Days")?.is_active ?? false,
+      isActive48: turnAroundTimes.find((i) => i.turnaround_time === "48 Hours")?.is_active ?? false,
+      isActive24: turnAroundTimes.find((i) => i.turnaround_time === "24 Hours")?.is_active ?? false,
       isActiveSameDay:
-        turnAroundTimes.find((item) => item.turnaround_time === "Same Day")
-          ?.is_active ?? false,
+        turnAroundTimes.find((i) => i.turnaround_time === "Same Day")?.is_active ?? false,
     }));
   }, [turnAroundTimes]);
 
@@ -107,8 +87,8 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
     setRegularPrice(0);
 
     if (selectedRegularDay === "14 Days") {
-      setValues((prevState) => ({
-        ...prevState,
+      setValues((prev) => ({
+        ...prev,
         days5: 0,
         days3: 0,
         hours48: 0,
@@ -121,8 +101,8 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
         isActiveSameDay: false,
       }));
     } else {
-      setValues((prevState) => ({
-        ...prevState,
+      setValues((prev) => ({
+        ...prev,
         days5: 0,
         days3: 0,
         hours48: 0,
@@ -138,19 +118,15 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
   };
 
   const handleChange = (e, fieldName) => {
-    const newValue =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setValues((prevValues) => ({
-      ...prevValues,
-      [fieldName]: newValue,
-    }));
+    const newValue = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setValues((prev) => ({ ...prev, [fieldName]: newValue }));
   };
 
   const handleRegularPriceChange = (e) => {
     const newRegularPrice = e.target.value;
     setRegularPrice(newRegularPrice);
-    setValues((prevValues) => ({
-      ...prevValues,
+    setValues((prev) => ({
+      ...prev,
       days5: calculatePrice(1.25, newRegularPrice),
       days3: calculatePrice(1.5, newRegularPrice),
       hours48: calculatePrice(1.75, newRegularPrice),
@@ -161,7 +137,8 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
 
   const calculatePrice = (multiplier, regularPrice) => {
     const price = regularPrice * multiplier;
-    return regularDay == "7 Days" ? Math.ceil(price / 5) * 5 : 0;
+    return regularDay === "7 Days" ? Math.ceil(price / 5) * 5 : 0;
+    // if 14 days is default, everything else is 0 (disabled)
   };
 
   async function setAllTurnAroundTimes() {
@@ -172,7 +149,6 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
       }
 
       const response = await fetch(
-        //`http://localhost:80/api/turnaroundtimes/set/${method.method_id}`,
         `${baseUrl}/api/turnaroundtimes/set/${method.method_id}`,
         {
           method: "POST",
@@ -225,11 +201,15 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log("Success:", data);
-      onClose();
+      // show success, then close after 1.5s
+      setSuccessMessage("Turnaround times saved successfully!");
+      setTimeout(() => {
+        setSuccessMessage("");
+        onClose?.();
+      }, 1500);
     } catch (error) {
       console.error("Error:", error);
+      alert("Failed to save turnaround times. Please try again.");
     }
   }
 
@@ -241,13 +221,23 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
       activityText="Set"
       onActivityClicked={setAllTurnAroundTimes}
     >
+      {successMessage && (
+        <div
+          className="w-full mb-4 p-2 text-green-800 bg-green-100 border border-green-300 rounded"
+          role="status"
+          aria-live="polite"
+        >
+          {successMessage}
+        </div>
+      )}
+
       <form className="flex flex-wrap justify-between gap-y-4">
         <div className="flex justify-between items-center w-full">
           <ValidationInput
             type="number"
             value={regularPrice}
             min={0}
-            onChange={(e) => handleRegularPriceChange(e)}
+            onChange={handleRegularPriceChange}
             title={
               <label className="flex gap-2">
                 Default
@@ -267,7 +257,7 @@ const ManageTurnAroundTimesPopup = ({ method, isOpen, onClose, title }) => {
 
         <section
           className={`w-full flex flex-col gap-y-2 ${
-            regularDay == "14 Days" ? "hidden" : ""
+            regularDay === "14 Days" ? "hidden" : ""
           }`}
         >
           <div className="w-full h-[.125rem] bg-gray-200 my-[.5rem]" />

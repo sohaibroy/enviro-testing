@@ -65,92 +65,79 @@ class AccountsController extends Controller
 ]);
 }
 
-    public function login(Request $request)
+   public function login(Request $request)
     {
-        try {
-            $request->validate([
-                'email' => 'required|email',
-                'password' => 'required'
-            ]);
-    
-            $account = Accounts::where('email', $request->email)->first();
-    
-            if (!$account || !Hash::check($request->password, $account->password)) {
-                // Invalid credentials
-                return response()->json(['error' => 'Invalid credentials.'], 401);
-            }
-        // Get the company_id associated with the account
-        $companyId = $account->company_id;
+        $validated = $request->validate([
+            'email'    => ['required', 'email'],
+            'password' => ['required'],
+        ]);
 
-        // Retrieve the company name from the companies table
-        $companyName = Companies::where('company_id', $companyId)->value('company_name');
-    
-        } catch (Exception $e) {
-            // Invalid request format
-            return response()->json(['error' => 'Invalid request format.'], 401);
+        $account = Accounts::where('email', $validated['email'])->first();
+
+        if (!$account || !Hash::check($validated['password'], $account->password)) {
+            return response()->json(['error' => 'Invalid credentials.'], 401);
         }
-    
-        // Authentication successful
-        $token = $account->createToken(strval($account->account_id) . "_account_token", expiresAt:now()->addHour())->plainTextToken;
-        
-        // Retrieve expiration time from personal access token
-        $expiresAt = optional($account->tokens->last())->expires_at;
-    
-       $response = [
-    'token' => $token,
-    'user' => [
-        'account_id' => $account->account_id,
-        'first_name' => $account->first_name,
-        'last_name' => $account->last_name,
-        'email' => $account->email,
-        'phone_number' => $account->phone_number,
-        'street_address' => $account->street_address,
-        'city' => $account->city,
-        'province' => $account->province,
-        'postal_code' => $account->postal_code,
-        'country' => $account->country,
-        'credit_card' => $account->credit_card,
-        'job_title' => $account->job_title,
-        'company_id' => $companyId,
-        'company_name' => $companyName
-    ],
-    'expires_at' => $expiresAt->format('Y-m-d H:i:s')
-];
-        
-        return response()->json($response);
-    }
 
+        //Establish a session for SPA auth
+        Auth::login($account);
+        $request->session()->regenerate();
+
+        // Optional: also issue a PAT if you still need token auth somewhere
+        $token = $account->createToken(
+            $account->account_id . '_account_token',
+            expiresAt: now()->addHour()
+        )->plainTextToken;
+
+        // Company info (if present)
+        $companyName = null;
+        if ($account->company_id) {
+            $companyName = Companies::where('company_id', $account->company_id)->value('company_name');
+        }
+
+        return response()->json([
+            'token' => $token, // optional to use
+            'user'  => [
+                'account_id'     => $account->account_id,
+                'first_name'     => $account->first_name,
+                'last_name'      => $account->last_name,
+                'email'          => $account->email,
+                'phone_number'   => $account->phone_number,
+                'street_address' => $account->street_address,
+                'city'           => $account->city,
+                'province'       => $account->province,
+                'postal_code'    => $account->postal_code,
+                'country'        => $account->country,
+                'credit_card'    => $account->credit_card, // you’re storing it; consider removing in prod
+                'job_title'      => $account->job_title,
+                'company_id'     => $account->company_id,
+                'company_name'   => $companyName,
+            ],
+            'expires_at' => now()->addHour()->format('Y-m-d H:i:s'),
+        ]);
+    }
 
     public function index()
-    {
-        $user= Auth::user();
-        if (strpos($user, 'admin') === false) {
-            return response()->json(['message' => 'You are not authorized to view this page'], 401);
-        } else{   
-        $customers = Accounts::all();
-        return response()->json($customers);
-        }
+{
+    $user = Auth::user();
+    if (!$user || empty($user->is_admin)) {
+        return response()->json(['message' => 'Forbidden'], 403);
     }
-    public function show($id)
-    {
-        $user= Auth::user();
+    return response()->json(Accounts::all());
+}
 
-        if (strpos($user, 'admin') === false) {
-
-            return response()->json(['message' => 'You are not authorized to view this page'], 401);
-
-        } else {
-            
-            $customer = Accounts::findOrFail($id);
-
-            if (!$customer) {
-                return response()->json(['message' => 'Account not found'], 404);
-            }
-    
-            return response()->json($customer);
-         }
-      
+public function show($id)
+{
+    $user = Auth::user();
+    if (!$user || empty($user->is_admin)) {
+        return response()->json(['message' => 'Forbidden'], 403);
     }
+
+    $customer = Accounts::find($id);
+    if (!$customer) {
+        return response()->json(['message' => 'Account not found'], 404);
+    }
+    return response()->json($customer);
+}
 
     // Create a new customer
     public function createAccount(Request $request)

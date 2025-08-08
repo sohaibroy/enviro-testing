@@ -20,183 +20,229 @@ class TransactionsController extends Controller
     * All data is transferred via one GET or POST request which is then separated into their respective controllers for final processing.
     */
 
-    public function index() {
-        $user = Auth::user();
-
-        if (!strpos($user, 'admin')) {
-            return response()->json(['message' => 'You are not authorized to view this page'], 401);
-        }
-
-        $transactions = Transactions::all();
-
-        return response()->json($transactions);
+    public function index()
+{
+    if (!$this->isAdmin()) {
+        return response()->json(['message' => 'You are not authorized to view this page'], 401);
     }
 
+    $txns = DB::table('transactions as t')
+        ->leftJoin('orders as o', 'o.transaction_id', '=', 't.transaction_id')
+        ->leftJoin('accounts as a', 'a.account_id', '=', 't.account_id')
+        ->leftJoin('companies as c', 'c.company_id', '=', 'a.company_id')
+        ->select([
+            // transactions
+            't.transaction_id',
+            't.account_id',
+            't.transaction_date',
+            't.subtotal',
+            't.gst',
+            't.total_amount',
+            't.is_active',
+
+            // orders
+            'o.order_id',
+            'o.status as order_status',
+            'o.order_date',
+            'o.subtotal as order_subtotal',
+            'o.gst as order_gst',
+            'o.total_amount as order_total',
+
+            // account (person)
+            'a.first_name',
+            'a.last_name',
+            'a.phone_number',
+            'a.email',
+            'a.company_id',
+
+            // company
+            'c.company_name',
+            'c.company_phone',
+            'c.address',
+
+            // effective is_active (auto-inactive if order completed)
+            DB::raw('CASE WHEN o.status = 2 THEN 0 ELSE t.is_active END AS is_active_effective'),
+        ])
+        ->orderByDesc('t.transaction_date')
+        ->get()
+        ->map(function ($row) {
+            $row->is_active = (int) $row->is_active_effective;
+            unset($row->is_active_effective);
+            return $row;
+        });
+
+    return response()->json($txns);
+}
+
     public function createTransaction(Request $request)
-    {
-        DB::beginTransaction();
+{
+    //validate core fields up front
+    $request->validate([
+        'transaction.subtotal'      => 'required|numeric|min:0',
+        'transaction.gst'           => 'required|numeric|min:0',
+        'transaction.total_amount'  => 'required|numeric|min:0',
+        'account.email'             => 'nullable|email', // only for guests
+        'rental'                    => 'nullable|array',
+        'rental_details'            => 'nullable|array',
+        'rental_details.*.equipment_id' => 'required_with:rental_details|integer',
+        'rental_details.*.quantity'     => 'required_with:rental_details|integer|min:1',
+    ]);
 
-        try {
-            $data = $request->all();
+    DB::beginTransaction();
 
-            Log::info('Auth check result:', ['isAuthenticated' => Auth::check()]);
-            if (Auth::check()) {
-                $accountUser = Auth::user();
-                  // Payment fields (credit_card, expiry_month, expiry_year) are missing from the accounts table, so they are set to null/empty here.
-                $billing = [
-                    'cardholder_name' => "{$accountUser->first_name} {$accountUser->last_name}",
-                    'credit_card' => null, 
-                    'expiry_month' => '',
-                    'expiry_year' => '',
-                ];
-            } else {
-                // For non-authenticated users
-                if (!isset($data['account'])) {
-                    Log::error('Missing account data for guest order');
-                    return response()->json(['error' => 'Account data is missing'], 400);
-                }
-                Log::info('Incoming account data:', $data['account']);
-                $billing = $data['account'];
+    try {
+        $data = $request->all();
+
+        Log::info('[createTransaction] Auth check', ['isAuthenticated' => Auth::check()]);
+
+        // ---------------------------
+        // Resolve account & billing
+        // ---------------------------
+        if (Auth::check()) {
+            $account        = Auth::user();
+            $accountId      = $account->account_id;
+            $cardholderName = trim(($account->first_name ?? '') . ' ' . ($account->last_name ?? ''));
+            $creditCard     = null; // don't store raw card
+            $expiryMonth    = '';
+            $expiryYear     = '';
+        } else {
+            // Guest flow must include account payload
+            if (empty($data['account'])) {
+                Log::error('[createTransaction] Missing account data for guest order');
+                return response()->json(['error' => 'Account data is missing'], 400);
+            }
+            $billing = $data['account'];
+
+            //Try to re-use existing account by email (prevents duplicates)
+            $existing = null;
+            if (!empty($billing['email'])) {
+                $existing = DB::table('accounts')->where('email', $billing['email'])->first();
             }
 
-            if (Auth::check()) {
-                $account = Auth::user();
-                $accountId = $account->account_id;
-
-                $cardholderName = $billing['cardholder_name'] ?? "{$account->first_name} {$account->last_name}";
-                $creditCard = $billing['credit_card'] ?? null;
-                $expiryMonth = $billing['expiry_month'] ?? '';
-                $expiryYear = $billing['expiry_year'] ?? '';
+            if ($existing) {
+                $accountId = $existing->account_id;
             } else {
                 $accountId = DB::table('accounts')->insertGetId([
-                    'first_name'     => $billing['first_name'] ?? '',
-                    'last_name'      => $billing['last_name'] ?? '',
-                    'email'          => $billing['email'] ?? '',
-                    'phone_number'   => $billing['phone_number'] ?? '',
+                    'first_name'     => $billing['first_name']     ?? '',
+                    'last_name'      => $billing['last_name']      ?? '',
+                    'email'          => $billing['email']          ?? '',
+                    'phone_number'   => $billing['phone_number']   ?? '',
                     'street_address' => $billing['street_address'] ?? '',
-                    'city'           => $billing['city'] ?? '',
-                    'province'       => $billing['province'] ?? '',
-                    'postal_code'    => $billing['postal_code'] ?? '',
-                    'country'        => $billing['country'] ?? '',
-                    'credit_card'    => $billing['credit_card'] ?? '',
+                    'city'           => $billing['city']           ?? '',
+                    'province'       => $billing['province']       ?? '',
+                    'postal_code'    => $billing['postal_code']    ?? '',
+                    'country'        => $billing['country']        ?? '',
+                    // Consider removing this column in prod; Stripe should hold cards
+                    'credit_card'    => $billing['credit_card']    ?? '',
                     'is_active'      => 1,
                     'company_id'     => null,
                     'password'       => null,
                     'job_title'      => null,
+                    // 'is_guest'    => 1, // optional flag if you have it
                 ]);
-                $cardholderName = $billing['cardholder_name'] ?? '';
-                $creditCard = $billing['credit_card'] ?? '';
-                $expiryMonth = $billing['expiry_month'] ?? '';
-                $expiryYear = $billing['expiry_year'] ?? '';
             }
 
-            $transaction = $data['transaction'];
-            $transactionId = DB::table('transactions')->insertGetId([
-                'account_id'    => $accountId,
-                'subtotal'      => $transaction['subtotal'] ?? 0,
-                'gst'           => $transaction['gst'] ?? 0,
-                'total_amount'  => $transaction['total_amount'] ?? 0,
-            ]);
-            Log::info("Transaction created with ID: $transactionId");
-
-            // --- RENTAL LOGIC ---
-            if (isset($data['rental'])) {
-                $rental = $data['rental'];
-                $rentalId = DB::table('rentals')->insertGetId([
-                    'transaction_id' => $transactionId,
-                    'rental_date'    => $rental['rental_date'] ?? now(),
-                    'subtotal'       => $transaction['subtotal'] ?? 0,
-                ]);
-                Log::info("Rental created with ID: $rentalId");
-
-                foreach ($data['rental_details'] as $detail) {
-                    $equipmentId = $detail['equipment_id'];
-                    $quantity = $detail['quantity'] ?? 1;
-
-                    $serials = DB::table('equipment_details')
-                        ->where('equipment_id', $equipmentId)
-                        ->where('status', 'available')
-                        ->limit($quantity)
-                        ->pluck('serial_id');
-
-                    if ($serials->count() < $quantity) {
-                        throw new \Exception("Not enough available serials for equipment ID $equipmentId");
-                    }
-
-                    foreach ($serials as $serialId) {
-                        DB::table('rental_details')->insert([
-                            'rental_id'           => $rentalId,
-                            'serial_id'           => $serialId,
-                            'quantity'            => 1,
-                            'price'               => $detail['price'] ?? 0,
-                            'start_date'          => $detail['start_date'] ?? null,
-                            'end_date'            => $detail['end_date'] ?? null,
-                            'equipment_condition' => $detail['condition'] ?? 'good',
-                            'is_active'           => 1,
-                        ]);
-
-                        DB::table('equipment_details')
-                            ->where('serial_id', $serialId)
-                            ->update(['status' => 'rented']);
-                    }
-                }
-                Log::info("Rental details and serials saved.");
-            }
-
-            // --- ORDER LOGIC ---
-            // if (isset($data['order'])) {
-            //     $order = $data['order'];
-            //     $orderId = DB::table('orders')->insertGetId([
-            //         'transaction_id' => $transactionId,
-            //         'order_date'     => $order['order_date'] ?? now(),
-            //         'subtotal'       => $order['subtotal'] ?? 0,
-            //         'is_active'      => 1,
-            //     ]);
-            //     Log::info("Order created with ID: $orderId");
-
-            //     foreach ($data['order_details'] ?? [] as $item) {
-            //         DB::table('order_details')->insert([
-            //             'order_id'   => $orderId,
-            //             'item_name'  => $item['item_name'] ?? '',
-            //             'quantity'   => $item['quantity'] ?? 1,
-            //             'price'      => $item['price'] ?? 0,
-            //         ]);
-            //     }
-            //     Log::info("Order details saved.");
-            // }
-
-            // --- PAYMENT LOGIC ---
-            DB::table('payments')->insert([
-                'transaction_id'     => $transactionId,
-                'card_holder_name'   => $cardholderName,
-                'card_expiry_month'  => $expiryMonth,
-                'card_expiry_year'   => $expiryYear,
-                'card_last_four'     => substr($creditCard, -4),
-                'payment_method'     => 'credit_card',
-                'payment_status'     => 'pending',
-                'amount'             => $transaction['total_amount'] ?? 0,
-            ]);
-            Log::info("Payment saved.");
-
-            DB::commit();
-
-            // return response()->json(['message' => 'Transaction successful'], 201);
-            return response()->json([
-    'message' => 'Transaction successful',
-    'transaction_id' => $transactionId
-], 201);
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Transaction creation failed:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json([
-                'error' => 'Transaction failed: ' . $e->getMessage()
-            ], 500);
+            $cardholderName = $billing['cardholder_name'] ?? '';
+            $creditCard     = $billing['credit_card']     ?? null;
+            $expiryMonth    = $billing['expiry_month']    ?? '';
+            $expiryYear     = $billing['expiry_year']     ?? '';
         }
+
+        // ---------------------------
+        // Create transaction
+        // ---------------------------
+        $t = $data['transaction'];
+        $transactionId = DB::table('transactions')->insertGetId([
+            'account_id'   => $accountId,
+            'subtotal'     => $t['subtotal'],
+            'gst'          => $t['gst'],
+            'total_amount' => $t['total_amount'],
+        ]);
+
+        Log::info('[createTransaction] Transaction created', ['transaction_id' => $transactionId]);
+
+        // ---------------------------
+        // Rentals (optional)
+        // ---------------------------
+        if (!empty($data['rental'])) {
+            $rental    = $data['rental'];
+            $rentalId  = DB::table('rentals')->insertGetId([
+                'transaction_id' => $transactionId,
+                'rental_date'    => $rental['rental_date'] ?? now(),
+                'subtotal'       => $t['subtotal'],
+            ]);
+
+            Log::info('[createTransaction] Rental created', ['rental_id' => $rentalId]);
+
+            foreach (($data['rental_details'] ?? []) as $detail) {
+                $equipmentId = $detail['equipment_id'];
+                $quantity    = $detail['quantity'] ?? 1;
+
+                $serials = DB::table('equipment_details')
+                    ->where('equipment_id', $equipmentId)
+                    ->where('status', 'available')
+                    ->limit($quantity)
+                    ->pluck('serial_id');
+
+                if ($serials->count() < $quantity) {
+                    throw new \Exception("Not enough available serials for equipment ID {$equipmentId}");
+                }
+
+                foreach ($serials as $serialId) {
+                    DB::table('rental_details')->insert([
+                        'rental_id'           => $rentalId,
+                        'serial_id'           => $serialId,
+                        'quantity'            => 1,
+                        'price'               => $detail['price'] ?? 0,
+                        'start_date'          => $detail['start_date'] ?? null,
+                        'end_date'            => $detail['end_date'] ?? null,
+                        'equipment_condition' => $detail['condition'] ?? 'good',
+                        'is_active'           => 1,
+                    ]);
+
+                    DB::table('equipment_details')
+                        ->where('serial_id', $serialId)
+                        ->update(['status' => 'rented']);
+                }
+            }
+
+            Log::info('[createTransaction] Rental details saved & serials marked rented');
+        }
+
+        // ---------------------------
+        // Payment (pending) — order is created later in webhook on "paid"
+        // ---------------------------
+        DB::table('payments')->insert([
+            'transaction_id'    => $transactionId,
+            'card_holder_name'  => $cardholderName,
+            'card_expiry_month' => $expiryMonth,
+            'card_expiry_year'  => $expiryYear,
+            'card_last_four'    => $creditCard ? substr($creditCard, -4) : null,
+            'payment_method'    => 'credit_card',
+            'payment_status'    => 'pending',
+            'amount'            => $t['total_amount'],
+        ]);
+
+        Log::info('[createTransaction] Payment saved (pending)');
+
+        DB::commit();
+
+        return response()->json([
+            'message'        => 'Transaction successful',
+            'transaction_id' => $transactionId,
+        ], 201);
+
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        Log::error('[createTransaction] Failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return response()->json([
+            'error' => 'Transaction failed: ' . $e->getMessage(),
+        ], 500);
     }
+}
 
     public function getAllTransactionsWithRelatedTables() {
         $user = Auth::user();
@@ -316,4 +362,12 @@ class TransactionsController extends Controller
 
         return response()->json(['message' => 'Transaction updated successfully'], 200);
     }
+
+    private function isAdmin(): bool
+{
+    $user = Auth::user();
+    if (!$user) return false;
+    $haystack = strtolower((string)($user->role ?? $user->email ?? ''));
+    return str_contains($haystack, 'admin');
+}
 }

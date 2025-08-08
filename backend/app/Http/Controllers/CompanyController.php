@@ -155,4 +155,12 @@ class CompanyController extends Controller
             return response()->json(['message'=>$searchCompany], 200);
         }
     }
+
+    public function deleteCompany($company_id) {
+    $deleted = DB::table('companies')->where('company_id', $company_id)->delete();
+    if (!$deleted) {
+        return response()->json(['message' => 'Not found'], 404);
+    }
+    return response()->json(['message' => 'Deleted'], 200);
+}
 }

@@ -15,7 +15,7 @@ return [
 
     'defaults' => [
         'guard' => 'web',
-        'passwords' => 'users',
+        'passwords' => 'accounts',
     ],
 
     /*
@@ -38,11 +38,11 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
-            'provider' => 'customer', // Update to use the 'customers' provider
+            'provider' => 'accounts', // Update to use the 'accounts' provider
         ],
         'api' => [
             'driver' => 'sanctum',
-            'provider' => 'customer', // Update to use the 'customers' provider
+            'provider' => 'accounts', // Update to use the 'accounts' provider
         ],
         'admins' => [
             'driver' => 'sanctum', // Use session driver for admin guard
@@ -68,9 +68,9 @@ return [
     */
 
     'providers' => [
-        'customer' => [
+        'accounts' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Customer::class,
+            'model' => App\Models\Accounts::class,
         ],
 
         'admins' => [
@@ -100,12 +100,20 @@ return [
 
     'passwords' => [
         'customers' => [
-            'provider' => 'customers',
+            'provider' => 'accounts',
             'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],
     ],
+
+           //reset admin passwords
+        'admins' => [
+             'provider' => 'admins',
+             'table'    => 'password_reset_tokens',
+             'expire'   => 60,
+             'throttle' => 60,
+         ],
 
     /*
     |--------------------------------------------------------------------------

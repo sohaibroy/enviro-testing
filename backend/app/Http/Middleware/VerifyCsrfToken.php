@@ -12,15 +12,21 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        'api/account/update/*', //disabling CSRF check for all update accounts
-        'api/orders/create',
-        'api/equipment/return',
-        'api/order/update/*',
-            'api/orders',
+    'api/account/update/*', //disabling CSRF check for all update accounts
+    'api/orders/create',
+    'api/equipment/return',
+    'api/order/update/*',
+    'api/orders',
     'api/transactions/create',
     'api/create-checkout-session',
     'api/send-contact-email',
     'api/accounts/*/assign-company',
-    'api/accounts/*/remove-company'
+    'api/accounts/*/remove-company',
+    'api/turnaroundtimes/*',
+    'api/method/update/*', 
+    'api/method/delete/*',
+    'api/category/create/*',
+    'api/synonym/create/*',
+    'api/synonym/delete/*'
     ];
 }

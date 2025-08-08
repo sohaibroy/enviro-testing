@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { cn } from "@/utils/mergeCss";
 
 const BasePopup = ({
@@ -11,19 +11,12 @@ const BasePopup = ({
   children,
   className,
 }) => {
-  const isMounted = useRef(false);
-
-  activityButtonHidden == null ? true : activityButtonHidden;
-
   useEffect(() => {
-    isMounted.current = isOpen;
-
     if (isOpen) {
       document.body.classList.add("overflow-y-hidden");
     } else {
       document.body.classList.remove("overflow-y-hidden");
     }
-
     return () => {
       document.body.classList.remove("overflow-y-hidden");
     };
@@ -31,42 +24,50 @@ const BasePopup = ({
 
   if (!isOpen) return null;
 
+  // Hide the primary button unless BOTH activityText and onActivityClicked are provided,
+  // or if activityButtonHidden was explicitly set to true.
+  const isActivityHidden =
+    activityButtonHidden ?? !(activityText && typeof onActivityClicked === "function");
+
   return (
     <div
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
+        if (e.target === e.currentTarget) onClose();
       }}
-      className={`fixed top-0 left-0 w-full h-full bg-black/50 z-50 flex items-center justify-center ${
+      className={cn(
+        "fixed top-0 left-0 z-50 flex h-full w-full items-center justify-center bg-black/50",
         isOpen ? "overflow-hidden" : ""
-      }`}
+      )}
     >
       <div
         className={cn(
-          "bg-white shadow-2xl p-[2rem] flex flex-col rounded-xl m-[2rem] max-w-[60rem] gap-[2rem]",
+          "m-[2rem] flex max-w-[60rem] flex-col gap-[2rem] rounded-xl bg-white p-[2rem] shadow-2xl",
           className
         )}
       >
-        <h1 className="text-2xl font-bold text-enviro_blue py-[.5rem]">
+        <h1 className="py-[.5rem] text-2xl font-bold text-enviro_blue">
           {title || "Popup Page"}
         </h1>
+
+        {/* Body */}
         {children}
+
+        {/* Footer */}
         <div className="flex justify-between">
           <button
-            className="bg-transparent underline w-[6rem] flex justify-center p-2 text-enviro_orange font-bold transition-all hover:scale-[101%]"
-            onClick={() => {
-              onClose();
-            }}
+            className="flex w-[6rem] justify-center p-2 font-bold text-enviro_orange underline transition-all hover:scale-[101%] bg-transparent"
+            onClick={onClose}
+            type="button"
           >
             Cancel
           </button>
+
+          {/* Primary action button (hidden by logic above) */}
           <button
-            hidden={activityButtonHidden}
-            className="bg-enviro_blue p-2 shadow-2xl rounded-md w-[6rem] font-bold text-center transition-all hover:scale-[101%] text-white"
-            onClick={() => {
-              onActivityClicked();
-            }}
+            hidden={isActivityHidden}
+            className="w-[6rem] rounded-md bg-enviro_blue p-2 text-center font-bold text-white shadow-2xl transition-all hover:scale-[101%]"
+            onClick={onActivityClicked}
+            type="button"
           >
             {activityText || "Continue"}
           </button>

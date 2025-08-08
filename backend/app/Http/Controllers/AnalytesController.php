@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 
 class AnalytesController extends Controller
 {
@@ -31,55 +32,33 @@ class AnalytesController extends Controller
     }
 
     // Create operation: Method for creating a new analyte
-    public function createAnalyte(Request $request)
-    {
-        $user = Auth::user();
+    public function createAnalyte(Request $request): JsonResponse
+{
+
+     $user = Auth::user();
 
         if (strpos($user, 'admin') === false) {
             return response()->json(['message' => 'You are not authorized to view this page'], 401);
         }
 
-        // Validate the incoming request data
-        $validator = Validator::make($request->all(), [
-            'analyte_name'=> 'required',
-            'cas_number'=>'nullable|regex:/^[\d-]+$/',
-        ]);
+    $validator = Validator::make($request->all(), [
+        'analyte_name' => 'required|string|max:255',
+        'cas_number'   => 'nullable|regex:/^[\d-]+$/',
+        'is_active'    => 'nullable|integer|in:0,1',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
-
-        $analyte = new Analytes();
-        $analyte->analyte_name=$request->input('analyte_name');
-        $analyte->cas_number=$request->input('cas_number');
-        $analyte->is_active=$request->input('is_active',1);
-
-        if(empty($analyte)){
-            return response()->json(['message'=>'Create analyte failed: Try again'], 400);
-        }
-
-        $analyte->save();
-
-
-        return response()->json(['message'=>$analyte], 200);
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 400);
     }
 
-    // Search for a specific analyte by analyte_id
-    public function show($analyte_id)
-    {
-        if(!is_numeric($analyte_id) || $analyte_id < 1){
-            return response()->json(['message'=>'Please enter a valid analyte id'], 400);
-        }
+    $analyte = Analytes::create([
+        'analyte_name' => $request->input('analyte_name'),
+        'cas_number'   => $request->input('cas_number'),
+        'is_active'    => (int) $request->input('is_active', 1),
+    ]);
 
-        $analyte = Analytes::find($analyte_id);
-
-        if (!$analyte) {
-
-            return response()->json(['message' => 'Analyte not found'], 404);
-        }
-
-        return response()->json($analyte, 200);
-    }
+    return response()->json($analyte, 201);
+}
 
     // Update an existing analyte
     public function updateAnalyte(Request $request, $analyte_id)
@@ -264,4 +243,44 @@ class AnalytesController extends Controller
             return response()->json(['message' => 'No analyte found'], 404);
         }
     }
+
+    public function destroy($analyte_id): JsonResponse
+    {
+        if (!is_numeric($analyte_id) || (int)$analyte_id < 1) {
+            return response()->json(['message' => 'Please enter a valid analyte id'], 400);
+        }
+
+        $exists = DB::table('analytes')->where('analyte_id', (int)$analyte_id)->exists();
+        if (!$exists) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        try {
+            DB::table('analytes')->where('analyte_id', (int)$analyte_id)->delete();
+            return response()->json(['message' => 'Deleted'], 200);
+        } catch (\Throwable $e) {
+            // Likely an FK constraint (methods, categories, etc.)
+            return response()->json(['message' => 'Cannot delete this analyte right now'], 409);
+        }
+    }
+
+    public function show($id): JsonResponse
+{
+    try {
+        if (!is_numeric($id) || (int)$id < 1) {
+            return response()->json(['message' => 'Invalid analyte id'], 400);
+        }
+
+        $analyte = Analytes::query()->find((int)$id);
+
+        if (!$analyte) {
+            return response()->json(['message' => 'Analyte not found'], 404);
+        }
+
+        return response()->json($analyte, 200);
+    } catch (\Throwable $e) {
+        \Log::error('GET /api/analyte/{id} failed', ['id' => $id, 'error' => $e->getMessage()]);
+        return response()->json(['message' => 'Server error'], 500);
+    }
+}
 }

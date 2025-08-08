@@ -27,6 +27,11 @@ function AddAccountPopup({ isOpen, onClose, fetchAccounts, companyId }) {
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
+  const inputClass = (hasError) =>
+    `w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
+      hasError ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-blue-500"
+    }`;
+
   const handleInputChange = (e) => {
     setError((prev) => ({ ...prev, [e.target.name]: "" }));
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -34,12 +39,37 @@ function AddAccountPopup({ isOpen, onClose, fetchAccounts, companyId }) {
 
   const handleRadioChange = (e) => {
     setIsBusinessCustomer(e.target.value === "business");
+    // clear jobTitle error when switching back to individual
+    if (e.target.value !== "business") {
+      setError((prev) => ({ ...prev, jobTitle: "" }));
+    }
   };
 
   const getCookie = (name) => {
     const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
     return match ? decodeURIComponent(match[2]) : null;
   };
+
+  const renderField = (label, name, type = "text", placeholder = undefined) => (
+    <div key={name}>
+      <label className="block mb-1 text-sm font-bold text-gray-700">{label}</label>
+      <input
+        name={name}
+        type={type}
+        value={formData[name]}
+        placeholder={placeholder}
+        onChange={handleInputChange}
+        className={inputClass(!!error[name])}
+        aria-invalid={!!error[name]}
+        aria-describedby={error[name] ? `${name}-error` : undefined}
+      />
+      {error[name] && (
+        <p id={`${name}-error`} className="text-red-500 text-sm mt-1">
+          {error[name]}
+        </p>
+      )}
+    </div>
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,21 +83,35 @@ function AddAccountPopup({ isOpen, onClose, fetchAccounts, companyId }) {
 
     if (!formData.firstName.trim()) newErrors.firstName = "Please enter your first name.";
     if (!formData.lastName.trim()) newErrors.lastName = "Please enter your last name.";
+
     if (!formData.email.trim()) newErrors.email = "Please enter a valid email address.";
-    else if (!emailRegex.test(formData.email)) newErrors.email = "Invalid email format.";
+    else if (!emailRegex.test(formData.email))
+      newErrors.email = "Invalid email format (e.g., name@example.com).";
+
     if (!formData.password.trim()) newErrors.password = "Please enter a password.";
-    else if (!passwordRegex.test(formData.password)) newErrors.password = "Password too weak.";
+    else if (!passwordRegex.test(formData.password))
+      newErrors.password = "Minimum 6 characters, 1 uppercase, 1 number.";
+
     if (!formData.phoneNumber.trim()) newErrors.phoneNumber = "Please enter your phone number.";
-    else if (!phoneRegex.test(phoneDigits)) newErrors.phoneNumber = "Phone must be 10 digits.";
-    if (!formData.streetAddress.trim()) newErrors.streetAddress = "Enter your street address.";
-    if (!formData.city.trim()) newErrors.city = "Enter your city.";
-    if (!formData.province.trim()) newErrors.province = "Enter your province.";
-    if (!formData.postalCode.trim()) newErrors.postalCode = "Enter your postal code.";
-    else if (!postalCodeRegex.test(formData.postalCode)) newErrors.postalCode = "Invalid format.";
-    if (!formData.country.trim()) newErrors.country = "Enter your country.";
-    if (!agreedToTerms) newErrors.agreedToTerms = "You must agree to the Terms & Conditions.";
+    else if (!phoneRegex.test(phoneDigits)) {
+      newErrors.phoneNumber = "Phone number must be 10 digits (e.g., 7805555555).";
+    }
+
+    if (!formData.streetAddress.trim()) newErrors.streetAddress = "Please enter your street address.";
+    if (!formData.city.trim()) newErrors.city = "Please enter your city.";
+    if (!formData.province.trim()) newErrors.province = "Please enter your province.";
+
+    if (!formData.postalCode.trim()) newErrors.postalCode = "Please enter your postal code.";
+    else if (!postalCodeRegex.test(formData.postalCode))
+      newErrors.postalCode = "Format must match e.g., A1A1A1.";
+
+    if (!formData.country.trim()) newErrors.country = "Please enter your country.";
+
+    if (!agreedToTerms)
+      newErrors.agreedToTerms = "Please agree to the Terms & Conditions to continue.";
+
     if (isBusinessCustomer && !formData.jobTitle.trim())
-      newErrors.jobTitle = "Job Title required for business.";
+      newErrors.jobTitle = "Job Title is required for Business Customer";
 
     if (Object.keys(newErrors).length > 0) {
       setError(newErrors);
@@ -76,12 +120,18 @@ function AddAccountPopup({ isOpen, onClose, fetchAccounts, companyId }) {
 
     try {
       setLoading(true);
+      setError({});
+      setSuccessMessage("");
+
+      // CSRF
       const csrfRes = await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
         credentials: "include",
       });
-
-      if (!csrfRes.ok) throw new Error("CSRF fetch failed");
-
+      if (!csrfRes.ok) {
+        setError({ general: "CSRF token error. Please refresh and try again." });
+        setLoading(false);
+        return;
+      }
       const csrfToken = getCookie("XSRF-TOKEN");
 
       const payload = {
@@ -114,19 +164,20 @@ function AddAccountPopup({ isOpen, onClose, fetchAccounts, companyId }) {
       if (!response.ok) {
         setError({
           general:
-            result.errors?.[Object.keys(result.errors)[0]][0] ||
-            result.message ||
+            result?.errors?.[Object.keys(result.errors || {})[0]]?.[0] ||
+            result?.message ||
             "Signup failed",
         });
       } else {
         setSuccessMessage("Account successfully created!");
-        fetchAccounts();
+        // refresh the list
+        fetchAccounts?.();
         setTimeout(() => {
-          onClose();
+          onClose?.();
         }, 1500);
       }
     } catch (err) {
-      setError({ general: err.message });
+      setError({ general: err.message || "Something went wrong. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -147,31 +198,37 @@ function AddAccountPopup({ isOpen, onClose, fetchAccounts, companyId }) {
             </div>
           )}
 
+          {/* Name */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              "firstName",
-              "lastName",
-              "email",
-              "password",
-              "phoneNumber",
-              "streetAddress",
-              "city",
-              "province",
-              "postalCode",
-              "country",
-            ].map((field) => (
-              <input
-                key={field}
-                placeholder={field.replace(/([A-Z])/g, " $1")}
-                name={field}
-                type={field === "password" ? "password" : "text"}
-                value={formData[field]}
-                onChange={handleInputChange}
-                className="input border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            ))}
+            {renderField("First Name", "firstName")}
+            {renderField("Last Name", "lastName")}
           </div>
 
+          {/* Email / Password */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {renderField("Email", "email", "email")}
+            {renderField("Password", "password", "password")}
+          </div>
+
+          {/* Phone / Street */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {renderField("Phone Number", "phoneNumber", "tel", "e.g., 7805555555")}
+            {renderField("Street Address", "streetAddress")}
+          </div>
+
+          {/* City / Province */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {renderField("City", "city")}
+            {renderField("Province", "province")}
+          </div>
+
+          {/* Postal / Country */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {renderField("Postal Code", "postalCode", "text", "A1A1A1")}
+            {renderField("Country", "country")}
+          </div>
+
+          {/* Customer type */}
           <div className="flex gap-6 items-center mt-2">
             <label className="flex items-center gap-2">
               <input
@@ -195,25 +252,26 @@ function AddAccountPopup({ isOpen, onClose, fetchAccounts, companyId }) {
             </label>
           </div>
 
-          {isBusinessCustomer && (
-            <input
-              placeholder="Job Title"
-              name="jobTitle"
-              value={formData.jobTitle}
-              onChange={handleInputChange}
-              className="input border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          )}
+          {/* Job title for business customers */}
+          {isBusinessCustomer && renderField("Job Title", "jobTitle")}
 
+          {/* Terms */}
           <label className="flex items-center gap-2 text-sm mt-2">
             <input
               type="checkbox"
               checked={agreedToTerms}
-              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              onChange={(e) => {
+                setAgreedToTerms(e.target.checked);
+                setError((prev) => ({ ...prev, agreedToTerms: "" }));
+              }}
             />
-            I agree to the <span className="underline cursor-pointer">Terms & Conditions</span>
+            I agree to the <span className="underline cursor-pointer">Terms &amp; Conditions</span>
           </label>
+          {error.agreedToTerms && (
+            <p className="text-red-500 text-sm -mt-2">{error.agreedToTerms}</p>
+          )}
 
+          {/* Actions */}
           <div className="flex gap-4 justify-end mt-6">
             <button
               type="button"
@@ -223,21 +281,19 @@ function AddAccountPopup({ isOpen, onClose, fetchAccounts, companyId }) {
               Cancel
             </button>
             <button
-  type="submit"
-  disabled={loading}
-  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition min-w-[10rem] h-10"
->
-  <span className="flex items-center justify-center gap-2">
-    {loading && <LoadingIcon />}
-    {!loading && "Create Account"}
-  </span>
-</button>
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition min-w-[10rem] h-10"
+            >
+              <span className="flex items-center justify-center gap-2">
+                {loading && <LoadingIcon />}
+                {!loading && "Create Account"}
+              </span>
+            </button>
           </div>
 
           {successMessage && (
-            <p className="text-green-600 text-center mt-4 font-medium">
-              {successMessage}
-            </p>
+            <p className="text-green-600 text-center mt-4 font-medium">{successMessage}</p>
           )}
         </form>
       </div>

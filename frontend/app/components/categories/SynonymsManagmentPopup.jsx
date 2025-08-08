@@ -8,13 +8,24 @@ import { LoadingIcon } from "../loading/LoadingIcon";
 import { ErrorMessage } from "../basic/ErrorMessage";
 import { GeneralMessage } from "../basic/GeneralMessage";
 import { isTokenExpired } from "@/utils/session";
+
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+const getCookie = (name) => {
+  const m = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return m ? decodeURIComponent(m[2]) : null;
+};
+
+const ensureCsrf = async () => {
+  await fetch(`${baseUrl}/sanctum/csrf-cookie`, { credentials: "include" });
+};
 
 const SynonymsManagementPopup = ({ isOpen, onClose, title, category }) => {
   const [inputValue, setInputValue] = useState("");
   const [synonyms, setSynonyms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
   const listRef = useRef(null);
 
   const fetchSynonyms = async () => {
@@ -24,25 +35,19 @@ const SynonymsManagementPopup = ({ isOpen, onClose, title, category }) => {
         return;
       }
 
-      const response = await fetch(
-        //`http://localhost:80/api/synonyms/${category.category_id}`,
-         `${baseUrl}/api/synonyms/${category.category_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          },
-        }
-      );
+      const response = await fetch(`${baseUrl}/api/synonyms/${category.category_id}`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch synonyms");
-      }
+      if (!response.ok) throw new Error("Failed to fetch synonyms");
 
       const data = await response.json();
       setSynonyms(data);
       setLoading(false);
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      setError(err.message || "Failed to fetch synonyms");
       setLoading(false);
     }
   };
@@ -52,39 +57,47 @@ const SynonymsManagementPopup = ({ isOpen, onClose, title, category }) => {
       window.location.href = "/admin-login";
       return;
     }
+    const value = inputValue.trim();
+    if (!value) return;
 
-    //fetch(`http://localhost:80/api/synonym/create/${category.category_id}`, {
-    fetch(`${baseUrl}/api/synonym/create/${category.category_id}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-      },
-      body: JSON.stringify({
-        synonym: inputValue,
-      }),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(() => {
-        setInputValue("");
-        fetchSynonyms();
-      })
-      .catch((error) => {
-        console.error("Error:", error);
+    try {
+      // If CSRF is still enforced, this prevents 419s; safe even if whitelisted
+      await ensureCsrf();
+      const xsrf = getCookie("XSRF-TOKEN");
+
+      const response = await fetch(`${baseUrl}/api/synonym/create/${category.category_id}`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-XSRF-TOKEN": xsrf || "",
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+        body: JSON.stringify({ synonym: value }),
       });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      setInputValue("");
+      setSuccessMessage("Synonym added!");
+      setTimeout(() => setSuccessMessage(""), 1500);
+      fetchSynonyms();
+    } catch (err) {
+      alert("Failed to add synonym. Please try again.");
+    }
   };
 
   useEffect(() => {
-    fetchSynonyms();
-  }, []);
+    if (isOpen) {
+      setLoading(true);
+      setError(null);
+      setSuccessMessage("");
+      fetchSynonyms();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
-    if (synonyms == null || listRef.current == null) return;
+    if (!synonyms || !listRef.current) return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [synonyms]);
 
@@ -98,6 +111,16 @@ const SynonymsManagementPopup = ({ isOpen, onClose, title, category }) => {
       activityButtonHidden={true}
       className="max-w-[30rem] max-h-[34rem]"
     >
+      {successMessage && (
+        <div
+          className="w-full mb-3 p-2 text-green-800 bg-green-100 border border-green-300 rounded"
+          role="status"
+          aria-live="polite"
+        >
+          {successMessage}
+        </div>
+      )}
+
       <div className="flex justify-between items-end gap-[.5rem]">
         <ValidationInput
           title="Input Synonym"
@@ -120,15 +143,16 @@ const SynonymsManagementPopup = ({ isOpen, onClose, title, category }) => {
       ) : error ? (
         <ErrorMessage error={error} />
       ) : synonyms.length > 0 ? (
-        <ul
-          ref={listRef}
-          className="max-h-[10rem] overflow-y-scroll flex flex-col"
-        >
+        <ul ref={listRef} className="max-h-[10rem] overflow-y-scroll flex flex-col">
           {synonyms.map((synonym) => (
             <SynonymListItem
               key={synonym.synonym_id}
               synonym={synonym}
-              fetchSynonyms={fetchSynonyms}
+              onDeleted={() => {
+                setSuccessMessage("Synonym deleted!");
+                setTimeout(() => setSuccessMessage(""), 1500);
+                fetchSynonyms();
+              }}
             />
           ))}
         </ul>

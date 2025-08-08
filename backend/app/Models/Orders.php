@@ -15,6 +15,7 @@ class Orders extends Model
 
 protected $fillable = [
     'transaction_id',
+    'account_id',
     'order_date',
     'subtotal',
     'gst',

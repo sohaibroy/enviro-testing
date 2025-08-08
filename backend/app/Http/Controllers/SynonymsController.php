@@ -11,13 +11,6 @@ class SynonymsController extends Controller
 {
     public function createSynonym(Request $request, $category_id)
     {
-        $user = Auth::user();
-
-        if (strpos($user, 'admin') === false) {
-            return response()->json(['message' => 'You are not authorized to view this page'], 401);
-        } 
-
-
         if(!is_numeric($category_id) || $category_id < 1){
             return response()->json(['message' => 'Please enter a valid category id'], 404);
         }
@@ -46,12 +39,6 @@ class SynonymsController extends Controller
 
     public function deleteSynonyms($synonym_id)
     {   
-        $user = Auth::user();
-
-        if (strpos($user, 'admin') === false) {
-            return response()->json(['message' => 'You are not authorized to view this page'], 401);
-        } 
-
         if (!is_numeric($synonym_id) || $synonym_id < 1 ) {
         return response()->json(['message' => 'Synonym ID must be a number'], 400);
         }
