@@ -97,4 +97,5 @@ RUN if [ -f artisan ]; then \
       php artisan storage:link || true; \
     fi
 
-CMD ["apache2-foreground"]
+# Run runtime clears on boot, then start Apache
+CMD ["sh","-lc","php artisan optimize:clear || true; php artisan config:clear || true; apache2-foreground"]

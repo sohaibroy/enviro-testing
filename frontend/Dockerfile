@@ -13,7 +13,7 @@ RUN npm install
 # Copy remaining project files
 COPY . .
 
-# ✅ Set environment variable BEFORE build
+#Set environment variable BEFORE build
 # This allows Render to inject NEXT_PUBLIC_API_URL during deployment
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
@@ -21,7 +21,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 # Set environment to production
 ENV NODE_ENV=production
 
-# ✅ Build with correct env var
+#Build with correct env var
 RUN npm run build
 
 # Expose app port
