@@ -37,14 +37,14 @@ function Login({ title, link, apiPath, isAdmin }) {
       // });
 
 
-      const response = await fetch(`${baseUrl}/api/login/account`, {
+const response = await fetch(apiPath, {
   method: "POST",
-  credentials: "include",
   headers: {
     "Content-Type": "application/json",
     "X-Requested-With": "XMLHttpRequest",
     ...(xsrfToken ? { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) } : {}),
   },
+  credentials: "include",
   body: JSON.stringify({ email, password }),
 });
 
