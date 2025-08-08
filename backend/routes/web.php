@@ -29,9 +29,7 @@ Route::get('/test-db', function () {
     return DB::table('accounts')->get();
 });
 
-Route::get('/sanctum/csrf-cookie', function () {
-    return response()->json(['csrf_cookie' => true]);
-});
+Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
 Route::get('/api/get-order', function (Request $request) {
     $orderId = $request->query('order_id');
