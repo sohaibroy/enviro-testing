@@ -24,7 +24,10 @@ function Login({ title, link, apiPath, isAdmin }) {
         credentials: "include",
       });
 
-      const xsrfToken = Cookies.get("XSRF-TOKEN"); // may be undefined briefly
+      //const xsrfToken = Cookies.get("XSRF-TOKEN"); // may be undefined briefly
+      const csrf =
+  Cookies.get("XSRF-TOKEN") ||
+  (document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/)?.[1] ?? "");
 
       // const response = await fetch(apiPath, {
       //   method: "POST",
@@ -42,7 +45,7 @@ const response = await fetch(apiPath, {
   headers: {
     "Content-Type": "application/json",
     "X-Requested-With": "XMLHttpRequest",
-    ...(xsrfToken ? { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) } : {}),
+    ...(csrf ? { "X-XSRF-TOKEN": decodeURIComponent(csrf) } : {}),
   },
   credentials: "include",
   body: JSON.stringify({ email, password }),
