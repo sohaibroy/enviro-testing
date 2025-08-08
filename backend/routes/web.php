@@ -6,6 +6,7 @@ use App\Http\Controllers\MailController;
 use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\OrdersController;
 use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
+use App\Http\Controllers\AccountsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,5 +53,11 @@ Route::get('/api/get-order', function (Request $request) {
         'payment_status' => $order->payment_status ?? 'pending',
         'details' => $details,
     ]);
+});
+
+
+Route::middleware('web')->group(function () {
+    //keep the exact same path your frontend calls
+    Route::post('/api/login/account', [AccountsController::class, 'login']);
 });
 
