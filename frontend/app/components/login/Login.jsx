@@ -19,7 +19,7 @@ function Login({ title, link, apiPath, isAdmin }) {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-      // Get CSRF cookie for session-based login
+      //Get CSRF cookie for session-based login
       await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
         credentials: "include",
       });
@@ -32,7 +32,7 @@ function Login({ title, link, apiPath, isAdmin }) {
           "Content-Type": "application/json",
           ...(xsrfToken ? { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) } : {}),
         },
-        credentials: "include", // send/receive session cookie
+        credentials: "include", //send/receive session cookie
         body: JSON.stringify({ email, password }),
       });
 
@@ -44,23 +44,23 @@ function Login({ title, link, apiPath, isAdmin }) {
 
       const data = await response.json();
 
-      // Store profile info for your app
+      //Store profile info for your app
       if (data.user) {
         sessionStorage.setItem("user", JSON.stringify(data.user));
         sessionStorage.setItem("accountType", "true");
       }
 
-      // ✅ Save token for Bearer-token API calls (Option B endpoints)
+      //Save token for Bearer-token API calls (Option B endpoints)
       if (data.token) {
         sessionStorage.setItem("accessToken", data.token);
       }
 
-      // (Optional) legacy cookies; fine to keep if other code reads them
+      //(Optional) legacy cookies
       Cookies.set("token", data.token, { path: "/" });
       Cookies.set("role", isAdmin ? "admin" : "customer", { path: "/" });
       sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
 
-      // Keep your existing helper
+      //Keep your existing helper
       createSession(
         data.token,
         isAdmin,
