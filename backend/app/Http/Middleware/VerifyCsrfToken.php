@@ -29,7 +29,8 @@ class VerifyCsrfToken extends Middleware
     'api/synonym/create/*',
     'api/synonym/delete/*',
     'api/login/account',
-    'api/login/admin', 
     'api/signup/account',
+    'api/company/create',
+    'api/company/*',
     ];
 }
