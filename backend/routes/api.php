@@ -93,7 +93,7 @@ Route::post('/submit-coc', [ChainOfCustodyController::class, 'submit']);
 // Authentication Routes
 
 //Route::post('/login/account', [AccountsController::class, 'login']); // phpunit works
-Route::post('/login/admin', [AdminController::class, 'login']); // phpunit works
+//Route::post('/login/admin', [AdminController::class, 'login']); // phpunit works
 Route::middleware('auth:sanctum')->post('/logout', [AdminController::class,'logout']); // phpunit works
 
 // Route::post('/searchcustomer', [AccountsController::class, 'searchCustomer']); // works
