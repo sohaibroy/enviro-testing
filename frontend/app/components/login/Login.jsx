@@ -24,7 +24,6 @@ function Login({ title, link, apiPath, isAdmin }) {
         credentials: "include",
       });
 
-     // Read cookie manually; don't rely on js-cookie here
 const xsrfToken = Cookies.get("XSRF-TOKEN");
 
       const response = await fetch(apiPath, {
@@ -51,17 +50,17 @@ const xsrfToken = Cookies.get("XSRF-TOKEN");
         sessionStorage.setItem("accountType", "true");
       }
 
-      //Save token for Bearer-token API calls (Option B endpoints)
+      //Save token for Bearer-token API calls
       if (data.token) {
         sessionStorage.setItem("accessToken", data.token);
       }
 
-      //(Optional) legacy cookies
+      //legacy cookies
       Cookies.set("token", data.token, { path: "/" });
       Cookies.set("role", isAdmin ? "admin" : "customer", { path: "/" });
       sessionStorage.setItem("role", isAdmin ? "admin" : "customer");
 
-      //Keep your existing helper
+      //helper
       createSession(
         data.token,
         isAdmin,
