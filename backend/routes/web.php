@@ -58,6 +58,6 @@ Route::get('/api/get-order', function (Request $request) {
 Route::middleware('web')->group(function () {
     //keep the exact same path your frontend calls
     Route::post('/api/login/account', [AccountsController::class, 'login']);
-    Route::post('/login/admin', [AdminController::class, 'login']);
+    Route::post('api/login/admin', [AdminController::class, 'login']);
 });
 
