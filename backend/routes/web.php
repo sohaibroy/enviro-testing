@@ -7,6 +7,7 @@ use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\OrdersController;
 use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 use App\Http\Controllers\AccountsController;
+use App\Http\Controllers\AdminController;
 
 /*
 |--------------------------------------------------------------------------
