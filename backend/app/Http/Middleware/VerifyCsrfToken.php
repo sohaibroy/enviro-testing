@@ -29,5 +29,17 @@ class VerifyCsrfToken extends Middleware
     'api/synonym/create/*',
     'api/synonym/delete/*',
     'api/login/account',
+    'api/login/admin',
+    'api/company/*',
+    'api/companies',         
+    'api/equipment/*',
+    'api/priceoverride/*',
+    'api/analyte/*',
+    'api/method/*',
+    'api/category/*',
+    'api/synonym/*',
+    'api/equipment-data/*',
+    'api/equipment-types/*',
+    'api/signup/*',
     ];
 }

@@ -25,30 +25,17 @@ function Login({ title, link, apiPath, isAdmin }) {
       });
 
      // Read cookie manually; don't rely on js-cookie here
-const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
-const xsrf = m ? decodeURIComponent(m[1]) : null;
+const xsrfToken = Cookies.get("XSRF-TOKEN");
 
-      // const response = await fetch(apiPath, {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     ...(xsrfToken ? { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) } : {}),
-      //   },
-      //   credentials: "include", //send/receive session cookie
-      //   body: JSON.stringify({ email, password }),
-      // });
-
-
-const response = await fetch(apiPath, {
-  method: "POST",
-  credentials: "include",
-  headers: {
-    "Content-Type": "application/json",
-    "X-Requested-With": "XMLHttpRequest",
-    ...(xsrf ? { "X-XSRF-TOKEN": xsrf } : {}),
-  },
-  body: JSON.stringify({ email, password }),
-});
+      const response = await fetch(apiPath, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(xsrfToken ? { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) } : {}),
+        },
+        credentials: "include", //send/receive session cookie
+        body: JSON.stringify({ email, password }),
+      });
 
       if (!response.ok) {
         setError("Incorrect email or password");
