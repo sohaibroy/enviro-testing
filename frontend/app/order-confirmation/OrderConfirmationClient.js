@@ -12,66 +12,57 @@ export default function OrderConfirmationClient() {
   const router = useRouter();
 
   useEffect(() => {
-    async function loadOrder() {
-      const sessionId = params.get('session_id');
-      let orderId = sessionStorage.getItem('lastOrderId');
+  async function loadOrder() {
+    const orderIdParam = params.get('order_id');            // NEW
+    const sessionId    = params.get('session_id');
+    let orderId        = orderIdParam || sessionStorage.getItem('lastOrderId');  // NEW
 
-      if (sessionId) {
-        try {
-          const res = await fetch(`${baseUrl}/api/stripe/session/${sessionId}`);
-          const data = await res.json();
-
-          if (!data || !data.order_id) {
-            router.replace('/payment-failed');
-            return;
-          }
-
-          orderId = data.order_id;
-          sessionStorage.setItem('lastOrderId', orderId);
-        } catch (err) {
-          router.replace('/payment-failed');
-          return;
-        }
-      }
-
-      if (!orderId) {
-        router.replace('/payment-failed');
+    if (!orderId && sessionId) {
+      try {
+        const res  = await fetch(`${baseUrl}/api/stripe/session/${sessionId}`);
+        const data = await res.json();
+        if (!data?.order_id) { router.replace('/payment-failed'); return; }
+        orderId = data.order_id;
+        sessionStorage.setItem('lastOrderId', String(orderId));
+      } catch {
+        router.replace('/payment-failed'); 
         return;
       }
-
-      try {
-        const res = await fetch(`${baseUrl}/api/orders/full/${orderId}`);
-        const data = await res.json();
-
-        const selections = JSON.parse(sessionStorage.getItem('orderSelections')) || [];
-
-        const enrichedDetails = (data.details || []).map((d, i) => ({
-          ...d,
-          analyte_name: d.analyte_name ?? selections[i]?.analyte ?? '',
-          method_name: d.method_name ?? selections[i]?.method ?? '',
-          turnaround_time: d.turnaround_time ?? selections[i]?.turnaround?.label ?? '',
-        }));
-
-        setOrder({
-          ...data,
-          details: enrichedDetails,
-        });
-
-        setTimeout(() => {
-          sessionStorage.removeItem('orderSelections');
-          sessionStorage.removeItem('rentalCart');
-          sessionStorage.removeItem('transactionId');
-        }, 5000);
-      } catch (err) {
-        router.replace('/payment-failed');
-      }
-
-      setLoading(false);
     }
 
-    loadOrder();
-  }, [params, router]);
+    if (!orderId) { router.replace('/payment-failed'); return; }
 
+    try {
+      const res  = await fetch(`${baseUrl}/api/orders/full/${orderId}`);
+      const data = await res.json();
+
+      const selections = JSON.parse(sessionStorage.getItem('orderSelections') || '[]');
+      const enrichedDetails = (data.details || []).map((d, i) => ({
+        ...d,
+        analyte_name: d.analyte_name ?? selections[i]?.analyte ?? '',
+        method_name: d.method_name ?? selections[i]?.method ?? '',
+        turnaround_time: d.turnaround_time ?? selections[i]?.turnaround?.label ?? '',
+      }));
+
+      setOrder({ ...data, details: enrichedDetails });
+
+      setTimeout(() => {
+        sessionStorage.removeItem('orderSelections');
+        sessionStorage.removeItem('rentalCart');
+        sessionStorage.removeItem('transactionId');
+      }, 5000);
+    } catch {
+      router.replace('/payment-failed');
+      return;
+    }
+
+    setLoading(false);
+  }
+
+  loadOrder();
+}, [params, router]);
+
+  // keep your original print flow (replace body, print, restore)
   const printReceipt = () => {
     const printContent = document.getElementById('print-content').innerHTML;
     const originalContent = document.body.innerHTML;
@@ -80,16 +71,23 @@ export default function OrderConfirmationClient() {
     window.print();
     document.body.innerHTML = originalContent;
 
+    // restore the app after printing
     window.location.reload();
   };
 
   if (loading) return <div className="p-6 text-center">Loading order confirmation...</div>;
   if (!order) return <div className="p-6 text-center text-red-500">Order not found.</div>;
 
+  // === NEW: derive GST & Total (fallback if API didn’t send them) ===
+  const subtotalNum = Number(order.subtotal ?? 0);
+  const gstNum = order.gst != null ? Number(order.gst) : +(subtotalNum * 0.05).toFixed(2);
+  const totalNum =
+    order.total_amount != null ? Number(order.total_amount) : +(subtotalNum + gstNum).toFixed(2);
+
   return (
     <div className="w-full flex justify-center bg-gray-50 px-4 sm:px-6 py-10 sm:py-16">
       <div className="w-full max-w-md sm:max-w-lg md:max-w-screen-md xl:max-w-3xl bg-white rounded-2xl shadow-xl p-6 sm:p-10 transition">
-
+        {/* Regular order confirmation content */}
         <div className="bg-green-100 text-green-800 rounded-lg p-3 mb-6 text-center font-semibold tracking-wide">
           Order Confirmed Successfully!
         </div>
@@ -97,8 +95,10 @@ export default function OrderConfirmationClient() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-gray-800 mb-6">
           <p><strong>Order ID:</strong> {order.order_id}</p>
           <p><strong>Order Date:</strong> {order.order_date}</p>
-          <p><strong>Subtotal:</strong> ${parseFloat(order.subtotal).toFixed(2)}</p>
-          <p><strong>Payment Status:</strong> {order.payment_status || 'Pending'}</p>
+          <p><strong>Subtotal:</strong> ${subtotalNum.toFixed(2)}</p>
+          <p><strong>GST:</strong> ${gstNum.toFixed(2)}</p>
+          <p className="sm:col-span-2"><strong>Total:</strong> ${totalNum.toFixed(2)}</p>
+          <p className="sm:col-span-2"><strong>Payment Status:</strong> {order.payment_status || 'Pending'}</p>
         </div>
 
         <div className="border-t pt-6 mt-6">
@@ -154,20 +154,24 @@ export default function OrderConfirmationClient() {
           </button>
         </div>
 
-        {/* Print receipt content */}
+        {/* Hidden print content (unchanged layout, just added GST & Total) */}
         <div id="print-content" className="hidden">
           <div className="p-6 max-w-md mx-auto">
+            {/* Company Logo Header */}
             <div className="flex justify-center mb-4">
               <div className="text-center">
+                {/* logo path */}
                 <img
                   src="/img/eurofins-logo.png"
                   alt="Eurofins Logo"
                   className="h-15 mx-auto mb-2 pl-14"
                   onError={(e) => {
                     e.target.style.display = 'none';
-                    document.getElementById('company-name-fallback').style.display = 'block';
+                    const fb = document.getElementById('company-name-fallback');
+                    if (fb) fb.style.display = 'block';
                   }}
                 />
+                <p id="company-name-fallback" className="text-lg font-semibold hidden">Eurofins</p>
                 <p className="text-sm text-gray-600">18949 111 Ave NW</p>
                 <p className="text-sm text-gray-600">Edmonton, Alberta</p>
                 <p className="text-sm text-gray-600">Canada</p>
@@ -186,7 +190,11 @@ export default function OrderConfirmationClient() {
               <p className="font-semibold">Date:</p>
               <p>{order.order_date}</p>
               <p className="font-semibold">Subtotal:</p>
-              <p>${parseFloat(order.subtotal).toFixed(2)}</p>
+              <p>${subtotalNum.toFixed(2)}</p>
+              <p className="font-semibold">GST:</p>
+              <p>${gstNum.toFixed(2)}</p>
+              <p className="font-semibold">Total:</p>
+              <p>${totalNum.toFixed(2)}</p>
               <p className="font-semibold">Payment Status:</p>
               <p>{order.payment_status || 'Pending'}</p>
             </div>
@@ -232,7 +240,7 @@ export default function OrderConfirmationClient() {
             )}
 
             <div className="border-t pt-4 mt-4 text-right">
-              <p className="font-bold">Total: ${parseFloat(order.subtotal).toFixed(2)}</p>
+              <p className="font-bold">Total: ${totalNum.toFixed(2)}</p>
             </div>
 
             <div className="mt-8 text-center text-xs text-gray-500">

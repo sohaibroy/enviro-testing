@@ -22,6 +22,12 @@ protected $fillable = [
     'total_amount',
     'status',
     'payment_status',
+    'payment_method',
+    'po_number',
+    'payment_received_at',
+    'payment_reference',
+    'stripe_session_id',
+    'stripe_payment_intent_id',
     'created_at',
     'updated_at'
 ];
@@ -40,4 +46,9 @@ protected $fillable = [
     {
         return $this->hasMany(OrderEquipment::class, 'order_id', 'order_id');
     }
+
+    public function account()
+{
+    return $this->belongsTo(\App\Models\Accounts::class, 'account_id', 'account_id');
+}
 }

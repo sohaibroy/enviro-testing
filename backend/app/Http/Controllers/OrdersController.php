@@ -31,65 +31,6 @@ class OrdersController extends Controller
         return response()->json($orders);
     }
 
-    // public function createOrder($order)
-    // {
-    //     // Validate the incoming JSON data
-    //     $validator = Validator::make($order, [
-    //         'order.transaction_id' => 'required|integer|min:1|max:11',
-    //         'order.subtotal' => 'required|numeric',
-    //         'order_details.*.turn_around_id' => 'required|integer',
-    //         'order_details.*.price' => 'required|numeric',
-    //         'order_details.*.required_quantity' => 'required|integer|min:1',
-    //         'order_details.*.required_pumps' => 'nullable|integer|max:11',
-    //         'order_details.*.required_media' => 'nullable|integer|max:11',
-    //         'order_details.*.customer_comment' => 'nullable|string|max:255',
-    //     ]);
-
-    //     // Check if validation fails
-    //     if ($validator->fails()) {
-    //         throw new Exception(json_encode($validator->errors()), 422);
-    //     }
-
-    //     try {
-    //         // Begin a database transaction
-    //         \DB::beginTransaction();
-
-    //         // Create and save the order header
-    //         $orderRecord = new Orders();
-    //         $orderRecord->transaction_id = $order['transaction_id'];
-    //         $orderRecord->total_amount = $order['total_amount'];
-    //         $orderRecord->subtotal = $order['subtotal'];
-    //         $orderRecord->save();
-
-    //         // Retrieve the order_id after saving the order header
-    //         $order_id = $orderRecord->order_id;
-
-    //         // Create and save the order details
-    //         foreach ($request->input('order_details') as $detail) {
-    //             $orderDetail = new OrderDetails();
-    //             $orderDetail->order_id = $order_id; // Assign the order ID
-    //             $orderDetail->turn_around_id = $detail['turn_around_id'];
-    //             $orderDetail->price = $detail['price'];
-    //             $orderDetail->quantity = $detail['required_quantity'];
-    //             $orderDetail->quantity_pumps = $detail['required_pumps'];
-    //             $orderDetail->quantity_media = $detail['required_media'];
-    //             $orderDetail->comments = $detail['customer_comment'];
-    //             $orderDetail->save();
-    //         }
-
-    //         // Commit the transaction
-    //         \DB::commit();
-
-    //         // Return a success response
-    //         return $orderRecord;
-    //     } catch (\Exception $e) {
-    //         // Rollback the transaction if an exception occurs
-    //         \DB::rollback();
-    //         // Rethrow to be caught by createTransaction
-    //         throw $e;
-    //     }
-    // }
-
 public function createOrder(Request $request)
 {
     \Log::info('[DEBUG] createOrder() route hit');
@@ -282,86 +223,161 @@ public function createOrder(Request $request)
 
 
     }
-    // Update an existing order
+    //Update an existing order
     public function updateOrders(Request $request, $order_id)
-    {
-        $user = Auth::user();
-
-        if (strpos($user, 'admin') === false) {
-            return response()->json(['message' => 'You are not authorized to view this page'], 401);
-        }
-
-        if(!is_numeric($order_id) || $order_id < 1){
-            return response()->json(['message'=>'Please enter a valid order id'],400);
-        }
-
-       $validator = Validator::make($request->all(), [
-    'status' => 'required|in:0,1,2',
-]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
-
-$status = $request->input('status');
-
-$affectedRows = DB::table('orders')
-    ->where('order_id', $order_id)
-    ->update([
-        'status' => $status
-    ]);
-
-        if ($affectedRows === 0) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        return response()->json(['message' => 'Order updated successfully'], 200);
+{
+    $user = Auth::user();
+    if (strpos((string) $user, 'admin') === false) {
+        return response()->json(['message' => 'You are not authorized to view this page'], 401);
     }
 
+    if (!is_numeric($order_id) || $order_id < 1) {
+        return response()->json(['message' => 'Please enter a valid order id'], 400);
+    }
 
-public function ExtremeOrderInfo()
-{
-    //this route was in the middleware before but had to move it becuase of token issues
-    return DB::table('orders')
-        ->leftJoin('transactions', 'orders.transaction_id', '=', 'transactions.transaction_id')
-        ->leftJoin('accounts', 'transactions.account_id', '=', 'accounts.account_id')
-        ->leftJoin('companies', 'accounts.company_id', '=', 'companies.company_id')
-        ->select(
-    'orders.order_id',
-    'orders.order_date',
-    'orders.subtotal',
-    'orders.gst',
-    'orders.total_amount',
-    'orders.status',
-    'orders.payment_status',
-    DB::raw("CASE
-        WHEN orders.status = 0 THEN 'Not Started'
-        WHEN orders.status = 1 THEN 'In Process'
-        WHEN orders.status = 2 THEN 'Completed'
-        ELSE 'Unknown'
-    END AS status_label"),
-    'accounts.first_name',
-    'accounts.last_name',
-    'accounts.email',
-    'accounts.phone_number',
-    'companies.company_id',
-    'companies.company_name',
-    'companies.address',
-    'companies.company_phone'
-)
-        ->get();
+    $validator = Validator::make($request->all(), [
+        'status'           => 'required|in:0,1,2',
+        'po_number'        => 'nullable|string|max:100',
+        'payment_status'   => 'nullable|in:pending,paid',
+        'payment_method'   => 'nullable|string|max:32',
+        'payment_reference'=> 'nullable|string|max:255',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 400);
+    }
+
+    //Load current order so we can detect transitions
+    /** @var \App\Models\Orders|null $order */
+    $order = \App\Models\Orders::find($order_id);
+    if (!$order) {
+        return response()->json(['message' => 'Order not found'], 404);
+    }
+
+    $prevPaymentStatus = strtolower((string) ($order->payment_status ?? ''));
+    $markingPaid       = ($request->input('payment_status') === 'paid');
+    $firstTimePaid     = $markingPaid && ($prevPaymentStatus !== 'paid');
+
+    //Build update payload
+    $payload = [
+        'status' => (int) $request->input('status'),
+        'updated_at' => now(),
+    ];
+
+    if ($request->filled('po_number')) {
+        $payload['po_number'] = $request->input('po_number');
+    }
+
+    if ($markingPaid) {
+        $payload['payment_status']      = 'paid';
+        $payload['payment_method']      = $request->input('payment_method', 'EFT');
+        $payload['payment_received_at'] = now();
+        if ($request->filled('payment_reference')) {
+            $payload['payment_reference'] = $request->input('payment_reference');
+        }
+    } elseif ($request->input('payment_status') === 'pending') {
+        $payload['payment_status'] = 'pending';
+    }
+
+    try {
+        \DB::beginTransaction();
+
+        //Update order row
+        \DB::table('orders')->where('order_id', $order_id)->update($payload);
+
+        //Refresh the model with new values
+        $order->refresh();
+
+        //If transitioning to PAID now, create transaction (if missing) + payment row
+        if ($firstTimePaid) {
+            //Ensure a transaction exists
+            if (empty($order->transaction_id)) {
+                $txnId = \DB::table('transactions')->insertGetId([
+                    'account_id'   => $order->account_id,
+                    'subtotal'     => $order->subtotal,
+                    'gst'          => $order->gst,
+                    'total_amount' => $order->total_amount,
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
+                ]);
+
+                $order->transaction_id = $txnId;
+                \DB::table('orders')->where('order_id', $order_id)->update([
+                    'transaction_id' => $txnId,
+                    'updated_at'     => now(),
+                ]);
+            }
+
+            //Record a payment
+            \DB::table('payments')->insert([
+                'transaction_id'    => $order->transaction_id,
+                'payment_method'    => strtolower($order->payment_method ?? 'eft'), // e.g., eft, wire, cheque
+                'payment_status'    => 'paid',
+                'amount'            => $order->total_amount,
+                'card_holder_name'  => null,
+                'card_expiry_month' => null,
+                'card_expiry_year'  => null,
+                'card_last_four'    => null,
+                'created_at'        => now(),
+                'updated_at'        => now(),
+            ]);
+        }
+
+        \DB::commit();
+    } catch (\Throwable $e) {
+        \DB::rollBack();
+        \Log::error('[updateOrders] failed to update order', [
+            'order_id' => $order_id,
+            'error'    => $e->getMessage(),
+        ]);
+        return response()->json(['message' => 'Failed to update order', 'error' => $e->getMessage()], 500);
+    }
+
+    //Send emails only on first transition to paid
+    if ($firstTimePaid) {
+        try {
+            $account = \App\Models\Accounts::find($order->account_id);
+            $customerEmail = $account?->email;
+
+            if ($customerEmail) {
+                \Log::info('[admin-paid] Sending CustomerPaidReceiptMail', [
+                    'order_id' => $order->order_id,
+                    'to'       => $customerEmail,
+                ]);
+                \Mail::to($customerEmail)->send(new \App\Mail\CustomerPaidReceiptMail($order));
+            } else {
+                \Log::warning('[admin-paid] No customer email on account', [
+                    'order_id'   => $order->order_id,
+                    'account_id' => $order->account_id,
+                ]);
+            }
+
+            //Internal copy
+            try {
+                \Mail::to('roysohaib@hotmail.com')->send(new \App\Mail\CustomerPaidReceiptMail($order));
+            } catch (\Throwable $e) {
+                \Log::warning('[admin-paid] internal copy failed', ['order_id' => $order->order_id, 'err' => $e->getMessage()]);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('[admin-paid] sending receipt failed', [
+                'order_id' => $order->order_id,
+                'error'    => $e->getMessage(),
+            ]);
+        }
+    }
+
+    return response()->json(['message' => 'Order updated successfully'], 200);
 }
 
 
     //Get the order with its details passing order id
-  public function getOrderWithDetails($order_id)
+public function getOrderWithDetails($order_id)
 {
     if (!is_numeric($order_id) || $order_id < 1) {
         return response()->json(['message' => 'Invalid order ID'], 400);
     }
 
     $order = DB::table('orders')->where('order_id', $order_id)->first();
-
     if (!$order) {
         return response()->json(['message' => 'Order not found'], 404);
     }
@@ -371,174 +387,241 @@ public function ExtremeOrderInfo()
         ->where('order_id', $order_id)
         ->get();
 
-    $details = DB::table('order_details as o')
-        ->select(
-            'o.price',
-            'o.required_quantity',
-            'o.required_pumps',
-            'o.required_media',
-            'o.customer_comment',
+    //Resolve method/analyte via od.method_id OR t.method_id
+    $details = DB::table('order_details as od')
+        ->leftJoin('turn_around_times as t', 'od.turn_around_id', '=', 't.turn_around_id')
+        ->leftJoin('methods as m', function ($join) {
+            $join->on('m.method_id', '=', 'od.method_id')
+                 ->orOn('m.method_id', '=', 't.method_id');
+        })
+        ->leftJoin('analytes as a', 'a.analyte_id', '=', 'm.analyte_id')
+        ->where('od.order_id', $order_id)
+        ->get([
+            'od.price',
+            'od.required_quantity',
+            'od.required_pumps',
+            'od.required_media',
+            'od.customer_comment',
             't.turnaround_time',
             'm.method_name',
-            'm.media',
-            'a.analyte_name'
-        )
-        ->leftJoin('turn_around_times as t', 'o.turn_around_id', '=', 't.turn_around_id')
-        ->leftJoin('methods as m', 't.method_id', '=', 'm.method_id')
-        ->leftJoin('analytes as a', 'm.analyte_id', '=', 'a.analyte_id')
-        ->where('o.order_id', $order_id)
-        ->get();
+            'a.analyte_name',
+            //extra aliases in case the frontend expects these keys:
+            DB::raw('m.method_name as method'),
+            DB::raw('a.analyte_name as analyte'),
+        ]);
 
     return response()->json([
-        'order_id' => $order->order_id,
-        'order_date' => $order->order_date,
-        'subtotal' => $order->subtotal,
-        'payment_status' => $order->payment_status ?? 'pending',
-        'details' => $details,
+        'order_id'        => $order->order_id,
+        'order_date'      => $order->order_date,
+        'subtotal'        => $order->subtotal,
+        'gst'             => $order->gst,
+        'total_amount'    => $order->total_amount,
+        'payment_status'  => $order->payment_status ?? 'pending',
+        'details'         => $details,
         'equipment_items' => $equipment,
     ]);
 }
 
-    // NOTE: Commenting out since new Transactions rework should take care of this.
-    // public function storeWalkinOrders(Request $request)
-    // {
-    //     // Validate the incoming JSON data
-    //     $validator = Validator::make($request->all(), [
-    //         'order_header.order_date' => 'required|date',
-    //         'order_header.total_amount' => 'required|numeric',
-    //         'order_header.subtotal' => 'required|numeric',
-    //         'order_header.gst' => 'required|numeric',
-    //         'order_details.*.turn_around_id' => 'required|integer',
-    //         'order_details.*.price' => 'required|numeric',
-    //         'order_details.*.required_quantity' => 'required|integer|min:1',
-    //         'order_details.*.required_pumps' => 'nullable|integer|max:11',
-    //         'order_details.*.required_media' => 'nullable|integer|max:11',
-    //         'order_details.*.customer_comment' => 'nullable|string|max:255',
-    //         'order_header.firstName' => 'required|string|max:255',
-    //         'order_header.lastName' => 'required|string|max:255',
-    //         'order_header.email' => 'required|email|max:255',
-    //         'order_header.phoneNumber' => 'required|string|max:20',
-    //     ]);
-    //     // Check if validation fails
-    //     if ($validator->fails()) {
-    //         return response()->json(['message' => $validator->errors()], 422);
-    //     }
+public function createPoOrder(Request $request)
+{
+    $user = \Auth::user();
+    $accountId = $user?->account_id ?? $user?->id;
 
-    //     // Begin a database transaction
-    //     \DB::beginTransaction();
+    //Validate core payload
+    $data = $request->validate([
+        'order.subtotal'        => 'required|numeric|min:0',
+        'order.gst'             => 'required|numeric|min:0',
+        'order.total_amount'    => 'required|numeric|min:0',
 
-    //     try {
-    //         $accountID="";
-    //         $account = null;
-    //         // Check if the email already exists
-    //         $existingAccount = Accounts::where('email', $request->input('order_header.email'))->first();
-    //         if($existingAccount){
-    //             $accountCompanyId =$existingAccount->company_id;
-    //                 if($accountCompanyId !== 1){
-    //                     return response()->json(['message'=>'Please log in to portal to make order'], 420);
-    //             }
-    //             $account = $existingAccount; // Assign existing account
-    //             $accountID = $existingAccount->account_id;
+        'order_details'                         => 'nullable|array',
+        'order_details.*.turn_around_id'        => 'required|integer|exists:turn_around_times,turn_around_id',
+        'order_details.*.price'                 => 'required|numeric|min:0',
+        'order_details.*.required_quantity'     => 'required|integer|min:1',
+        'order_details.*.required_pumps'        => 'nullable|integer|min:0',
+        'order_details.*.required_media'        => 'nullable|string',
+        'order_details.*.customer_comment'      => 'nullable|string|max:10000',
 
-    //         }
-    //        else{
-    //             // Create the new customer
-    //             $account = new Accounts();
-    //             $account->first_name = $request->input('order_header.firstName');
-    //             $account->last_name = $request->input('order_header.lastName');
-    //             $account->email = $request->input('order_header.email');
-    //             $account->password = HASH::make($request->input('order_header.firstName') . $request->input('order_header.lastName') . 'EnviroWorks1');
-    //             $account->phone_number = $request->input('order_header.phoneNumber');
-    //             $account->company_id = 1;
-    //             $account->is_active = 0; // default is put to zero they are walk in customer
-    //             $account->save();
+        
+        'order_details.*.method_id'             => 'nullable|integer|exists:methods,method_id',
+        'order_details.*.analyte_id'            => 'nullable|integer|exists:analytes,analyte_id',
+        'order_details.*.method_name'           => 'nullable|string|max:255',
+        'order_details.*.analyte_name'          => 'nullable|string|max:255',
 
-    //             // Retrieve the account ID after saving the account
-    //             $accountID = $account->account_id;
-    //         }
+        'rental_items'                          => 'nullable|array',
+        'rental_items.*.equipment_name'         => 'required|string|max:255',
+        'rental_items.*.category'               => 'required|string|max:255',
+        'rental_items.*.start_date'             => 'required|date',
+        'rental_items.*.return_date'            => 'required|date|after_or_equal:rental_items.*.start_date',
+        'rental_items.*.quantity'               => 'required|integer|min:1',
+        'rental_items.*.daily_cost'             => 'required|numeric|min:0',
 
-    //         // Create and save the order header
-    //         $order = new Orders();
-    //         $order->account_id = $accountID;
-    //         $order->order_date = $request->input('order_header.order_date');
-    //         $order->total_amount = $request->input('order_header.total_amount');
-    //         $order->gst = $request->input('order_header.gst');
-    //         $order->subtotal = $request->input('order_header.subtotal');
-    //         $order->is_active = 1;
-    //         $order->save();
+        'po_number'                              => 'nullable|string|max:100',
+    ]);
 
-    //         $company_info = null;
-    //         $company = Companies::find($account->company_id);
-    //         if ($company) {
-    //             $company_info = [
-    //                 'company_id' => $company->company_id,
-    //                 'company_name' => $company->company_name,
-    //                 'company_phone' => $company->company_phone,
-    //                 'company_address' => $company->address,
-    //                 'first_name' => $account->first_name,
-    //                 'last_name' => $account->last_name,
-    //                 'email' => $account->email,
-    //                 'phone_number' => $account->phone_number
-    //             ];
-    //         }
+    try {
+        \DB::beginTransaction();
 
-    //         // Retrieve the order_id after saving the order header
-    //         $order_id = $order->order_id;
+        //Create the order (orders table has timestamps disabled -> set manually)
+        $o = new \App\Models\Orders();
+        $o->account_id      = $accountId;
+        $o->transaction_id  = null;
+        $o->subtotal        = $data['order']['subtotal'];
+        $o->gst             = $data['order']['gst'];
+        $o->total_amount    = $data['order']['total_amount'];
+        $o->order_date      = now();
+        $o->status          = 0;                 // Not Started
+        $o->payment_status  = 'pending';
+        $o->payment_method  = 'PO';
+        $o->po_number       = $data['po_number'] ?? null;
+        $o->created_at      = now();
+        $o->updated_at      = now();
+        $o->save();
 
-    //         // Create and save the order details
-    //         foreach ($request->input('order_details') as $detail) {
-    //             $orderDetail = new OrderDetails();
-    //             $orderDetail->order_id = $order_id; // Assign the order ID
-    //             $orderDetail->turn_around_id = $detail['turn_around_id'];
-    //             $orderDetail->price= $detail['price'];
-    //             $orderDetail->quantity = $detail['required_quantity'];
-    //             $orderDetail->quantity_pumps = $detail['required_pumps'];
-    //             $orderDetail->quantity_media = $detail['required_media'];
-    //             $orderDetail->comments = $detail['customer_comment'];
-    //             $orderDetail->save();
+        $orderId = $o->order_id;
 
-    //             // Retrieve method name and analyte name based on turn_around_id
-    //             $turnAround = TurnAroundTime::find($detail['turn_around_id']);
-    //             if ($turnAround) {
+        //Insert order_details (resolve analyte/method by id or by name if provided)
+        foreach (($data['order_details'] ?? []) as $d) {
+            $methodId  = $d['method_id']   ?? null;
+            $analyteId = $d['analyte_id']  ?? null;
 
-    //                 $orderDetail->price = $turnAround->price;
+            if (!$methodId && !empty($d['method_name'])) {
+                $m = \App\Models\Methods::where('method_name', $d['method_name'])->first();
+                $methodId = $m?->method_id;
+            }
+            if (!$analyteId && !empty($d['analyte_name'])) {
+                $a = \App\Models\Analytes::where('analyte_name', $d['analyte_name'])->first();
+                $analyteId = $a?->analyte_id;
+            }
 
-    //                 $orderDetail->turnaround_time = $turnAround->turnaround_time;
+            \DB::table('order_details')->insert([
+                'order_id'          => $orderId,
+                'method_id'         => $methodId,     // may be null if not provided/resolved
+                'analyte_id'        => $analyteId,    // may be null if not provided/resolved
+                'turn_around_id'    => $d['turn_around_id'],
+                'price'             => $d['price'],
+                'required_quantity' => $d['required_quantity'],
+                'required_pumps'    => $d['required_pumps'] ?? null,
+                'required_media'    => $d['required_media'] ?? null,
+                'customer_comment'  => $d['customer_comment'] ?? null,
+                'created_at'        => now(),
+                'updated_at'        => now(),
+            ]);
+        }
 
-    //                 $method = Methods::find($turnAround->method_id);
+        //Insert equipment and reserve serials immediately for PO
+        foreach (($data['rental_items'] ?? []) as $item) {
+            \App\Models\OrderEquipment::create([
+                'order_id'       => $orderId,
+                'equipment_name' => $item['equipment_name'],
+                'category'       => $item['category'],
+                'start_date'     => $item['start_date'],
+                'return_date'    => $item['return_date'],
+                'quantity'       => $item['quantity'],
+                'daily_cost'     => $item['daily_cost'],
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
 
-    //                 if ($method) {
-    //                     $orderDetail->method_name = $method->method_name;
-    //                     $analyte = Analytes::find($method->analyte_id);
-    //                     if ($analyte) {
-    //                         $orderDetail->analyte_name = $analyte->analyte_name;
-    //                     }
-    //                 }
-    //             }
+            //Reserve units
+            $equipmentId = \DB::table('equipment')
+                ->where('equipment_name', $item['equipment_name'])
+                ->value('equipment_id');
 
-    //             // Add order detail to the array
-    //             $orderDetailsArray[] = $orderDetail;
-    //         }
+            if ($equipmentId) {
+                $availableSerials = \DB::table('equipment_details')
+                    ->where('equipment_id', $equipmentId)
+                    ->where('status', 'available')
+                    ->limit($item['quantity'])
+                    ->pluck('serial_id');
 
-    //         // Commit the transaction
-    //         \DB::commit();
+                if ($availableSerials->count() < $item['quantity']) {
+                    throw new \Exception("Not enough available units for equipment: {$item['equipment_name']}");
+                }
 
-    //         // EMAIL TRIGGER GOES HERE
-    //         // After Committing the transaction
-    //         // Instantiate the Mailable class and send the email
-    //         // Instantiate the Mailable class
-    //         $email = new EmailOrder($order, $orderDetailsArray, $company_info);
+                \DB::table('equipment_details')
+                    ->whereIn('serial_id', $availableSerials)
+                    ->update(['status' => 'rented']);
 
-    //         // Call the build method to prepare the email
-    //         $email->build();
+                \Log::info("[PO] Reserved serials for equipment_id {$equipmentId}: " . implode(',', $availableSerials->toArray()));
+            } else {
+                \Log::warning("[PO] No equipment_id found for equipment_name: {$item['equipment_name']}");
+            }
+        }
 
-    //         // Return a success response
-    //         return response()->json(['message' => 'Order created successfully', 'order_id' => $order_id], 201);
-    //     } catch (\Exception $e) {
-    //         // Rollback the transaction if an exception occurs
-    //         \DB::rollback();
-    //         // Handle the exception, log it, or return an error response
-    //         return response()->json(['message' => 'Failed to create order', 'error' => $e->getMessage()], 500);
-    //     }
-    // }
+        //Eager load for email templates
+        $o->load([
+            'orderDetails.method.analyte',
+            'orderDetails.turnAround',     // if you want turnaround label
+            'equipmentItems',
+            // Optional: 'account.company'
+        ]);
+
+        \DB::commit();
+
+        // Send customer "pending" confirmation
+$customerEmail = \DB::table('accounts')->where('account_id', $o->account_id)->value('email');
+if ($customerEmail) {
+    try {
+        \Mail::to($customerEmail)->send(new \App\Mail\CustomerPoOrderConfirmationMail($o, $customerEmail));
+    } catch (\Throwable $mailErr) {
+        \Log::warning('[PO email] Failed to send customer PO email', ['error' => $mailErr->getMessage()]);
+    }
+}
+
+// Send company notification (paid/pending)
+try {
+    \Mail::to('roysohaib@hotmail.com')->send(new \App\Mail\CompanyOrderNotificationMail($o, $customerEmail));
+} catch (\Throwable $mailErr) {
+    \Log::warning('[PO email] Failed to send company notification', ['error' => $mailErr->getMessage()]);
+}
+
+return response()->json(['message' => 'PO order created', 'order_id' => $orderId], 201);
+
+    } catch (\Throwable $e) {
+        \DB::rollBack();
+        \Log::error('[createPoOrder] '.$e->getMessage());
+        return response()->json(['error' => 'Failed to create PO order'], 500);
+    }
+}
+
+public function ExtremeOrderInfo()
+{
+    // Pull orders with account + company info using orders.account_id
+    $rows = DB::table('orders as o')
+        ->leftJoin('accounts as a', 'a.account_id', '=', 'o.account_id')
+        ->leftJoin('companies as c', 'c.company_id', '=', 'a.company_id')
+        ->select([
+            'o.order_id',
+            'o.order_date',
+            'o.subtotal',
+            'o.gst',
+            'o.total_amount',
+            'o.status',
+            'o.payment_status',
+            'o.payment_method',
+            'o.po_number',
+            'o.transaction_id',
+            DB::raw("CASE
+                WHEN o.status = 0 THEN 'Not Started'
+                WHEN o.status = 1 THEN 'In Process'
+                WHEN o.status = 2 THEN 'Completed'
+                ELSE 'Unknown'
+            END AS status_label"),
+            'a.account_id',
+            'a.first_name',
+            'a.last_name',
+            'a.email',
+            'a.phone_number',
+            'c.company_id',
+            'c.company_name',
+            'c.address',
+            'c.company_phone',
+        ])
+        ->orderByDesc('o.order_date')
+        ->get();
+
+    return response()->json($rows);
+}
+
+
 }

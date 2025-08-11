@@ -16,29 +16,7 @@ class OrderDetailsController extends Controller
         $orderDetails = OrderDetails::all();
         return response()->json($orderDetails);
     }
-    // public function createOrderDetails(Request $request,$order_id)
-    // {
-    //     $validator= Validator::make($request->all(),[
-    //         'method_id'=>'required',
-    //         'quantity'=>'required',
-    //         'quantity_pumps'=>'nullable|numeric|max 11',
-    //         'quantity_media'=>'nullable|numeric|max 11',
-    //         'comments'=>'nullable|string|255'
-    //     ]);
-    //     if($validator->fails()){
-    //         return response()->json(['errors' => $validator->errors()], 400);
-    //     }
-    //     $orderdetail = new OrderDetails();
-    //     $orderdetail->order_id=$order_id;
-    //     $orderdetail->method_id=$request->input('method_id');
-    //     $orderdetail->quantity= $request->input('quantity');
-    //     $orderdetail->quantity_pumps=$request->input('quantity_pumps');
-    //     $orderdetail->comments=$request->input('comments');
-    //     $orderdetail->save();
-
-    //     return response()->json(['message' => 'You have created a new order detail'], 200);
-
-    // }
+    
 
     public function GetOrderDetails($order_id)
     {

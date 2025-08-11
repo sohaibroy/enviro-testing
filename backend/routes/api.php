@@ -71,6 +71,7 @@ Route::post('/create-payment-intent', [StripeController::class, 'create']);
 Route::post('/create-checkout-session', [StripeController::class, 'createCheckoutSession']);
 Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 Route::get('/stripe/session/{session_id}', [StripeController::class, 'getOrderIdFromSession']);
+Route::post('/orders/{order}/checkout-session', [StripeController::class, 'createCheckoutForExistingOrder']);
 
 
 // Public Routes
@@ -190,6 +191,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Order Details
     Route::post('/orderdetails/{order_id}', [OrderDetailsController::class, 'GetOrderDetails']); //phpunit works
 
+    //Route::post('/orders/purchase-order', [OrdersController::class, 'createPoOrder']);
+
     // Rentals
     Route::get('/rentals', [RentalsController::class, 'ExtremeRentalInfo']);
     Route::put('/rentals/update/{rental_id}', [RentalsController::class, 'updateRentals']);
@@ -213,7 +216,40 @@ Route::middleware('auth:sanctum')->group(function () {
     //Route::middleware('auth:sanctum')->get('/account/me', [AccountsController::class, 'me']);
     Route::get('/account/me', [AccountsController::class, 'me']);
 
+// Route::post('/admin/orders/{order}/set-po', function (Request $req, \App\Models\Orders $order) {
+//     $req->validate(['po_number' => 'required|string|max:100']);
+//     $order->update(['po_number' => $req->po_number, 'updated_at' => now()]);
+//     return response()->json(['success' => true]);
+// });
+
+Route::post('/admin/orders/{order}/mark-paid', function (Request $req, \App\Models\Orders $order) {
+    $req->validate(['payment_reference' => 'nullable|string|max:255']);
+
+    $order->update([
+        'payment_status'      => 'paid',
+        'payment_method'      => $order->payment_method ?: 'EFT',
+        'payment_received_at' => now(),
+        'payment_reference'   => $req->payment_reference,
+        'updated_at'          => now(),
+    ]);
+
+    try {
+        $account = \App\Models\Accounts::find($order->account_id);
+        if ($account && $account->email) {
+            \Mail::to($account->email)->send(new \App\Mail\CustomerPaidReceiptMail($order));
+        }
+        //internal copy
+        \Mail::to('roysohaib@hotmail.com')->send(new \App\Mail\CustomerPaidReceiptMail($order));
+    } catch (\Throwable $e) {
+        \Log::warning('[mark-paid] receipt email failed', ['order_id' => $order->order_id, 'err' => $e->getMessage()]);
+    }
+
+    return response()->json(['success' => true]);
 });
+
+
+});
+
 
 // Search for a company by name --works
 Route::get('company/search/{searchTerm}', [CompanyController::class, 'searchCompanyByName']);//phpunit works
@@ -275,3 +311,46 @@ Route::get('/test-db', function () {
         return response()->json(['error' => $e->getMessage()], 500);
     }
 });
+
+Route::get('/orders/my-orders', function (Request $req) {
+        $u = $req->user();
+        $accountId = $u?->account_id ?? $u?->id;
+
+        return DB::table('orders as o')
+            ->leftJoin('accounts as a', 'a.account_id', '=', 'o.account_id')
+            ->leftJoin('companies as c', 'c.company_id', '=', 'a.company_id')
+            ->where('o.account_id', $accountId)
+            ->orderByDesc('o.order_id')
+            ->get([
+                // order fields your card already uses
+                'o.order_id',
+                'o.order_date',
+                'o.subtotal',
+                'o.gst',
+                'o.total_amount',
+                'o.status',
+                'o.payment_status',
+                'o.payment_method',
+                'o.po_number',
+
+                // account fields expected by the card
+                'a.account_id',
+                'a.first_name',
+                'a.last_name',
+                'a.email',
+                'a.phone_number',
+
+                // company fields expected by the card
+                'c.company_id',
+                'c.company_name',
+                'c.address',
+                'c.company_phone',
+            ]);
+    });
+
+    Route::post('/orders/purchase-order', [OrdersController::class, 'createPoOrder']);
+    Route::post('/admin/orders/{order}/set-po', function (Request $req, \App\Models\Orders $order) {
+     $req->validate(['po_number' => 'required|string|max:100']);
+     $order->update(['po_number' => $req->po_number, 'updated_at' => now()]);
+     return response()->json(['success' => true]);
+ });

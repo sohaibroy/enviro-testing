@@ -41,5 +41,6 @@ class VerifyCsrfToken extends Middleware
     'api/equipment-data/*',
     'api/equipment-types/*',
     'api/signup/*',
+    'api/orders/*',
     ];
 }

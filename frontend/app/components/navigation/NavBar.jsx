@@ -80,12 +80,12 @@ const handleLogout = () => {
       Home
     </Link>
 
-    <Link
-      className="bg-green-600 p-2 w-full sm:w-[6rem] shadow-2xl font-bold text-center rounded-md transition-all hover:scale-[101%]"
-      href="/checkout"
-    >
-      Checkout
-    </Link>
+  <Link
+  className="bg-green-600 p-2 w-full sm:w-auto shadow-2xl font-bold text-center rounded-md transition-all hover:scale-[101%]"
+  href={accountType ? "/customer-portal" : "/customer-login"}
+>
+  {accountType ? "Customer Portal" : "Login to Portal"}
+</Link>
 
     {accountType === null ? (
       <>
