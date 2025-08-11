@@ -4,12 +4,6 @@ import Link from "next/link";
 import { BaseListItem } from "../basic/BaseListItem";
 import { OrderUpdatePopup } from "./OrderUpdatePopup";
 
-/**
- * OrdersListItem (JS version)
- *
- * - Admin pages pass `fetchOrders` (so we show Order Details + Edit buttons)
- * - Customer portal does NOT pass `fetchOrders` (so we hide admin-only actions)
- */
 function OrdersListItem({
   order,
   fetchOrders,
