@@ -587,15 +587,12 @@ public function getOrderWithDetails($order_id)
 public function createPoOrder(Request $request)
 {
     $user = \Auth::user();
-
-    //Accept account_id in payload for stateless/mobile calls
     $accountId = $user?->account_id ?? $user?->id ?? $request->input('account_id');
 
     if (!$accountId) {
         return response()->json(['error' => 'Unauthenticated: account_id required'], 401);
     }
 
-    //Validate payload (same rules you had)
     $data = $request->validate([
         'order.subtotal'        => 'required|numeric|min:0',
         'order.gst'             => 'required|numeric|min:0',
@@ -623,13 +620,13 @@ public function createPoOrder(Request $request)
         'rental_items.*.daily_cost'             => 'required|numeric|min:0',
 
         'po_number'                              => 'nullable|string|max:100',
-        'account_id'                             => 'nullable|integer', // accepted for stateless calls
+        'account_id'                             => 'nullable|integer',
     ]);
 
     try {
         \DB::beginTransaction();
 
-        //Create a transaction FIRST (orders.transaction_id is NOT NULL)
+        //Create transaction first
         $txnId = \DB::table('transactions')->insertGetId([
             'account_id'   => $accountId,
             'subtotal'     => $data['order']['subtotal'],
@@ -639,7 +636,7 @@ public function createPoOrder(Request $request)
             'updated_at'   => now(),
         ]);
 
-        //Create the Order with that transaction_id
+        //Create order
         $o = new \App\Models\Orders();
         $o->account_id      = $accountId;
         $o->transaction_id  = $txnId;
@@ -657,7 +654,7 @@ public function createPoOrder(Request $request)
 
         $orderId = $o->order_id;
 
-        //nsert order_details; resolve method/analyte by id OR by name if provided
+        //Details
         foreach (($data['order_details'] ?? []) as $d) {
             $methodId  = $d['method_id']  ?? null;
             $analyteId = $d['analyte_id'] ?? null;
@@ -686,7 +683,7 @@ public function createPoOrder(Request $request)
             ]);
         }
 
-        //Insert equipment + reserve serials
+        //Equipment + reserve serials
         foreach (($data['rental_items'] ?? []) as $item) {
             \App\Models\OrderEquipment::create([
                 'order_id'       => $orderId,
@@ -721,24 +718,46 @@ public function createPoOrder(Request $request)
             }
         }
 
-        //Eager load for emails
-        $o->load(['orderDetails.method.analyte','equipmentItems']);
+        //Eager-load for email templates
+        $o->load(['orderDetails.method.analyte', 'orderDetails.turnAround', 'equipmentItems', 'account.company']);
 
         \DB::commit();
 
-        // 5) Emails
-        $customerEmail = \DB::table('accounts')->where('account_id', $accountId)->value('email');
-        if ($customerEmail) {
-            try {
-                \Mail::to($customerEmail)->send(new \App\Mail\CustomerPoOrderConfirmationMail($o));
-            } catch (\Throwable $mailErr) {
-                \Log::warning('[PO email] Failed to send customer PO email', ['error' => $mailErr->getMessage()]);
-            }
-        }
+        //EMAILS
+        $customerEmail = \DB::table('accounts')->where('account_id', $accountId)->value('email') ?: '';
+        $opsEmail = env('OPS_NOTIF_EMAIL', 'roysohaib@hotmail.com');
+
+        //Customer email (always BCC ops so they at least get this)
         try {
-            \Mail::to('roysohaib@hotmail.com')->send(new \App\Mail\CompanyOrderNotificationMail($o, $customerEmail ?? ''));
+            if ($customerEmail) {
+                \Mail::to($customerEmail)
+                    ->bcc($opsEmail)
+                    ->send(new \App\Mail\CustomerPoOrderConfirmationMail($o));
+                \Log::info('[PO email] Customer mail sent (with BCC to ops)', [
+                    'order_id' => $o->order_id,
+                    'to'       => $customerEmail,
+                    'bcc'      => $opsEmail,
+                ]);
+            }
         } catch (\Throwable $mailErr) {
-            \Log::warning('[PO email] Failed to send company notification', ['error' => $mailErr->getMessage()]);
+            \Log::warning('[PO email] Customer mail failed', [
+                'order_id' => $o->order_id,
+                'err'      => $mailErr->getMessage(),
+            ]);
+        }
+
+        //Dedicated company notification
+        try {
+            \Mail::to($opsEmail)->send(new \App\Mail\CompanyOrderNotificationMail($o, $customerEmail));
+            \Log::info('[PO email] Company notification sent', [
+                'order_id' => $o->order_id,
+                'to'       => $opsEmail,
+            ]);
+        } catch (\Throwable $mailErr) {
+            \Log::warning('[PO email] Company notification failed', [
+                'order_id' => $o->order_id,
+                'err'      => $mailErr->getMessage(),
+            ]);
         }
 
         return response()->json(['message' => 'PO order created', 'order_id' => $orderId], 201);
