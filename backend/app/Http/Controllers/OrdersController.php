@@ -422,12 +422,180 @@ public function getOrderWithDetails($order_id)
     ]);
 }
 
+// public function createPoOrder(Request $request)
+// {
+//     $user = \Auth::user();
+//     $accountId = $user?->account_id ?? $user?->id;
+
+//     //Validate core payload
+//     $data = $request->validate([
+//         'order.subtotal'        => 'required|numeric|min:0',
+//         'order.gst'             => 'required|numeric|min:0',
+//         'order.total_amount'    => 'required|numeric|min:0',
+
+//         'order_details'                         => 'nullable|array',
+//         'order_details.*.turn_around_id'        => 'required|integer|exists:turn_around_times,turn_around_id',
+//         'order_details.*.price'                 => 'required|numeric|min:0',
+//         'order_details.*.required_quantity'     => 'required|integer|min:1',
+//         'order_details.*.required_pumps'        => 'nullable|integer|min:0',
+//         'order_details.*.required_media'        => 'nullable|string',
+//         'order_details.*.customer_comment'      => 'nullable|string|max:10000',
+
+        
+//         'order_details.*.method_id'             => 'nullable|integer|exists:methods,method_id',
+//         'order_details.*.analyte_id'            => 'nullable|integer|exists:analytes,analyte_id',
+//         'order_details.*.method_name'           => 'nullable|string|max:255',
+//         'order_details.*.analyte_name'          => 'nullable|string|max:255',
+
+//         'rental_items'                          => 'nullable|array',
+//         'rental_items.*.equipment_name'         => 'required|string|max:255',
+//         'rental_items.*.category'               => 'required|string|max:255',
+//         'rental_items.*.start_date'             => 'required|date',
+//         'rental_items.*.return_date'            => 'required|date|after_or_equal:rental_items.*.start_date',
+//         'rental_items.*.quantity'               => 'required|integer|min:1',
+//         'rental_items.*.daily_cost'             => 'required|numeric|min:0',
+
+//         'po_number'                              => 'nullable|string|max:100',
+//     ]);
+
+//     try {
+//         \DB::beginTransaction();
+
+//         //Create the order (orders table has timestamps disabled -> set manually)
+//         $o = new \App\Models\Orders();
+//         $o->account_id      = $accountId;
+//         $o->transaction_id  = null;
+//         $o->subtotal        = $data['order']['subtotal'];
+//         $o->gst             = $data['order']['gst'];
+//         $o->total_amount    = $data['order']['total_amount'];
+//         $o->order_date      = now();
+//         $o->status          = 0;                 // Not Started
+//         $o->payment_status  = 'pending';
+//         $o->payment_method  = 'PO';
+//         $o->po_number       = $data['po_number'] ?? null;
+//         $o->created_at      = now();
+//         $o->updated_at      = now();
+//         $o->save();
+
+//         $orderId = $o->order_id;
+
+//         //Insert order_details (resolve analyte/method by id or by name if provided)
+//         foreach (($data['order_details'] ?? []) as $d) {
+//             $methodId  = $d['method_id']   ?? null;
+//             $analyteId = $d['analyte_id']  ?? null;
+
+//             if (!$methodId && !empty($d['method_name'])) {
+//                 $m = \App\Models\Methods::where('method_name', $d['method_name'])->first();
+//                 $methodId = $m?->method_id;
+//             }
+//             if (!$analyteId && !empty($d['analyte_name'])) {
+//                 $a = \App\Models\Analytes::where('analyte_name', $d['analyte_name'])->first();
+//                 $analyteId = $a?->analyte_id;
+//             }
+
+//             \DB::table('order_details')->insert([
+//                 'order_id'          => $orderId,
+//                 'method_id'         => $methodId,     // may be null if not provided/resolved
+//                 'analyte_id'        => $analyteId,    // may be null if not provided/resolved
+//                 'turn_around_id'    => $d['turn_around_id'],
+//                 'price'             => $d['price'],
+//                 'required_quantity' => $d['required_quantity'],
+//                 'required_pumps'    => $d['required_pumps'] ?? null,
+//                 'required_media'    => $d['required_media'] ?? null,
+//                 'customer_comment'  => $d['customer_comment'] ?? null,
+//                 'created_at'        => now(),
+//                 'updated_at'        => now(),
+//             ]);
+//         }
+
+//         //Insert equipment and reserve serials immediately for PO
+//         foreach (($data['rental_items'] ?? []) as $item) {
+//             \App\Models\OrderEquipment::create([
+//                 'order_id'       => $orderId,
+//                 'equipment_name' => $item['equipment_name'],
+//                 'category'       => $item['category'],
+//                 'start_date'     => $item['start_date'],
+//                 'return_date'    => $item['return_date'],
+//                 'quantity'       => $item['quantity'],
+//                 'daily_cost'     => $item['daily_cost'],
+//                 'created_at'     => now(),
+//                 'updated_at'     => now(),
+//             ]);
+
+//             //Reserve units
+//             $equipmentId = \DB::table('equipment')
+//                 ->where('equipment_name', $item['equipment_name'])
+//                 ->value('equipment_id');
+
+//             if ($equipmentId) {
+//                 $availableSerials = \DB::table('equipment_details')
+//                     ->where('equipment_id', $equipmentId)
+//                     ->where('status', 'available')
+//                     ->limit($item['quantity'])
+//                     ->pluck('serial_id');
+
+//                 if ($availableSerials->count() < $item['quantity']) {
+//                     throw new \Exception("Not enough available units for equipment: {$item['equipment_name']}");
+//                 }
+
+//                 \DB::table('equipment_details')
+//                     ->whereIn('serial_id', $availableSerials)
+//                     ->update(['status' => 'rented']);
+
+//                 \Log::info("[PO] Reserved serials for equipment_id {$equipmentId}: " . implode(',', $availableSerials->toArray()));
+//             } else {
+//                 \Log::warning("[PO] No equipment_id found for equipment_name: {$item['equipment_name']}");
+//             }
+//         }
+
+//         //Eager load for email templates
+//         $o->load([
+//             'orderDetails.method.analyte',
+//             'orderDetails.turnAround',     // if you want turnaround label
+//             'equipmentItems',
+//             // Optional: 'account.company'
+//         ]);
+
+//         \DB::commit();
+
+//         // Send customer "pending" confirmation
+// $customerEmail = \DB::table('accounts')->where('account_id', $o->account_id)->value('email');
+// if ($customerEmail) {
+//     try {
+//         \Mail::to($customerEmail)->send(new \App\Mail\CustomerPoOrderConfirmationMail($o, $customerEmail));
+//     } catch (\Throwable $mailErr) {
+//         \Log::warning('[PO email] Failed to send customer PO email', ['error' => $mailErr->getMessage()]);
+//     }
+// }
+
+// // Send company notification (paid/pending)
+// try {
+//     \Mail::to('roysohaib@hotmail.com')->send(new \App\Mail\CompanyOrderNotificationMail($o, $customerEmail));
+// } catch (\Throwable $mailErr) {
+//     \Log::warning('[PO email] Failed to send company notification', ['error' => $mailErr->getMessage()]);
+// }
+
+// return response()->json(['message' => 'PO order created', 'order_id' => $orderId], 201);
+
+//     } catch (\Throwable $e) {
+//         \DB::rollBack();
+//         \Log::error('[createPoOrder] '.$e->getMessage());
+//         return response()->json(['error' => 'Failed to create PO order'], 500);
+//     }
+// }
+
 public function createPoOrder(Request $request)
 {
     $user = \Auth::user();
-    $accountId = $user?->account_id ?? $user?->id;
 
-    //Validate core payload
+    //Accept account_id in payload for stateless/mobile calls
+    $accountId = $user?->account_id ?? $user?->id ?? $request->input('account_id');
+
+    if (!$accountId) {
+        return response()->json(['error' => 'Unauthenticated: account_id required'], 401);
+    }
+
+    //Validate payload (same rules you had)
     $data = $request->validate([
         'order.subtotal'        => 'required|numeric|min:0',
         'order.gst'             => 'required|numeric|min:0',
@@ -441,7 +609,6 @@ public function createPoOrder(Request $request)
         'order_details.*.required_media'        => 'nullable|string',
         'order_details.*.customer_comment'      => 'nullable|string|max:10000',
 
-        
         'order_details.*.method_id'             => 'nullable|integer|exists:methods,method_id',
         'order_details.*.analyte_id'            => 'nullable|integer|exists:analytes,analyte_id',
         'order_details.*.method_name'           => 'nullable|string|max:255',
@@ -456,20 +623,31 @@ public function createPoOrder(Request $request)
         'rental_items.*.daily_cost'             => 'required|numeric|min:0',
 
         'po_number'                              => 'nullable|string|max:100',
+        'account_id'                             => 'nullable|integer', // accepted for stateless calls
     ]);
 
     try {
         \DB::beginTransaction();
 
-        //Create the order (orders table has timestamps disabled -> set manually)
+        //Create a transaction FIRST (orders.transaction_id is NOT NULL)
+        $txnId = \DB::table('transactions')->insertGetId([
+            'account_id'   => $accountId,
+            'subtotal'     => $data['order']['subtotal'],
+            'gst'          => $data['order']['gst'],
+            'total_amount' => $data['order']['total_amount'],
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
+
+        //Create the Order with that transaction_id
         $o = new \App\Models\Orders();
         $o->account_id      = $accountId;
-        $o->transaction_id  = null;
+        $o->transaction_id  = $txnId;
         $o->subtotal        = $data['order']['subtotal'];
         $o->gst             = $data['order']['gst'];
         $o->total_amount    = $data['order']['total_amount'];
         $o->order_date      = now();
-        $o->status          = 0;                 // Not Started
+        $o->status          = 0;
         $o->payment_status  = 'pending';
         $o->payment_method  = 'PO';
         $o->po_number       = $data['po_number'] ?? null;
@@ -479,10 +657,10 @@ public function createPoOrder(Request $request)
 
         $orderId = $o->order_id;
 
-        //Insert order_details (resolve analyte/method by id or by name if provided)
+        //nsert order_details; resolve method/analyte by id OR by name if provided
         foreach (($data['order_details'] ?? []) as $d) {
-            $methodId  = $d['method_id']   ?? null;
-            $analyteId = $d['analyte_id']  ?? null;
+            $methodId  = $d['method_id']  ?? null;
+            $analyteId = $d['analyte_id'] ?? null;
 
             if (!$methodId && !empty($d['method_name'])) {
                 $m = \App\Models\Methods::where('method_name', $d['method_name'])->first();
@@ -495,8 +673,8 @@ public function createPoOrder(Request $request)
 
             \DB::table('order_details')->insert([
                 'order_id'          => $orderId,
-                'method_id'         => $methodId,     // may be null if not provided/resolved
-                'analyte_id'        => $analyteId,    // may be null if not provided/resolved
+                'method_id'         => $methodId,
+                'analyte_id'        => $analyteId,
                 'turn_around_id'    => $d['turn_around_id'],
                 'price'             => $d['price'],
                 'required_quantity' => $d['required_quantity'],
@@ -508,7 +686,7 @@ public function createPoOrder(Request $request)
             ]);
         }
 
-        //Insert equipment and reserve serials immediately for PO
+        //Insert equipment + reserve serials
         foreach (($data['rental_items'] ?? []) as $item) {
             \App\Models\OrderEquipment::create([
                 'order_id'       => $orderId,
@@ -522,7 +700,6 @@ public function createPoOrder(Request $request)
                 'updated_at'     => now(),
             ]);
 
-            //Reserve units
             $equipmentId = \DB::table('equipment')
                 ->where('equipment_name', $item['equipment_name'])
                 ->value('equipment_id');
@@ -541,41 +718,30 @@ public function createPoOrder(Request $request)
                 \DB::table('equipment_details')
                     ->whereIn('serial_id', $availableSerials)
                     ->update(['status' => 'rented']);
-
-                \Log::info("[PO] Reserved serials for equipment_id {$equipmentId}: " . implode(',', $availableSerials->toArray()));
-            } else {
-                \Log::warning("[PO] No equipment_id found for equipment_name: {$item['equipment_name']}");
             }
         }
 
-        //Eager load for email templates
-        $o->load([
-            'orderDetails.method.analyte',
-            'orderDetails.turnAround',     // if you want turnaround label
-            'equipmentItems',
-            // Optional: 'account.company'
-        ]);
+        //Eager load for emails
+        $o->load(['orderDetails.method.analyte','equipmentItems']);
 
         \DB::commit();
 
-        // Send customer "pending" confirmation
-$customerEmail = \DB::table('accounts')->where('account_id', $o->account_id)->value('email');
-if ($customerEmail) {
-    try {
-        \Mail::to($customerEmail)->send(new \App\Mail\CustomerPoOrderConfirmationMail($o, $customerEmail));
-    } catch (\Throwable $mailErr) {
-        \Log::warning('[PO email] Failed to send customer PO email', ['error' => $mailErr->getMessage()]);
-    }
-}
+        // 5) Emails
+        $customerEmail = \DB::table('accounts')->where('account_id', $accountId)->value('email');
+        if ($customerEmail) {
+            try {
+                \Mail::to($customerEmail)->send(new \App\Mail\CustomerPoOrderConfirmationMail($o));
+            } catch (\Throwable $mailErr) {
+                \Log::warning('[PO email] Failed to send customer PO email', ['error' => $mailErr->getMessage()]);
+            }
+        }
+        try {
+            \Mail::to('roysohaib@hotmail.com')->send(new \App\Mail\CompanyOrderNotificationMail($o, $customerEmail ?? ''));
+        } catch (\Throwable $mailErr) {
+            \Log::warning('[PO email] Failed to send company notification', ['error' => $mailErr->getMessage()]);
+        }
 
-// Send company notification (paid/pending)
-try {
-    \Mail::to('roysohaib@hotmail.com')->send(new \App\Mail\CompanyOrderNotificationMail($o, $customerEmail));
-} catch (\Throwable $mailErr) {
-    \Log::warning('[PO email] Failed to send company notification', ['error' => $mailErr->getMessage()]);
-}
-
-return response()->json(['message' => 'PO order created', 'order_id' => $orderId], 201);
+        return response()->json(['message' => 'PO order created', 'order_id' => $orderId], 201);
 
     } catch (\Throwable $e) {
         \DB::rollBack();
@@ -583,6 +749,7 @@ return response()->json(['message' => 'PO order created', 'order_id' => $orderId
         return response()->json(['error' => 'Failed to create PO order'], 500);
     }
 }
+
 
 public function ExtremeOrderInfo()
 {

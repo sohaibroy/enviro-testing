@@ -664,43 +664,45 @@ export default function Step8({ onBack, onStepChange }) {
       daily_cost: e.DailyCost,
     }));
 
-  // ==== SUBMITTERS (STAT ELESS: no CSRF needed) ====
+  //SUBMITTERS
 
   const submitPO = async () => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-    const payload = {
-      order: { subtotal, gst, total_amount: total },
-      order_details: buildAnalyteDetails(),
-      rental_items: buildRentalItems(),
-      po_number: poNumber || null,
-    };
+  //pull from your sessionStorage "user"
+  const userJson = sessionStorage.getItem('user');
+  const user = userJson ? JSON.parse(userJson) : null;
+  const accountId = user?.account_id ?? user?.id ?? null;
 
-    const res = await fetch(`${baseUrl}/api/orders/purchase-order`, {
-      method: 'POST',
-      // stateless call:
-      credentials: 'omit',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const ct = res.headers.get('content-type') || '';
-    const body = ct.includes('application/json') ? await res.json() : await res.text();
-
-    if (!res.ok) {
-      const msg = typeof body === 'string' ? body : body?.message || body?.error;
-      throw new Error(msg || `PO order failed (HTTP ${res.status})`);
-    }
-
-    if (body?.order_id) {
-      sessionStorage.setItem('lastOrderId', String(body.order_id));
-      router.push(`/order-confirmation?order_id=${body.order_id}`);
-      return;
-    }
+  const payload = {
+    account_id: accountId, 
+    order: { subtotal, gst, total_amount: total },
+    order_details: buildAnalyteDetails(),
+    rental_items: buildRentalItems(),
+    po_number: poNumber || null,
   };
+
+  const res = await fetch(`${baseUrl}/api/orders/purchase-order`, {
+    method: 'POST',
+    credentials: 'omit',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const ct = res.headers.get('content-type') || '';
+  const body = ct.includes('application/json') ? await res.json() : await res.text();
+
+  if (!res.ok) {
+    const msg = typeof body === 'string' ? body : body?.message || body?.error;
+    throw new Error(msg || `PO order failed (HTTP ${res.status})`);
+  }
+
+  if (body?.order_id) {
+    sessionStorage.setItem('lastOrderId', String(body.order_id));
+    router.push(`/order-confirmation?order_id=${body.order_id}`);
+    return;
+  }
+};
 
   const submitCard = async () => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;

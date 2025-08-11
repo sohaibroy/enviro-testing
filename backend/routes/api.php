@@ -223,29 +223,73 @@ Route::middleware('auth:sanctum')->group(function () {
 // });
 
 Route::post('/admin/orders/{order}/mark-paid', function (Request $req, \App\Models\Orders $order) {
-    $req->validate(['payment_reference' => 'nullable|string|max:255']);
-
-    $order->update([
-        'payment_status'      => 'paid',
-        'payment_method'      => $order->payment_method ?: 'EFT',
-        'payment_received_at' => now(),
-        'payment_reference'   => $req->payment_reference,
-        'updated_at'          => now(),
+    $req->validate([
+        'payment_reference' => 'nullable|string|max:255',
+        'payment_method'    => 'nullable|string|max:32',
     ]);
 
+    \DB::beginTransaction();
     try {
-        $account = \App\Models\Accounts::find($order->account_id);
-        if ($account && $account->email) {
-            \Mail::to($account->email)->send(new \App\Mail\CustomerPaidReceiptMail($order));
+        // Ensure a transaction exists (needed for NOT NULL constraint)
+        if (empty($order->transaction_id)) {
+            $txnId = \DB::table('transactions')->insertGetId([
+                'account_id'   => $order->account_id,
+                'subtotal'     => $order->subtotal,
+                'gst'          => $order->gst,
+                'total_amount' => $order->total_amount,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
+            $order->transaction_id = $txnId;
         }
-        //internal copy
-        \Mail::to('roysohaib@hotmail.com')->send(new \App\Mail\CustomerPaidReceiptMail($order));
-    } catch (\Throwable $e) {
-        \Log::warning('[mark-paid] receipt email failed', ['order_id' => $order->order_id, 'err' => $e->getMessage()]);
-    }
 
-    return response()->json(['success' => true]);
-});
+        $payMethod = $req->input('payment_method', $order->payment_method ?: 'EFT');
+
+        $order->update([
+            'payment_status'      => 'paid',
+            'payment_method'      => $payMethod,
+            'payment_received_at' => now(),
+            'payment_reference'   => $req->payment_reference,
+            'updated_at'          => now(),
+            'transaction_id'      => $order->transaction_id,
+        ]);
+
+        // Optional: add a payments row if none exists
+        if (!\DB::table('payments')->where('transaction_id', $order->transaction_id)->exists()) {
+            \DB::table('payments')->insert([
+                'transaction_id'    => $order->transaction_id,
+                'payment_method'    => strtolower($payMethod) === 'credit card' ? 'credit_card' : 'eft',
+                'payment_status'    => 'paid',
+                'amount'            => $order->total_amount,
+                'card_holder_name'  => null,
+                'card_expiry_month' => null,
+                'card_expiry_year'  => null,
+                'card_last_four'    => null,
+                'created_at'        => now(),
+                'updated_at'        => now(),
+            ]);
+        }
+
+        \DB::commit();
+
+        try {
+            $account = \App\Models\Accounts::find($order->account_id);
+            if ($account && $account->email) {
+                \Mail::to($account->email)->send(new \App\Mail\CustomerPaidReceiptMail($order));
+            }
+            \Mail::to('roysohaib@hotmail.com')->send(new \App\Mail\CustomerPaidReceiptMail($order));
+        } catch (\Throwable $e) {
+            \Log::warning('[mark-paid] receipt email failed', ['order_id' => $order->order_id, 'err' => $e->getMessage()]);
+        }
+
+        return response()->json(['success' => true]);
+    } catch (\Throwable $e) {
+        \DB::rollBack();
+        \Log::error('[mark-paid] '.$e->getMessage());
+        return response()->json(['error' => 'Failed to mark paid'], 500);
+    }
+})->middleware('auth:sanctum');
+
 
 
 });
