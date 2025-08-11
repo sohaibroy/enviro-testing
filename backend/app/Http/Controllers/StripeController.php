@@ -395,49 +395,84 @@ public function getOrderIdFromSession($sessionId)
     }
 }
 
-    public function createCheckoutForExistingOrder(Request $request, Orders $order)
-{
-    require_once base_path('stripe-php-17.3.0/init.php');
-    \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+   public function createCheckoutForExistingOrder(Request $request, Orders $order)
+    {
+        //Determine caller identity (prefer Sanctum user, fall back to explicit account_id)
+        $accountId = optional($request->user())->account_id
+            ?? optional($request->user())->id
+            ?? (int) $request->input('account_id')
+            ?? (int) $request->query('account_id');
 
-    $user = \Auth::user();
-    $userAccountId = $user?->account_id ?? $user?->id;
-    if ($order->account_id != $userAccountId && !str_contains(strtolower($user->email ?? ''), 'admin')) {
-        return response()->json(['error' => 'Forbidden'], 403);
-    }
-    if (($order->payment_status ?? '') === 'paid') {
-        return response()->json(['error' => 'Order already paid'], 409);
-    }
+        if (!$accountId) {
+            Log::warning('[checkout-existing] unauthenticated');
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
-    $frontendUrl = env('FRONTEND_URL');
-    if (!$frontendUrl) return response()->json(['error' => 'FRONTEND_URL missing'], 500);
+        //Ownership check
+        if ((int)$order->account_id !== (int)$accountId) {
+            Log::warning('[checkout-existing] forbidden - order does not belong to account', [
+                'order_id' => $order->order_id,
+                'order_account_id' => $order->account_id,
+                'caller_account_id' => $accountId,
+            ]);
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
 
-    $amountCents = (int) round(($order->total_amount ?? 0) * 100);
+        //Paid guard
+        if (strtolower((string)($order->payment_status ?? '')) === 'paid') {
+            return response()->json(['error' => 'Order already paid'], 422);
+        }
 
-    try {
-        $session = \Stripe\Checkout\Session::create([
-            'payment_method_types' => ['card'],
-            'mode' => 'payment',
-            'line_items' => [[
-                'price_data' => [
-                    'currency' => 'cad',
-                    'product_data' => ['name' => 'Order #'.$order->order_id],
-                    'unit_amount' => $amountCents,
+        //Stripe session
+        require_once base_path('stripe-php-17.3.0/init.php');
+        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        $frontend = rtrim(env('FRONTEND_URL', config('app.frontend_url', '')), '/');
+        $successUrl = $frontend ? $frontend . '/customer-portal?paid=1' : 'https://example.com/success';
+        $cancelUrl  = $frontend ? $frontend . '/customer-portal?cancel=1' : 'https://example.com/cancel';
+
+        $amountCents = (int) round(($order->total_amount ?? 0) * 100);
+
+        $account = Accounts::find($order->account_id);
+        $customerEmail = $account?->email;
+
+        try {
+            $session = \Stripe\Checkout\Session::create([
+                'mode' => 'payment',
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'quantity' => 1,
+                    'price_data' => [
+                        'currency' => 'cad',
+                        'unit_amount' => $amountCents,
+                        'product_data' => [
+                            'name' => 'Order #' . $order->order_id,
+                            'description' => 'Eurofins EnviroWorks payment',
+                        ],
+                    ],
+                ]],
+                'success_url' => $successUrl,
+                'cancel_url'  => $cancelUrl,
+                'metadata' => [
+                    'existing_order_id' => (string) $order->order_id,
+                    'transaction_id'    => (string) ($order->transaction_id ?? ''),
+                    'account_id'        => (string) $accountId,
                 ],
-                'quantity' => 1,
-            ]],
-            'success_url' => $frontendUrl . '/order-confirmation?order_id='.$order->order_id.'&session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url'  => $frontendUrl . '/customer-portal?canceled=1',
-            'metadata'    => [
-                'existing_order_id' => (string)$order->order_id,
-            ],
-        ]);
+                'client_reference_id' => (string) $order->order_id,
+                'customer_email' => $customerEmail,
+            ]);
 
-        return response()->json(['id' => $session->id]);
-    } catch (\Throwable $e) {
-        \Log::error('[createCheckoutForExistingOrder] '.$e->getMessage());
-        return response()->json(['error' => 'Stripe session failed'], 500);
+            Log::info('[checkout-existing] session created', [
+                'order_id' => $order->order_id,
+                'session_id' => $session->id,
+            ]);
+
+            return response()->json(['id' => $session->id, 'url' => $session->url]);
+        } catch (\Throwable $e) {
+            Log::error('[checkout-existing] stripe error: '.$e->getMessage(), [
+                'order_id' => $order->order_id,
+            ]);
+            return response()->json(['error' => 'Stripe error creating session'], 500);
+        }
     }
-}
-
 }

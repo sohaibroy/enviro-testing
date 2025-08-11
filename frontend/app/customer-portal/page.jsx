@@ -32,24 +32,36 @@ export default function CustomerPortalPage() {
     }
   }
 
-  async function handlePayNow(orderId) {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${orderId}/checkout-session`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Could not start checkout");
+async function handlePayNow(orderId) {
+  try {
+    const userJson = typeof window !== "undefined" ? sessionStorage.getItem("user") : null;
+    const user = userJson ? JSON.parse(userJson) : null;
+    const accountId = (user && (user.account_id || user.id)) || null;
 
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error("Stripe failed to initialize");
-      const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
-      if (error) alert(error.message);
-    } catch (e) {
-      alert(e.message || "Payment error");
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${orderId}/checkout-session`;
+    if (accountId) {
+      const u = new URL(url);
+      u.searchParams.set('account_id', String(accountId));
+      url = u.toString();
     }
+
+    const res = await fetch(url, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || "Could not start checkout");
+
+    const stripe = await stripePromise;
+    if (!stripe) throw new Error("Stripe failed to initialize");
+    const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+    if (error) alert(error.message);
+  } catch (e) {
+    alert(e.message || "Payment error");
   }
+}
 
   return (
     <div className="max-w-4xl mx-auto p-6">
