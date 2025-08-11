@@ -669,13 +669,12 @@ export default function Step8({ onBack, onStepChange }) {
   const submitPO = async () => {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-  //pull from your sessionStorage "user"
   const userJson = sessionStorage.getItem('user');
   const user = userJson ? JSON.parse(userJson) : null;
-  const accountId = user?.account_id ?? user?.id ?? null;
+  const accountId = (user && (user.account_id || user.id)) || null;
 
   const payload = {
-    account_id: accountId, 
+    account_id: accountId, //make sure server knows who this is
     order: { subtotal, gst, total_amount: total },
     order_details: buildAnalyteDetails(),
     rental_items: buildRentalItems(),
@@ -684,8 +683,12 @@ export default function Step8({ onBack, onStepChange }) {
 
   const res = await fetch(`${baseUrl}/api/orders/purchase-order`, {
     method: 'POST',
-    credentials: 'omit',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      Accept: 'application/json',
+    },
     body: JSON.stringify(payload),
   });
 
@@ -697,10 +700,9 @@ export default function Step8({ onBack, onStepChange }) {
     throw new Error(msg || `PO order failed (HTTP ${res.status})`);
   }
 
-  if (body?.order_id) {
+  if (body && body.order_id) {
     sessionStorage.setItem('lastOrderId', String(body.order_id));
-    router.push(`/order-confirmation?order_id=${body.order_id}`);
-    return;
+    window.location.href = `/order-confirmation?order_id=${body.order_id}`;
   }
 };
 

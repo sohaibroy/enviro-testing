@@ -5,11 +5,6 @@ import { OrdersListItem } from "../components/orders/OrdersListItem";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-function getXsrf() {
-  const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : "";
-}
-
 export default function CustomerPortalPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,12 +13,20 @@ export default function CustomerPortalPage() {
 
   async function fetchOrders() {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sanctum/csrf-cookie`, { credentials: "include" });
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/my-orders`, { credentials: "include" });
+      const userJson = typeof window !== "undefined" ? sessionStorage.getItem("user") : null;
+      const user = userJson ? JSON.parse(userJson) : null;
+      const accountId = (user && (user.account_id || user.id)) || null;
+
+      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/my-orders`);
+      if (accountId) url.searchParams.set("account_id", String(accountId));
+
+      const res = await fetch(url.toString(), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to load orders");
-      setOrders(await res.json());
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -34,11 +37,13 @@ export default function CustomerPortalPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${orderId}/checkout-session`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json", "X-XSRF-TOKEN": getXsrf() },
+        headers: { "Content-Type": "application/json" },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Could not start checkout");
+
       const stripe = await stripePromise;
+      if (!stripe) throw new Error("Stripe failed to initialize");
       const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
       if (error) alert(error.message);
     } catch (e) {
@@ -55,12 +60,13 @@ export default function CustomerPortalPage() {
         <p>No orders found.</p>
       ) : (
         <div className="space-y-4">
-          {orders.map(o => (
+          {orders.map((o) => (
             <OrdersListItem
               key={o.order_id}
               order={o}
               showPayControls
               onPayNow={handlePayNow}
+              hideAdminActions
             />
           ))}
         </div>

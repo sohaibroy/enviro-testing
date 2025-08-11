@@ -357,40 +357,42 @@ Route::get('/test-db', function () {
 });
 
 Route::get('/orders/my-orders', function (Request $req) {
-        $u = $req->user();
-        $accountId = $u?->account_id ?? $u?->id;
+    $u = $req->user();
+    $accountId = $u?->account_id
+        ?? $u?->id
+        ?? (int) $req->query('account_id'); //fallback for non-Sanctum sessions
 
-        return DB::table('orders as o')
-            ->leftJoin('accounts as a', 'a.account_id', '=', 'o.account_id')
-            ->leftJoin('companies as c', 'c.company_id', '=', 'a.company_id')
-            ->where('o.account_id', $accountId)
-            ->orderByDesc('o.order_id')
-            ->get([
-                // order fields your card already uses
-                'o.order_id',
-                'o.order_date',
-                'o.subtotal',
-                'o.gst',
-                'o.total_amount',
-                'o.status',
-                'o.payment_status',
-                'o.payment_method',
-                'o.po_number',
+    if (!$accountId) {
+        //No identity — return empty list to avoid leaking data
+        return response()->json([]);
+    }
 
-                // account fields expected by the card
-                'a.account_id',
-                'a.first_name',
-                'a.last_name',
-                'a.email',
-                'a.phone_number',
-
-                // company fields expected by the card
-                'c.company_id',
-                'c.company_name',
-                'c.address',
-                'c.company_phone',
-            ]);
-    });
+    return DB::table('orders as o')
+        ->leftJoin('accounts as a', 'a.account_id', '=', 'o.account_id')
+        ->leftJoin('companies as c', 'c.company_id', '=', 'a.company_id')
+        ->where('o.account_id', $accountId)
+        ->orderByDesc('o.order_id')
+        ->get([
+            'o.order_id',
+            'o.order_date',
+            'o.subtotal',
+            'o.gst',
+            'o.total_amount',
+            'o.status',
+            'o.payment_status',
+            'o.payment_method',
+            'o.po_number',
+            'a.account_id',
+            'a.first_name',
+            'a.last_name',
+            'a.email',
+            'a.phone_number',
+            'c.company_id',
+            'c.company_name',
+            'c.address',
+            'c.company_phone',
+        ]);
+});
 
     Route::post('/orders/purchase-order', [OrdersController::class, 'createPoOrder']);
     Route::post('/admin/orders/{order}/set-po', function (Request $req, \App\Models\Orders $order) {
