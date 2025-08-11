@@ -1,9 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { loadStripe } from "@stripe/stripe-js";
 import { OrdersListItem } from "../components/orders/OrdersListItem";
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 export default function CustomerPortalPage() {
   const [orders, setOrders] = useState([]);
@@ -50,14 +47,11 @@ async function handlePayNow(orderId) {
       credentials: "include",
       headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
     });
-
     const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || "Could not start checkout");
+    if (!res.ok || !data?.url) throw new Error(data?.error || "Could not start checkout");
 
-    const stripe = await stripePromise;
-    if (!stripe) throw new Error("Stripe failed to initialize");
-    const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
-    if (error) alert(error.message);
+    //just go to the checkout URL
+    window.location.href = data.url;
   } catch (e) {
     alert(e.message || "Payment error");
   }
