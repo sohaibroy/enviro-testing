@@ -30,8 +30,6 @@ use App\Http\Controllers\StripeController;
 use App\Http\Controllers\MonerisController;
 use App\Http\Controllers\ReturnEquipmentController;
 use App\Models\Methods;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
-use App\Http\Middleware\VerifyCsrfToken;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,13 +68,10 @@ Route::get('/orders/full/{order_id}', [OrdersController::class, 'getOrderWithDet
 
 //Stripe Route
 Route::post('/create-payment-intent', [StripeController::class, 'create']);
-Route::post('/create-checkout-session', [StripeController::class, 'createCheckoutSession'])
-    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, VerifyCsrfToken::class]);
-Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook'])
-    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, VerifyCsrfToken::class]);
+Route::post('/create-checkout-session', [StripeController::class, 'createCheckoutSession']);
+Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 Route::get('/stripe/session/{session_id}', [StripeController::class, 'getOrderIdFromSession']);
-Route::post('/orders/{order}/checkout-session', [StripeController::class, 'createCheckoutForExistingOrder'])
-    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, VerifyCsrfToken::class]);
+Route::post('/orders/{order}/checkout-session', [StripeController::class, 'createCheckoutForExistingOrder']);
 
 
 // Public Routes
@@ -300,8 +295,7 @@ Route::get('/rentals/searchrentals/{rental_id}', [RentalsController::class, 'sho
 Route::get('/rentals/searchtool/{searchValue}', [RentalsController::class, 'searchRentalTool']);
 
 // Transactions Routes
-Route::post('/transactions/create', [TransactionsController::class, 'createTransaction'])
-    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, VerifyCsrfToken::class]);
+Route::post('/transactions/create', [TransactionsController::class, 'createTransaction']);
 Route::post('/transactions/guest', [TransactionsController::class, 'createTransaction']);
 // Turnaroundtime Routes
 Route::get('/turn-around-times/{methodId}', [TurnAroundTimeController::class, 'getTurnAroundTimes']);//phpunit works
@@ -354,8 +348,7 @@ Route::get('/orders/my-orders', function (Request $req) {
             ]);
     });
 
-    Route::post('/orders/purchase-order', [OrdersController::class, 'createPoOrder'])
-    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, VerifyCsrfToken::class]);
+    Route::post('/orders/purchase-order', [OrdersController::class, 'createPoOrder']);
     Route::post('/admin/orders/{order}/set-po', function (Request $req, \App\Models\Orders $order) {
      $req->validate(['po_number' => 'required|string|max:100']);
      $order->update(['po_number' => $req->po_number, 'updated_at' => now()]);
